@@ -992,6 +992,8 @@ The approved user-facing wording is:
 
 ### 11.6 Sarah v1 acceptance tests
 
+Sarah v1 has 19 acceptance tests in total: 5 baseline tests and 14 trip-scenario tests.
+
 | ID | Expected result |
 |---|---|
 | SARAH-B-001 | Baseline current-account closing balance is £2,750 in every displayed month |
