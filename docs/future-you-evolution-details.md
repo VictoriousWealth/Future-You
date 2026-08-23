@@ -359,3 +359,17 @@
     - The core proposition can be proven without integrations or unsupported scenario types, and implementation should not be forced to make product-scope decisions.
   - Effect on Future You:
     - Version one remains a focused conversational decision simulator rather than expanding into budgeting, recommendation, benefits administration or financial-data aggregation.
+
+- **Future refinement — Deterministic modular MVP architecture defined**
+  - What changed:
+    - The approved product contracts were translated into a technical architecture and a vertical implementation sequence.
+  - Previous approach:
+    - Simulator behaviour, conversation behaviour, UI states and MVP scope were defined, but responsibility boundaries, persistence, provider use and deployment shape were not yet fixed.
+  - New approach:
+    - Future You is implemented as one TypeScript modular monolith with a pure deterministic financial domain at its centre, a responsive Next.js interface/API, immutable versioned context and scenario records, and managed Supabase authentication/PostgreSQL persistence.
+    - The LLM is isolated behind typed server-side actions and may interpret or explain; all financial numbers, dates, classifications and alternatives come from the simulator and deterministic presentation data.
+    - Scenario viewing never changes confirmed context, numeric benefit simulation and scenario commitment remain disabled in MVP, and successful runs retain their inputs, assumptions, ancestry, rules version and hashes.
+  - Why it changed:
+    - Implementation needs the smallest credible structure that preserves reproducibility, scenario isolation, testability and the frozen Sarah v1 outcomes without adding enterprise infrastructure or post-MVP behaviour.
+  - Effect on Future You:
+    - The golden path can be built early as a verified vertical slice, while AI, UI and persistence remain unable to invent calculations or silently turn an opportunity or what-if into Sarah's current financial reality.
