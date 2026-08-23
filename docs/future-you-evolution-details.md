@@ -373,3 +373,19 @@
     - Implementation needs the smallest credible structure that preserves reproducibility, scenario isolation, testability and the frozen Sarah v1 outcomes without adding enterprise infrastructure or post-MVP behaviour.
   - Effect on Future You:
     - The golden path can be built early as a verified vertical slice, while AI, UI and persistence remain unable to invent calculations or silently turn an opportunity or what-if into Sarah's current financial reality.
+
+- **Future refinement — Slice 1 deterministic simulator contract implemented**
+  - What changed:
+    - The first implementation slice converted the approved Sarah and simulation specifications into an independently executable TypeScript domain package with acceptance tests.
+  - Previous approach:
+    - The financial rules and frozen outcomes existed as specifications, but there was no executable engine proving that one general policy produced them without Sarah-specific calculation branches.
+  - New approach:
+    - Context, baseline and scenario inputs are immutable and versioned; calculations use integer pence, a chronological event ledger, explicit cash reserves, buffer-first future allocation, capped ordered goal slots, same-event rollover and structured classification metrics.
+    - Slice 1 locks six allocation events for classification, six months of detailed output and a maximum of 120 monthly goal-allocation events. Goals unfinished at that limit return `NOT_REACHED_WITHIN_HORIZON` rather than an invented date.
+    - Payday calculation uses an injected England-and-Wales working-day calendar. The committed 2026–2028 GOV.UK-derived fixture is versioned; unavailable years use the disclosed Monday-to-Friday fallback and record that assumption. The simulator performs no live calendar request.
+    - Sarah's routine-spending envelope is assigned to the named spending cycle before its payday, preserving the approved cycle convention when a calendar month ends on a weekend.
+    - OpenAI, Supabase, external financial providers, UI, HTTP and environment configuration are absent. The later OpenAI adapter must default to `store: false`; later Supabase work must combine grants with RLS and cross-user isolation tests.
+  - Why it changed:
+    - The product needs executable evidence that scenario numbers are reproducible, that overdraft and opportunities do not become cash, and that alternative branches cannot mutate Sarah's current path or one another.
+  - Effect on Future You:
+    - The frozen baseline, £650 decision, £500 and £400 options, and October timing path now come from one tested deterministic engine. Slice 2 can be reviewed against a stable domain boundary without importing UI, persistence or AI concerns into financial truth.
