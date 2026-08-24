@@ -19,6 +19,10 @@ import type { SimulatorApplicationDependencies } from "./dependencies";
 import { correlationIdFor, resolveCurrentBaseline } from "./resolve-current-baseline";
 import { scenarioIdFor } from "./simulate-one-off-purchase";
 import { inputIdentity } from "../../domain/shared/identity";
+import {
+  findIdempotentSimulationRun,
+  saveIdempotentSimulationRun
+} from "./idempotent-simulation-run";
 
 export class GenerateAmountAlternativesUseCase {
   constructor(private readonly dependencies: SimulatorApplicationDependencies) {}
@@ -69,6 +73,15 @@ export class GenerateAmountAlternativesUseCase {
       const candidateRequest = isSource
         ? request.source
         : { ...request.source, requestId: `${request.requestId}_${options.length}` };
+      const existing = await findIdempotentSimulationRun(
+        this.dependencies.runStore,
+        candidateRequest
+      );
+      if (!existing.ok) return err(existing.error);
+      if (existing.value) {
+        options.push(existing.value.result);
+        continue;
+      }
       const simulated = simulateOneOffPurchase({
         baselineId: resolved.value.baseline.baselineId,
         baseline: resolved.value.baseline,
@@ -96,8 +109,13 @@ export class GenerateAmountAlternativesUseCase {
         this.dependencies.calendarMetadata,
         isSource ? undefined : `${formatMoney(candidate)} option`
       );
-      await this.dependencies.runStore.save(response);
-      options.push(response);
+      const persisted = await saveIdempotentSimulationRun(
+        this.dependencies.runStore,
+        candidateRequest,
+        response
+      );
+      if (!persisted.ok) return err(persisted.error);
+      options.push(persisted.value);
     }
 
     return ok({
