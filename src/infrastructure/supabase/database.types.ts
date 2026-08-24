@@ -79,6 +79,232 @@ export type Database = {
           },
         ]
       }
+      conversation_messages: {
+        Row: {
+          content_payload: Json
+          context_version_id: string
+          conversation_id: string
+          created_at: string
+          kind: string
+          message_id: string
+          run_id: string | null
+          sequence_number: number
+          user_id: string
+        }
+        Insert: {
+          content_payload: Json
+          context_version_id: string
+          conversation_id: string
+          created_at?: string
+          kind: string
+          message_id: string
+          run_id?: string | null
+          sequence_number: number
+          user_id: string
+        }
+        Update: {
+          content_payload?: Json
+          context_version_id?: string
+          conversation_id?: string
+          created_at?: string
+          kind?: string
+          message_id?: string
+          run_id?: string | null
+          sequence_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_message_conversation_fk"
+            columns: ["user_id", "conversation_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: [
+              "user_id",
+              "conversation_id",
+              "context_version_id",
+            ]
+          },
+          {
+            foreignKeyName: "conversation_message_run_fk"
+            columns: ["user_id", "run_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["user_id", "run_id", "context_version_id"]
+          },
+        ]
+      }
+      conversation_turns: {
+        Row: {
+          assistant_message_id: string | null
+          completed_at: string | null
+          context_version_id: string
+          conversation_id: string
+          created_at: string
+          explanation_fallback_used: boolean
+          explanation_prompt_version: string
+          explanation_schema_version: string
+          failure_category: string | null
+          interpretation_kind: string | null
+          interpretation_prompt_version: string
+          interpretation_schema_version: string
+          model_identifier: string
+          provider_attempt_count: number
+          provider_identifier: string
+          referenced_run_id: string | null
+          request_id: string
+          request_identity: string
+          response_payload: Json | null
+          status: string
+          trusted_timestamp: string
+          trusted_timezone: string
+          turn_id: string
+          user_id: string
+          user_message_id: string
+        }
+        Insert: {
+          assistant_message_id?: string | null
+          completed_at?: string | null
+          context_version_id: string
+          conversation_id: string
+          created_at?: string
+          explanation_fallback_used?: boolean
+          explanation_prompt_version: string
+          explanation_schema_version: string
+          failure_category?: string | null
+          interpretation_kind?: string | null
+          interpretation_prompt_version: string
+          interpretation_schema_version: string
+          model_identifier: string
+          provider_attempt_count?: number
+          provider_identifier: string
+          referenced_run_id?: string | null
+          request_id: string
+          request_identity: string
+          response_payload?: Json | null
+          status: string
+          trusted_timestamp: string
+          trusted_timezone: string
+          turn_id: string
+          user_id: string
+          user_message_id: string
+        }
+        Update: {
+          assistant_message_id?: string | null
+          completed_at?: string | null
+          context_version_id?: string
+          conversation_id?: string
+          created_at?: string
+          explanation_fallback_used?: boolean
+          explanation_prompt_version?: string
+          explanation_schema_version?: string
+          failure_category?: string | null
+          interpretation_kind?: string | null
+          interpretation_prompt_version?: string
+          interpretation_schema_version?: string
+          model_identifier?: string
+          provider_attempt_count?: number
+          provider_identifier?: string
+          referenced_run_id?: string | null
+          request_id?: string
+          request_identity?: string
+          response_payload?: Json | null
+          status?: string
+          trusted_timestamp?: string
+          trusted_timezone?: string
+          turn_id?: string
+          user_id?: string
+          user_message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_turn_assistant_message_fk"
+            columns: ["user_id", "assistant_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["user_id", "message_id"]
+          },
+          {
+            foreignKeyName: "conversation_turn_conversation_fk"
+            columns: ["user_id", "conversation_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: [
+              "user_id",
+              "conversation_id",
+              "context_version_id",
+            ]
+          },
+          {
+            foreignKeyName: "conversation_turn_run_fk"
+            columns: ["user_id", "referenced_run_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["user_id", "run_id", "context_version_id"]
+          },
+          {
+            foreignKeyName: "conversation_turn_user_message_fk"
+            columns: ["user_id", "user_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["user_id", "message_id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          context_version_id: string
+          conversation_id: string
+          created_at: string
+          latest_activity_at: string
+          orchestration_version: string
+          pending_clarification: Json | null
+          selected_run_id: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          context_version_id: string
+          conversation_id: string
+          created_at?: string
+          latest_activity_at?: string
+          orchestration_version: string
+          pending_clarification?: Json | null
+          selected_run_id?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          context_version_id?: string
+          conversation_id?: string
+          created_at?: string
+          latest_activity_at?: string
+          orchestration_version?: string
+          pending_clarification?: Json | null
+          selected_run_id?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_context_fk"
+            columns: ["user_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "financial_context_versions"
+            referencedColumns: ["user_id", "version_id"]
+          },
+          {
+            foreignKeyName: "conversation_selected_run_fk"
+            columns: ["user_id", "selected_run_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_runs"
+            referencedColumns: ["user_id", "run_id", "context_version_id"]
+          },
+        ]
+      }
       financial_context_versions: {
         Row: {
           compatible_calendar_version: string
@@ -427,9 +653,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      begin_conversation_turn: {
+        Args: {
+          p_conversation_id: string
+          p_explanation_prompt_version: string
+          p_explanation_schema_version: string
+          p_interpretation_prompt_version: string
+          p_interpretation_schema_version: string
+          p_message_text: string
+          p_model_identifier: string
+          p_provider_identifier: string
+          p_request_id: string
+          p_request_identity: string
+          p_trusted_timestamp: string
+          p_trusted_timezone: string
+          p_turn_id: string
+          p_user_message_id: string
+        }
+        Returns: {
+          response_payload: Json
+          status: string
+          turn_id: string
+        }[]
+      }
       canonical_jsonb_sha256: {
         Args: { value: Json }
         Returns: string
+      }
+      complete_conversation_turn: {
+        Args: {
+          p_assistant_content: Json
+          p_assistant_kind: string
+          p_assistant_message_id: string
+          p_conversation_id: string
+          p_explanation_fallback_used: boolean
+          p_failure_category: string
+          p_final_status: string
+          p_interpretation_kind: string
+          p_pending_clarification: Json
+          p_provider_attempt_count: number
+          p_referenced_run_id: string
+          p_response_payload: Json
+          p_selected_run_id: string
+          p_turn_id: string
+        }
+        Returns: undefined
       }
       confirm_financial_context_version: {
         Args: {
