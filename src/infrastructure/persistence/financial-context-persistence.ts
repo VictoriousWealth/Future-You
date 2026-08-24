@@ -17,10 +17,16 @@ const identifier = z.string().min(1).max(160);
 const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const yearMonth = z.string().regex(/^\d{4}-\d{2}$/);
 const exactMinorUnits = z.string().regex(/^(0|[1-9]\d*)$/);
+const signedExactMinorUnits = z.string().regex(/^-?(0|[1-9]\d*)$/);
 
 const moneySchema = z.object({
   currency: z.literal("GBP"),
   minorUnits: exactMinorUnits
+}).strict();
+
+const signedMoneySchema = z.object({
+  currency: z.literal("GBP"),
+  minorUnits: signedExactMinorUnits
 }).strict();
 
 const scopeSchema = z.union([
@@ -57,7 +63,17 @@ const persistedFinancialContextSchema = z.object({
   jurisdiction: z.literal("ENGLAND_AND_WALES"),
   currentAccount: z.object({
     id: identifier,
-    clearedBalance: planningMoneySchema,
+    clearedBalance: z.object({
+      value: signedMoneySchema.nullable(),
+      evidence: evidenceSchema
+    }).strict().superRefine((value, context) => {
+      if ((value.value === null) !== (value.evidence.state === "UNKNOWN")) {
+        context.addIssue({
+          code: "custom",
+          message: "Only UNKNOWN planning values may contain null."
+        });
+      }
+    }),
     reservedSpending: planningMoneySchema,
     overdraftLimit: moneySchema,
     overdraftIncludedAsCash: z.literal(false)
@@ -110,7 +126,8 @@ const persistedFinancialContextSchema = z.object({
     lockedAllocations: z.array(z.object({
       period: yearMonth,
       goalId: identifier,
-      amount: moneySchema
+      amount: moneySchema,
+      evidenceState: z.literal("ESTIMATED").optional()
     }).strict())
   }).strict(),
   confirmedOneOffEvents: z.array(z.object({
@@ -275,7 +292,10 @@ export function financialContextToPersistence(
       lockedAllocations: context.goalAllocationPolicy.lockedAllocations.map((allocation) => ({
         period: allocation.period,
         goalId: allocation.goalId,
-        amount: moneyToPersistence(allocation.amount)
+        amount: moneyToPersistence(allocation.amount),
+        ...(allocation.evidenceState === undefined
+          ? {}
+          : { evidenceState: allocation.evidenceState })
       }))
     },
     confirmedOneOffEvents: context.confirmedOneOffEvents.map((event) => ({
@@ -367,7 +387,10 @@ export function financialContextFromPersistence(
       lockedAllocations: value.goalAllocationPolicy.lockedAllocations.map((allocation) => ({
         period: mustYearMonth(allocation.period),
         goalId: allocation.goalId,
-        amount: moneyFromPersistence(allocation.amount)
+        amount: moneyFromPersistence(allocation.amount),
+        ...(allocation.evidenceState === undefined
+          ? {}
+          : { evidenceState: allocation.evidenceState })
       }))
     },
     confirmedOneOffEvents: value.confirmedOneOffEvents.map((event) => ({
