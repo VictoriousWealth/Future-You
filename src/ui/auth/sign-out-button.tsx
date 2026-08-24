@@ -20,7 +20,7 @@ export function SignOutButton({ configuration }: Readonly<{
       onClick={async () => {
         setPending(true);
         const client = createBrowserSupabaseClient(configuration);
-        await client.auth.signOut();
+        await client.auth.signOut({ scope: "local" });
         router.replace("/login");
         router.refresh();
       }}
