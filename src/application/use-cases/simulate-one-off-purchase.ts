@@ -10,6 +10,10 @@ import { toOneOffPurchaseResponse } from "../mappers/domain-to-dto";
 import { oneOffPurchaseRequestToDomain } from "../mappers/request-to-domain";
 import type { SimulatorApplicationDependencies } from "./dependencies";
 import { correlationIdFor, resolveCurrentBaseline } from "./resolve-current-baseline";
+import {
+  findIdempotentSimulationRun,
+  saveIdempotentSimulationRun
+} from "./idempotent-simulation-run";
 
 export function scenarioIdFor(request: OneOffPurchaseRequestDTO, baselineId: string): string {
   return `scenario-${inputIdentity({
@@ -25,6 +29,9 @@ export class SimulateOneOffPurchaseUseCase {
   async execute(
     request: OneOffPurchaseRequestDTO
   ): Promise<Result<OneOffPurchaseResponseDTO, ApplicationError>> {
+    const existing = await findIdempotentSimulationRun(this.dependencies.runStore, request);
+    if (!existing.ok) return err(existing.error);
+    if (existing.value) return ok(existing.value.result);
     const resolved = await resolveCurrentBaseline(
       this.dependencies,
       request.expectedContextVersionId
@@ -75,7 +82,6 @@ export class SimulateOneOffPurchaseUseCase {
       simulated.value,
       this.dependencies.calendarMetadata
     );
-    await this.dependencies.runStore.save(response);
-    return ok(response);
+    return saveIdempotentSimulationRun(this.dependencies.runStore, request, response);
   }
 }
