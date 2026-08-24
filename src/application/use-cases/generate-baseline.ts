@@ -17,14 +17,14 @@ export class GenerateBaselineUseCase {
     );
     if (!resolved.ok) return err(resolved.error);
     const correlationId = correlationIdFor("generate-baseline", request.requestId);
-    return ok(
-      toBaselineResponse(
-        request.requestId,
-        correlationId,
-        resolved.value.context,
-        resolved.value.baseline,
-        this.dependencies.calendarMetadata
-      )
+    const response = toBaselineResponse(
+      request.requestId,
+      correlationId,
+      resolved.value.context,
+      resolved.value.baseline,
+      this.dependencies.calendarMetadata
     );
+    await this.dependencies.runStore.saveBaseline(response);
+    return ok(response);
   }
 }
