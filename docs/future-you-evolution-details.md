@@ -436,3 +436,33 @@
     - The simulator cannot become a credible personal product until its context and results are durable, attributable to a verified user and inaccessible to every other user without weakening deterministic financial truth.
   - Effect on Future You:
     - Sarah's frozen current path and four decisions now persist behind a tested ownership boundary and survive client/application adapter recreation with their context, rules, calendar, assumptions and output identities intact. Authentication and persistence are proven without introducing AI, benefit arithmetic, onboarding or new simulator behaviour.
+
+- **Future refinement — General onboarding allocation and active-cycle rules closed**
+  - What changed:
+    - Three previously under-specified inputs for general-user onboarding were made normative before Slice 4 implementation.
+  - Previous approach:
+    - The simulator had a separate normal contribution budget and slot caps without an explicit general-user derivation rule; the onboarding inventory did not collect an arbitrary-date remaining spending reserve or require a declaration of already-committed goal transfers.
+  - New approach:
+    - The normal monthly contribution budget is always derived as the sum of active goal-slot caps. Goal entry order remains the confirmed allocation order, completion remainders use the confirmed overflow destination, and absent/invalid overflow retains cash.
+    - Onboarding separately collects actual cleared cash, snapshot date, remaining active-cycle reserve, full future-cycle routine spending, desired buffer and payday rule. Current buffer is cash minus remaining reserve without clamping; the opening cycle begins at the snapshot and never replays earlier spending.
+    - Itemised current-cycle spending consumes the declared reserve and only its reconciled remainder is spread, preventing double-counting. Users must explicitly declare no locked transfers or provide goal, exact amount, timing/dependency and evidence; normal contributions and Sarah's fixture never imply a commitment.
+    - Locked transfers execute once at the active allocation event and remain separate from future uncommitted buffer-first allocation. Sarah still maps through the general rules as £600 derived caps, £1,850 remaining reserve, £900 current buffer and explicit £300/£200/£100 September transfers.
+  - Why it changed:
+    - A trustworthy arbitrary-date baseline cannot infer already-spent money, silently assign Sarah's funding-cycle position or maintain two contribution-budget sources that can drift.
+  - Effect on Future You:
+    - Slice 4 can construct deterministic user-owned contexts from manual data while preserving pressured baselines, exact reserve semantics, contribution rollover and every frozen Sarah result.
+
+- **Future refinement — Slice 4 manual onboarding and immutable correction implemented**
+  - What changed:
+    - Authenticated users without context can now build a deterministic current path from manual values, review it before persistence, confirm one immutable version and later create an immutable correction version.
+  - Previous approach:
+    - Production requests required an already-seeded context; a genuine no-context user was shown a placeholder and could not reach the simulator without fixture data.
+  - New approach:
+    - Monetary form values remain strings and are parsed into exact pence on the server. The opening forecast starts at the declared snapshot, spends only the remaining reserve before the next funding event, and derives contribution capacity from active goal caps.
+    - A request-local simulator preview returns a canonical hash and performs no writes. Hash-bound confirmation uses a narrow security-invoker transaction under the authenticated user's RLS session to insert the version, change the current pointer and record an immutable idempotency key atomically.
+    - Exact retries return the original version, conflicting request reuse is rejected, and corrections create predecessor-linked V2 rows. V1 and its stored scenario runs remain unchanged and retrievable without recalculation.
+    - Optional workplace association is stored separately as user-provided and unverified, with no numerical effect. Browser code continues to render server DTOs and has no simulator or persistence dependency.
+  - Why it changed:
+    - Future You needs a general path from account creation to trustworthy simulation without silently assigning Sarah, confusing cash with reserve, or allowing preview, persistence and browser arithmetic to disagree.
+  - Effect on Future You:
+    - A new user can now reach the existing £650 decision simulator from manually confirmed financial facts, survive a restart, correct those facts immutably and retain historical what-if evidence. Slice 5 remains explicitly deferred.
