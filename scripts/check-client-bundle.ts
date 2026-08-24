@@ -8,7 +8,10 @@ const forbidden = [
   "SLICE_1_RULES",
   "allocateGoalPool",
   "SarahV1ContextSource",
-  "SupabaseSimulationRunStore"
+  "SupabaseSimulationRunStore",
+  "ProductSurfaceApplication",
+  "SupabaseWorkplaceAssociationSource",
+  "OpenAIResponsesConversationModelProvider"
 ] as const;
 
 function files(directory: string): string[] {
