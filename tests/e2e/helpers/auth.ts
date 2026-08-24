@@ -15,16 +15,28 @@ export const LOCAL_USERS = {
   }
 } as const;
 
-export async function signIn(page: Page, user: keyof typeof LOCAL_USERS): Promise<void> {
-  await page.goto("/login");
+export async function signIn(
+  page: Page,
+  user: keyof typeof LOCAL_USERS,
+  destination?: "/ask" | "/home" | "/goals" | "/benefits"
+): Promise<void> {
+  const requested = destination ?? (user === "sarah" ? "/ask" : undefined);
+  await page.goto(requested ? `/login?next=${encodeURIComponent(requested)}` : "/login");
   await page.getByLabel("Email").fill(LOCAL_USERS[user].email);
   await page.getByLabel("Password").fill(LOCAL_USERS[user].password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(user === "sarah" ? /\/ask$/ : /\/onboarding$/);
+  if (user === "sarah") {
+    await expect(page).toHaveURL(new RegExp(`${requested ?? "/home"}$`));
+  } else {
+    await expect(page).toHaveURL(/\/(?:onboarding|home)$/);
+  }
 }
 
 export async function signOut(page: Page): Promise<void> {
   if (await page.getByRole("button", { name: "Sign out" }).count() === 0) {
+    if (await page.getByRole("button", { name: "Open conversation history" }).count() === 0) {
+      await page.goto("/ask");
+    }
     await page.getByRole("button", { name: "Open conversation history" }).click();
   }
   await page.getByRole("button", { name: "Sign out" }).click();
