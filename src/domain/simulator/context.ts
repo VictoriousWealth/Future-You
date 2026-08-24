@@ -70,7 +70,15 @@ export function createFinancialContext(
   const problems: string[] = [];
   const goalIds = new Set<string>();
 
-  validatePlanningMoney(input.currentAccount.clearedBalance, "currentAccount.clearedBalance", problems);
+  if (
+    input.currentAccount.clearedBalance.value !== null &&
+    input.currentAccount.clearedBalance.value.currency !== "GBP"
+  ) {
+    problems.push("currentAccount.clearedBalance must use GBP.");
+  }
+  if (input.currentAccount.clearedBalance.evidence.state === "HYPOTHETICAL") {
+    problems.push("currentAccount.clearedBalance cannot be hypothetical in confirmed context.");
+  }
   validatePlanningMoney(input.currentAccount.reservedSpending, "currentAccount.reservedSpending", problems);
   validatePlanningMoney(input.desiredSafetyBuffer, "desiredSafetyBuffer", problems);
   validatePlanningMoney(input.income.amount, "income.amount", problems);
@@ -95,6 +103,28 @@ export function createFinancialContext(
   for (const slot of input.goalAllocationPolicy.orderedSlots) {
     if (!goalIds.has(slot.goalId)) problems.push(`Allocation slot references unknown goal ${slot.goalId}.`);
     validateMoney(slot.normalCap, `slot.${slot.goalId}.normalCap`, problems);
+  }
+  const activeGoalIds = new Set(input.goals.filter((goal) => !goal.paused).map((goal) => goal.id));
+  const activeSlots = input.goalAllocationPolicy.orderedSlots.filter((slot) =>
+    activeGoalIds.has(slot.goalId)
+  );
+  const activeSlotGoalIds = new Set(activeSlots.map((slot) => slot.goalId));
+  if (activeSlotGoalIds.size !== activeSlots.length) {
+    problems.push("Each active goal may have only one normal-contribution slot.");
+  }
+  for (const goalId of activeGoalIds) {
+    if (!activeSlotGoalIds.has(goalId)) {
+      problems.push(`Active goal ${goalId} must have a normal-contribution slot.`);
+    }
+  }
+  const normalContributionBudget = input.goalAllocationPolicy.normalContributionBudget.value;
+  if (normalContributionBudget !== null) {
+    const derivedBudgetMinor = activeSlots.reduce((sum, slot) => sum + slot.normalCap.minor, 0n);
+    if (normalContributionBudget.minor !== derivedBudgetMinor) {
+      problems.push(
+        "Normal contribution budget must equal the sum of active per-goal contribution caps."
+      );
+    }
   }
   if (
     input.goalAllocationPolicy.overflowGoalId !== null &&
