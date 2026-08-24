@@ -44,12 +44,50 @@ export type Database = {
           },
         ]
       }
+      context_confirmation_keys: {
+        Row: {
+          context_version_id: string
+          created_at: string
+          operation: string
+          request_id: string
+          request_identity: string
+          user_id: string
+        }
+        Insert: {
+          context_version_id: string
+          created_at?: string
+          operation: string
+          request_id: string
+          request_identity: string
+          user_id: string
+        }
+        Update: {
+          context_version_id?: string
+          created_at?: string
+          operation?: string
+          request_id?: string
+          request_identity?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "context_confirmation_context_fk"
+            columns: ["user_id", "context_version_id"]
+            isOneToOne: false
+            referencedRelation: "financial_context_versions"
+            referencedColumns: ["user_id", "version_id"]
+          },
+        ]
+      }
       financial_context_versions: {
         Row: {
+          compatible_calendar_version: string
+          compatible_rules_version: string
           confirmation_reason: string
           context_id: string
           created_at: string
           domain_schema_version: string
+          onboarding_request_hash: string | null
           origin: string
           payload: Json
           payload_hash: string | null
@@ -60,10 +98,13 @@ export type Database = {
           version_id: string
         }
         Insert: {
+          compatible_calendar_version?: string
+          compatible_rules_version?: string
           confirmation_reason: string
           context_id: string
           created_at?: string
           domain_schema_version: string
+          onboarding_request_hash?: string | null
           origin: string
           payload: Json
           payload_hash?: string | null
@@ -74,10 +115,13 @@ export type Database = {
           version_id: string
         }
         Update: {
+          compatible_calendar_version?: string
+          compatible_rules_version?: string
           confirmation_reason?: string
           context_id?: string
           created_at?: string
           domain_schema_version?: string
+          onboarding_request_hash?: string | null
           origin?: string
           payload?: Json
           payload_hash?: string | null
@@ -351,6 +395,33 @@ export type Database = {
           },
         ]
       }
+      workplace_associations: {
+        Row: {
+          association_source: string
+          created_at: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+          workplace_name: string
+        }
+        Insert: {
+          association_source: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          verification_status: string
+          workplace_name: string
+        }
+        Update: {
+          association_source?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          workplace_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -359,6 +430,29 @@ export type Database = {
       canonical_jsonb_sha256: {
         Args: { value: Json }
         Returns: string
+      }
+      confirm_financial_context_version: {
+        Args: {
+          p_calendar_version: string
+          p_confirmation_reason: string
+          p_context_id: string
+          p_domain_schema_version: string
+          p_expected_current_version_id: string
+          p_onboarding_request_hash: string
+          p_operation: string
+          p_origin: string
+          p_payload: Json
+          p_persistence_schema_version: string
+          p_request_id: string
+          p_request_identity: string
+          p_rules_version: string
+          p_source: string
+          p_version_id: string
+        }
+        Returns: {
+          context_version_id: string
+          status: string
+        }[]
       }
     }
     Enums: {
