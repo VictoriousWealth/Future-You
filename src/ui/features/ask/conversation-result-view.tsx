@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { OneOffPurchaseResponseDTO } from "../../../application/dto/contracts";
 
 export function ConversationResultView({ result }: Readonly<{ result: OneOffPurchaseResponseDTO }>) {
@@ -42,6 +43,9 @@ export function ConversationResultView({ result }: Readonly<{ result: OneOffPurc
             </div>
           ))}
         </div>
+        <Link className="fy-goals-preview-link" href={`/goals?runId=${encodeURIComponent(result.calculation.runId)}`}>
+          Preview this path in Goals →
+        </Link>
       </section>
 
       <details className="fy-details">
