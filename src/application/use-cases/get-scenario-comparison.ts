@@ -17,7 +17,7 @@ export class GetScenarioComparisonUseCase {
     const simulation = await this.dependencies.runStore.get(input.runId);
     if (!simulation) {
       return err({
-        code: "SIMULATION_RUN_NOT_FOUND",
+        code: "RUN_NOT_FOUND",
         message: "The requested scenario comparison was not found.",
         missingFields: []
       });
