@@ -680,6 +680,11 @@ If Sarah confirms the payment timing, pattern and source, the selected scenario 
 
 ## 13. Existing mockup mapping
 
+> **Slice 6 supersession:** `shared-product-surfaces-slice-6.md` is authoritative for Home,
+> Goals and Benefits. In particular, the persisted Sarah contract contains no pension-match ceiling or
+> season-ticket-loan record. Those opportunities must not be inferred from the unverified workplace
+> name, shown on Home/Benefits or offered as an Ask branch.
+
 | Supplied screen | Classification | Mapping and required change |
 |---|---|---|
 | 1 — Welcome/login choice | **Keep almost unchanged** | Retain brand, proportions, buttons and palette. It is outside the returning-Sarah golden path. |
@@ -731,10 +736,9 @@ Detailed onboarding screens remain a broader product requirement, but they are n
 | 6 | Ask | Opens Compare options | £650, £500 and £400 cards with deterministic impacts | £650 trip selected | Alternative states become visible | Original result and baseline |
 | 7 | Ask | Selects £500, then £400 | Result cards update; £400 shows Noticeable trade-off and £500 buffer | Selected amount option | Viewed option | Other options and baseline |
 | 8 | Ask | Asks “What if I wait until October?” | Go in October option; £250 low and same goal dates explained | Go in October | New timing option | £650, £500, £400 and baseline |
-| 9 | Ask | Reads “Future You spotted” card | Season-ticket loan; eligibility unknown; not included | Go in October or reselected £650 | Opportunity becomes visible | All calculations |
-| 10 | Ask | Taps “See what changes” | Trip + season-ticket loan marked Needs information; eligibility and terms requested | Incomplete opportunity option | Draft exploration state | Current path and every evaluated trip option |
-| 11 | Ask | Closes missing-info state | Scenario selector remains available | Previous evaluated option | Sheet closes | Nothing financial changes |
-| 12 | Ask | Selects “Your current path” | Baseline goal dates and £900 buffer; no trip effects | Your current path | Viewed state returns to baseline | Hypothetical options remain saved and Sarah's real context has never changed |
+| 9 | Ask | Reviews assumptions | No employer opportunity is presented because none is authoritatively persisted | Go in October or reselected £650 | Detail visibility only | All calculations |
+| 10 | Ask | Opens the scenario selector | Current path and every evaluated trip option remain available | Previous evaluated option | Selector opens | Nothing financial changes |
+| 11 | Ask | Selects “Your current path” | Baseline goal dates and £900 buffer; no trip effects | Your current path | Viewed state returns to baseline | Hypothetical options remain saved and Sarah's real context has never changed |
 
 ## 16. Product checks
 
