@@ -3,31 +3,37 @@ import { correlationIdFor } from "../../../../../../application/use-cases/resolv
 import {
   apiErrorResponse,
   applicationErrorResponse,
-  internalSimulatorErrorResponse,
   jsonResponse
 } from "../../../../../../server/http/api-response";
-import { slice2Application } from "../../../../../../server/slice-2-application";
+import { withAuthenticatedApplication } from "../../../../../../server/http/authenticated-route";
+import type { AuthenticatedApplicationResolver } from "../../../../../../server/authenticated-application";
 
 export const runtime = "nodejs";
 
-export async function GET(
+export async function handleGET(
   _request: Request,
+  context: { params: Promise<{ contextVersionId: string }> },
+  resolver?: AuthenticatedApplicationResolver
+): Promise<Response> {
+  const invalidCorrelation = correlationIdFor("get-current-path", "invalid-request");
+  return withAuthenticatedApplication(invalidCorrelation, async (application) => {
+    const { contextVersionId } = await context.params;
+    const parsed = parseBaselineRequest({
+      requestId: "get_current_path",
+      expectedContextVersionId: contextVersionId
+    });
+    if (!parsed.ok) {
+      return apiErrorResponse(400, parsed.code, "Invalid context version.", invalidCorrelation, parsed.issues);
+    }
+    const correlationId = correlationIdFor("get-current-path", parsed.value.requestId);
+    const result = await application.getCurrentPath.execute(parsed.value);
+    return result.ok ? jsonResponse(result.value) : applicationErrorResponse(result.error, correlationId);
+  }, resolver);
+}
+
+export async function GET(
+  request: Request,
   context: { params: Promise<{ contextVersionId: string }> }
 ): Promise<Response> {
-  const { contextVersionId } = await context.params;
-  const parsed = parseBaselineRequest({
-    requestId: "get_current_path",
-    expectedContextVersionId: contextVersionId
-  });
-  const invalidCorrelation = correlationIdFor("get-current-path", "invalid-request");
-  if (!parsed.ok) {
-    return apiErrorResponse(400, parsed.code, "Invalid context version.", invalidCorrelation, parsed.issues);
-  }
-  const correlationId = correlationIdFor("get-current-path", parsed.value.requestId);
-  try {
-    const result = await slice2Application.getCurrentPath.execute(parsed.value);
-    return result.ok ? jsonResponse(result.value) : applicationErrorResponse(result.error, correlationId);
-  } catch {
-    return internalSimulatorErrorResponse(correlationId);
-  }
+  return handleGET(request, context);
 }
