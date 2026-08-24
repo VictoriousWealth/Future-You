@@ -57,6 +57,34 @@ insert into auth.identities (
   'email', statement_timestamp(), statement_timestamp(), statement_timestamp()
 );
 
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change_token_current,
+  email_change, reauthentication_token, raw_app_meta_data, raw_user_meta_data,
+  is_super_admin, created_at, updated_at, is_sso_user, is_anonymous
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '33333333-3333-4333-8333-333333333333',
+  'authenticated',
+  'authenticated',
+  'onboarding@example.test',
+  extensions.crypt('Onboarding-Local-Only-2026!', extensions.gen_salt('bf')),
+  statement_timestamp(), '', '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"display_name":"Manual Onboarding User"}'::jsonb,
+  false, statement_timestamp(), statement_timestamp(), false, false
+);
+
+insert into auth.identities (
+  id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+) values (
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'onboarding@example.test',
+  '33333333-3333-4333-8333-333333333333',
+  '{"sub":"33333333-3333-4333-8333-333333333333","email":"onboarding@example.test","email_verified":true,"phone_verified":false}'::jsonb,
+  'email', statement_timestamp(), statement_timestamp(), statement_timestamp()
+);
+
 insert into public.financial_context_versions (
   user_id, version_id, context_id, predecessor_version_id, domain_schema_version,
   persistence_schema_version, payload, source, origin, confirmation_reason
