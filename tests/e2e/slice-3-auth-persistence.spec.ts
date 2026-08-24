@@ -99,7 +99,11 @@ test("redirects private pages and returns typed 401 for every unauthenticated fi
     { method: "post", url: "/api/v1/conversations" },
     { method: "get", url: "/api/v1/conversations/conversation-0000000000000000" },
     { method: "post", url: "/api/v1/conversations/conversation-0000000000000000/messages" },
-    { method: "post", url: "/api/v1/conversations/conversation-0000000000000000/selection" }
+    { method: "post", url: "/api/v1/conversations/conversation-0000000000000000/selection" },
+    { method: "get", url: "/api/v1/home" },
+    { method: "get", url: "/api/v1/goals" },
+    { method: "get", url: "/api/v1/goals/preview?runId=run-0000000000000000" },
+    { method: "get", url: "/api/v1/benefits" }
   ];
   for (const operation of operations) {
     const response = operation.method === "get"
@@ -152,7 +156,8 @@ test("continues Sarah's session, persists exact retries and rejects conflicts an
   expect(acceptedAfterRejection.calculation.runId).toMatch(/^run-[a-f0-9]{16}$/);
 
   await page.goto("/");
-  await expect(page).toHaveURL(/\/ask$/);
+  await expect(page).toHaveURL(/\/home$/);
+  await page.goto("/ask");
   await page.getByRole("button", { name: "Open conversation history" }).click();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
 });
