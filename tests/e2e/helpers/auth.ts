@@ -24,6 +24,9 @@ export async function signIn(page: Page, user: keyof typeof LOCAL_USERS): Promis
 }
 
 export async function signOut(page: Page): Promise<void> {
+  if (await page.getByRole("button", { name: "Sign out" }).count() === 0) {
+    await page.getByRole("button", { name: "Open conversation history" }).click();
+  }
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login/);
 }
