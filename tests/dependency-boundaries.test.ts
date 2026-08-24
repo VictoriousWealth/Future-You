@@ -92,6 +92,31 @@ describe("automated dependency-direction enforcement", () => {
     expect(combined).not.toMatch(/\.minorUnits\b|\.minimumBufferRatio\b|\.delayMonths\b/);
   });
 
+  it("Home, Goals and Benefits remain renderer-only and provider-free", () => {
+    const surfaceRoot = join(SOURCE_ROOT, "ui", "features", "product-surfaces");
+    const surfaceSource = sourceFiles(surfaceRoot)
+      .map((file) => readFileSync(file, "utf8"))
+      .join("\n");
+    expect(surfaceSource).not.toMatch(
+      /\bBigInt\b|\bbigint\b|\.minorUnits\b|\.basisPoints\b|\.delayMonths\b|Date\.parse|parseInt|parseFloat/
+    );
+    expect(surfaceSource).not.toMatch(
+      /simulateOneOffPurchase|generateBaseline|ConversationModelProvider|OpenAI|fake-conversation/
+    );
+
+    const composition = readFileSync(
+      join(SOURCE_ROOT, "server", "authenticated-product-surface-application.ts"),
+      "utf8"
+    );
+    expect(composition).not.toMatch(/Conversation|OpenAI|resolveConversationProvider/);
+
+    const benefitsRoute = readFileSync(
+      join(SOURCE_ROOT, "app", "api", "v1", "benefits", "route.ts"),
+      "utf8"
+    );
+    expect(benefitsRoute).not.toMatch(/simulator|conversation|provider|openai/i);
+  });
+
   it("Route Handlers remain thin and do not import domain or fixtures directly", () => {
     const routeFiles = sourceFiles(join(SOURCE_ROOT, "app", "api"));
     const violations = routeFiles.flatMap((file) =>
@@ -118,7 +143,11 @@ describe("automated dependency-direction enforcement", () => {
     const routeViolations = routeFiles
       .filter((file) => {
         const source = readFileSync(file, "utf8");
-        return !source.includes("authenticated-route") || source.includes("slice-2-application");
+        return (
+          (!source.includes("authenticated-route") &&
+            !source.includes("authenticated-product-surface-route")) ||
+          source.includes("slice-2-application")
+        );
       })
       .map((file) => relative(SOURCE_ROOT, file));
     expect(routeViolations).toEqual([]);
