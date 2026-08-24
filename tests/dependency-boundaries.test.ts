@@ -112,4 +112,54 @@ describe("automated dependency-direction enforcement", () => {
       .map((file) => relative(SOURCE_ROOT, file));
     expect(rawJsonViolations).toEqual([]);
   });
+
+  it("production request paths use authenticated Supabase adapters and never the Slice 2 stores", () => {
+    const routeFiles = sourceFiles(join(SOURCE_ROOT, "app", "api"));
+    const routeViolations = routeFiles
+      .filter((file) => {
+        const source = readFileSync(file, "utf8");
+        return !source.includes("authenticated-route") || source.includes("slice-2-application");
+      })
+      .map((file) => relative(SOURCE_ROOT, file));
+    expect(routeViolations).toEqual([]);
+
+    const composition = readFileSync(
+      join(SOURCE_ROOT, "server", "authenticated-application.ts"),
+      "utf8"
+    );
+    expect(composition).toContain("SupabaseFinancialContextSource");
+    expect(composition).toContain("SupabaseSimulationRunStore");
+    expect(composition).not.toMatch(/SarahV1ContextSource|InMemorySimulationRunStore/);
+  });
+
+  it("ordinary request code has no service-role credential or RLS-bypass path", () => {
+    const productionFiles = [
+      ...sourceFiles(join(SOURCE_ROOT, "app")),
+      ...sourceFiles(join(SOURCE_ROOT, "server")),
+      ...sourceFiles(join(SOURCE_ROOT, "infrastructure"))
+    ];
+    const violations = productionFiles
+      .filter((file) =>
+        /SUPABASE_SERVICE_ROLE_KEY|service[_-]?role|bypassrls/i.test(readFileSync(file, "utf8"))
+      )
+      .map((file) => relative(SOURCE_ROOT, file));
+    expect(violations).toEqual([]);
+  });
+
+  it("server identity is verified from claims and request clients are not global singletons", () => {
+    const principalProvider = readFileSync(
+      join(SOURCE_ROOT, "infrastructure", "auth", "supabase-principal-provider.ts"),
+      "utf8"
+    );
+    expect(principalProvider).toContain("auth.getClaims()");
+    expect(principalProvider).not.toMatch(/auth\.getSession\(|browser.*user.?id/i);
+
+    const authenticatedComposition = readFileSync(
+      join(SOURCE_ROOT, "server", "authenticated-application.ts"),
+      "utf8"
+    );
+    expect(authenticatedComposition).toMatch(
+      /resolveAuthenticatedApplication[^=]*= async \(\) =>[\s\S]*createRequestSupabaseClient\(\)/
+    );
+  });
 });
