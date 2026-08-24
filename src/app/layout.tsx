@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Future You — Boundary Proof",
-  description: "Deterministic financial simulation rendered from versioned JSON DTOs."
+  title: "Future You",
+  description: "See how today’s money decisions could change your future."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
