@@ -239,6 +239,21 @@ describe("explicit domain-to-DTO mapping", () => {
       }
     });
     expect(
+      applicationErrorToDTO(
+        {
+          code: "FINANCIAL_CONTEXT_NOT_FOUND",
+          message: "No current financial context exists.",
+          missingFields: []
+        },
+        "corr-onboarding-required"
+      )
+    ).toMatchObject({
+      error: {
+        code: "FINANCIAL_CONTEXT_REQUIRED",
+        message: "Complete financial onboarding before using this operation."
+      }
+    });
+    expect(
       parseOneOffPurchaseRequest({
         ...SARAH_V1_BROWSER_PROOF_COMMAND,
         change: { ...SARAH_V1_BROWSER_PROOF_COMMAND.change, type: "recurring_expense" }
