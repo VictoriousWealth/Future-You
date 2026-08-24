@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   createBrowserSupabaseClient,
   type BrowserSupabaseConfiguration
@@ -14,6 +14,9 @@ export function LoginForm({ configuration }: Readonly<{
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => setReady(true), []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,7 +52,7 @@ export function LoginForm({ configuration }: Readonly<{
       <label htmlFor="password">Password</label>
       <input id="password" name="password" type="password" autoComplete="current-password" required />
       {message ? <p role="alert">{message}</p> : null}
-      <button type="submit" disabled={pending}>{pending ? "Signing in…" : "Sign in"}</button>
+      <button type="submit" disabled={pending || !ready}>{pending ? "Signing in…" : "Sign in"}</button>
     </form>
   );
 }
