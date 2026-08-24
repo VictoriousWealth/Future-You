@@ -94,7 +94,12 @@ test("redirects private pages and returns typed 401 for every unauthenticated fi
     { method: "post", url: "/api/v1/scenarios/timing-alternative" },
     { method: "post", url: "/api/v1/scenarios/options" },
     { method: "get", url: "/api/v1/simulations/run-0000000000000000" },
-    { method: "get", url: "/api/v1/comparisons?runId=run-0000000000000000" }
+    { method: "get", url: "/api/v1/comparisons?runId=run-0000000000000000" },
+    { method: "get", url: "/api/v1/conversations" },
+    { method: "post", url: "/api/v1/conversations" },
+    { method: "get", url: "/api/v1/conversations/conversation-0000000000000000" },
+    { method: "post", url: "/api/v1/conversations/conversation-0000000000000000/messages" },
+    { method: "post", url: "/api/v1/conversations/conversation-0000000000000000/selection" }
   ];
   for (const operation of operations) {
     const response = operation.method === "get"
@@ -148,6 +153,7 @@ test("continues Sarah's session, persists exact retries and rejects conflicts an
 
   await page.goto("/");
   await expect(page).toHaveURL(/\/ask$/);
+  await page.getByRole("button", { name: "Open conversation history" }).click();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
 });
 
