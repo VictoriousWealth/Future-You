@@ -103,6 +103,7 @@ Multiple cash accounts, variable-income forecasting, investments and multi-curre
 | Currency | Required | Yes: GBP default | No | No | MVP is UK/GBP only |
 | Current-account cleared balance | Required | No | Yes | No | An accepted estimate produces lower confidence |
 | Balance as-of date | Required | Yes: entry date | No | No | User may correct it during review |
+| Remaining active-cycle reserve | Required | No | Yes | No | User supplies cash still reserved from the snapshot until the next funding event; never inferred from a full future cycle |
 | Pending confirmed cash events | Optional | No | Yes | Yes | Included only when entered |
 | Net income amount | Required | No | Yes | No | Must represent spendable cash after deductions |
 | Pay frequency | Required confirmation | Yes: monthly in MVP | No | No | Other frequencies are POST-MVP |
@@ -123,6 +124,7 @@ Multiple cash accounts, variable-income forecasting, investments and multi-curre
 | Goal target deadline | Optional | No | No | Yes | MVP calculates completion but does not judge “on track” |
 | Goal allocation order | Required | From confirmed onboarding order | No | No | Shown for confirmation; no recommendation logic |
 | Overflow goal | Optional | No | No | Yes | If omitted, unused contribution remains unallocated cash |
+| Current-cycle committed goal transfers | Required none/list declaration | No | Yes | No | Explicitly confirm none or provide goal, exact amount and date/funding-event dependency |
 | Upcoming confirmed commitments | Optional, with required none/yes confirmation | No | Yes | Yes after “none known” | Included only when entered or confirmed |
 | Employer | Optional | No | No | Yes | Collected after account creation; skipping hides employer opportunities |
 | Active-benefit status | Optional | No | No | Yes | Informational unless its cash effect is already represented elsewhere |
@@ -141,6 +143,15 @@ A usable MVP baseline requires:
 5. Desired safety buffer
 6. At least one goal with balance, target and contribution
 7. Confirmed allocation order
+8. A usable remaining active-cycle reserve
+9. An explicit declaration of current-cycle committed goal transfers
+
+The monthly goal-contribution budget is derived, not separately entered:
+
+> Monthly contribution budget = sum of the normal contribution caps in the active goal-allocation policy
+
+Each goal's normal contribution is its allocation-slot cap. The stored/constructed budget MUST
+reconcile exactly to that sum so there is only one source of truth.
 
 If one is materially unknown, Future You requests it before producing a numerical affordability class.
 
@@ -333,6 +344,9 @@ The simulator supports an explicit allocation order. In MVP:
 - Future You does not recommend the order.
 - The Goals UI does not support later drag-and-drop reprioritisation.
 - Editing allocation priority after onboarding is POST-MVP.
+- The monthly contribution budget is the sum of the active ordered slots' normal contribution caps.
+- Completing a goal does not reduce that budget; its same-event remainder follows the confirmed
+  overflow destination, or remains cash when there is no eligible overflow.
 
 Sarah v1 retains her frozen allocation order and rollover rule.
 
@@ -404,6 +418,7 @@ The shortest trustworthy flow collects:
 1. **Cash snapshot**
    - Current-account balance
    - Balance date
+   - Remaining active-cycle reserve from that snapshot until the next funding event
 2. **Income and timing**
    - Net income
    - Pay frequency
@@ -417,12 +432,27 @@ The shortest trustworthy flow collects:
 5. **Goals**
    - At least one goal, balance, target and contribution
    - Goal entry order and optional overflow destination
+   - Explicit declaration of any already-committed active-cycle goal transfers, including none
 6. **Review**
    - Current context
    - Estimates and assumptions
    - Allocation order
 
 The user may correct any value before the baseline is accepted.
+
+The remaining active-cycle reserve and normal routine spending are independent inputs. The former is
+the cash still reserved between the snapshot and next funding event; the latter funds later complete
+cycles. The server derives the current safety buffer as cleared cash minus remaining reserve without
+clamping. It MUST NOT prorate the reserve from monthly spending or replay spending before the snapshot.
+
+Any itemised current-cycle spending or required payment consumes the declared remaining reserve. The
+server debits itemised events plus only the unitemised reserve remainder, and the two MUST reconcile to
+the declared reserve. This prevents the same bill being counted twice.
+
+Already-committed goal transfers are locked ledger events, separate from future uncommitted goal
+allocation. The user must explicitly declare none or provide deterministic transfer details. An empty
+answer is not a declaration, normal contributions do not imply commitments, and a locked transfer must
+not trigger an additional automatic allocation at the same funding event.
 
 ### 10.3 Employer/workplace association
 
