@@ -16,7 +16,7 @@ export class GetCurrentFinancialContextUseCase {
       : null;
     if (!context) {
       return err({
-        code: "CONTEXT_NOT_FOUND",
+        code: "FINANCIAL_CONTEXT_NOT_FOUND",
         message: "No current financial context is available.",
         missingFields: ["currentFinancialContext"]
       });
