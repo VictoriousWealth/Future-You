@@ -6,7 +6,12 @@ import {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const session = await refreshSupabaseSession(request);
-  if (request.nextUrl.pathname.startsWith("/ask") && !session.authenticated) {
+  if (
+    (request.nextUrl.pathname.startsWith("/ask") ||
+      request.nextUrl.pathname.startsWith("/onboarding") ||
+      request.nextUrl.pathname.startsWith("/settings")) &&
+    !session.authenticated
+  ) {
     const login = new URL("/login", request.url);
     login.searchParams.set("next", request.nextUrl.pathname);
     return copyRefreshedCookies(session.response, NextResponse.redirect(login));
@@ -21,5 +26,5 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ["/ask/:path*", "/login", "/api/v1/:path*"]
+  matcher: ["/ask/:path*", "/onboarding/:path*", "/settings/:path*", "/login", "/api/v1/:path*"]
 };
