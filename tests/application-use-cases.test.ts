@@ -242,6 +242,9 @@ describe("Slice 2 application use cases", () => {
         getContextVersion: async () => null
       }
     }).execute({ requestId: "req_no_context", expectedContextVersionId: "missing" });
-    expect(absent).toMatchObject({ ok: false, error: { code: "CONTEXT_NOT_FOUND" } });
+    expect(absent).toMatchObject({
+      ok: false,
+      error: { code: "FINANCIAL_CONTEXT_NOT_FOUND" }
+    });
   });
 });
