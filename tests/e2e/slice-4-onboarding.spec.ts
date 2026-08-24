@@ -209,16 +209,20 @@ test("completes manual onboarding, runs £650, retries safely, and creates immut
       confirmedPayload = request.postDataJSON() as Record<string, unknown>;
     }
   });
-  const optionsAfterConfirmation = page.waitForResponse((response) =>
-    response.url().includes("/api/v1/scenarios/options")
-  );
   await page.getByRole("button", { name: "Confirm this financial context" }).click();
   await expect(page).toHaveURL(/\/ask$/);
-  const optionsResponse = await optionsAfterConfirmation;
-  const options = await optionsResponse.json();
+  const turnAfterConfirmation = page.waitForResponse((response) =>
+    response.url().includes("/api/v1/conversations/") &&
+    response.url().endsWith("/messages") &&
+    response.request().method() === "POST"
+  );
+  await page.getByLabel("Ask Future You").fill("Can I afford a £650 trip next month?");
+  await page.getByRole("button", { name: "Send message" }).click();
+  const turn = await (await turnAfterConfirmation).json();
   await expect(page.getByTestId("buffer-after")).toHaveText("£250");
-  expect(options.contextVersion).toMatch(/^manual-/);
-  const oldRunId = options.options[1].runId as string;
+  const selected = turn.conversation.selectedResult;
+  expect(selected.context.version).toMatch(/^manual-/);
+  const oldRunId = selected.calculation.runId as string;
 
   await page.reload();
   await expect(page).toHaveURL(/\/ask$/);
@@ -262,18 +266,33 @@ test("completes manual onboarding, runs £650, retries safely, and creates immut
   await page.getByRole("button", { name: "Confirm this financial context" }).click();
   expect((await revisionResponse).status()).toBe(201);
   await expect(page).toHaveURL(/\/ask$/);
+  await expect(page.getByTestId("stale-context-state")).toBeVisible();
+  await expect(page.getByTestId("stale-context-state")).toContainText(
+    "Start a new conversation"
+  );
+  const staleTurnResponse = page.waitForResponse((response) =>
+    response.url().includes("/api/v1/conversations/") &&
+    response.url().endsWith("/messages") &&
+    response.request().method() === "POST"
+  );
+  await page.getByLabel("Ask Future You").fill("What about £500?");
+  await page.getByRole("button", { name: "Send message" }).click();
+  expect((await staleTurnResponse).status()).toBe(409);
+  await expect(page.getByTestId("provider-error-state")).toContainText(
+    "Start a new conversation"
+  );
 
   const historical = await browserJson(page, `/api/v1/simulations/${oldRunId}`);
   expect(historical).toMatchObject({
     status: 200,
     body: {
-      context: { version: options.contextVersion },
+      context: { version: selected.context.version },
       presentation: { immediateImpact: { safetyBufferAfter: "£250" } }
     }
   });
   const current = await browserJson(page, "/api/v1/financial-context/current");
   expect((current.body as CurrentContextResponseShape).context.version).not.toBe(
-    options.contextVersion
+    selected.context.version
   );
   await signOut(page);
 });
