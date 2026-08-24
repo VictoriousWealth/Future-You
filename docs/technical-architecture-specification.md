@@ -10,6 +10,12 @@
 
 This document defines the smallest credible technical architecture for the approved Future You MVP. It specifies how to build the product already defined; it does not redefine financial behaviour, Sarah v1, conversation behaviour, UI behaviour or MVP scope.
 
+**Slice 5 scoped amendment:** `conversational-orchestration-slice-5.md` is normative where it narrows the
+provider to strict interpretation and symbolic explanation planning, removes Slice 5 benefit branches,
+limits clarification to supported inputs, or defines the current visual-delivery sequence. The original
+slice labels in section 27 are historical sequencing guidance; approved Slice 1–5 contracts now control
+implementation numbering.
+
 The governing product contracts are:
 
 1. `simulation-rules-specification.md` for financial meaning and deterministic calculation rules
@@ -881,7 +887,8 @@ The model is used for:
 - identifying genuinely missing material parameters;
 - understanding follow-ups such as “What about £500?” against structured thread memory;
 - choosing whether the user is asking to select, compare, explain or explore an opportunity;
-- producing concise connective prose from an approved fact package.
+- returning a symbolic plan that selects only approved templates, trusted fact keys, caveat keys,
+  follow-up action keys and tone identifiers.
 
 The model is never used for:
 
@@ -903,7 +910,11 @@ Use strict JSON Schema/structured outputs. Prompts are versioned files in the re
 - no Sarah-specific arithmetic or hard-coded result values;
 - examples used only to teach intent shape, not to calculate.
 
-The explanation prompt receives stable fact IDs, formatted server values and causal ledger references. It must return structured blocks and fact references. The renderer inserts or validates numbers. Prompt/version metadata is retained with the assistant message, but raw chain-of-thought is neither requested nor stored.
+The explanation prompt receives stable symbolic fact IDs and availability metadata, not formatted account,
+income, goal-balance or result values. It returns only a strict explanation plan. The server validates every
+template/fact reference and renders all final sentences, amounts, dates, classifications and labels from
+the immutable stored result DTO. Prompt/version metadata is retained with the assistant message, but raw
+chain-of-thought and raw provider output are neither requested nor stored.
 
 ### 16.5 Retry and failure behaviour
 
@@ -921,11 +932,15 @@ The explanation prompt receives stable fact IDs, formatted server values and cau
 Send only the information required for the current action:
 
 - bounded recent message text and structured decision-thread memory;
-- planning amounts/dates necessary to interpret or explain the current decision;
-- fact IDs and result values needed for explanation;
+- exact source quotes and semantic timing data necessary to interpret the current decision;
+- symbolic available-fact IDs needed to plan an explanation, without unrelated financial values;
 - a hashed/pseudonymous safety identifier, not Sarah's email or database identity.
 
 Do not send account credentials, authentication tokens, raw database records, unrelated conversations or full employer/profile data. Use provider-side storage disabled where supported (for OpenAI, request `store: false`), while recognising that this setting alone is not a claim of zero retention. Provider contractual/retention settings must be reviewed before real financial data is used.
+
+Final financial prose is server-owned. Clarification, scope and provider-failure messages are also selected
+from server templates. Unknown or unavailable provider-selected facts are rejected; explanation failure
+leaves the stored deterministic result visible and uses a deterministic fallback.
 
 ## 17. Simulator implementation strategy
 
@@ -1394,6 +1409,12 @@ The architecture keeps clean seams for later work, but it does not build unused 
 At no step does viewing, explaining or comparing a scenario create a real trip, alter Sarah's cash balance, activate a benefit or rewrite a goal plan.
 
 ## 27. Recommended implementation sequence after architecture approval
+
+The numbered sequence below records the original architecture proposal. It no longer names the active
+post-Slice-4 order: alternatives/navigation shipped earlier, and the approved replacement Slice 5 is
+constrained conversational orchestration plus the real Ask visual experience. Slice 6 applies the visual
+system to Home, Goals and Benefits; Slice 7 refines responsiveness, accessibility, interaction and final
+cross-screen quality rather than introducing the design for the first time.
 
 Implementation should proceed in vertical slices, with the deterministic golden path visible early.
 
