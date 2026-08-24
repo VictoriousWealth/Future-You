@@ -34,22 +34,22 @@ export async function resolveCurrentBaseline(
   const currentVersionId = await dependencies.contextSource.getCurrentContextVersionId();
   if (!currentVersionId) {
     return err({
-      code: "CONTEXT_NOT_FOUND",
+      code: "FINANCIAL_CONTEXT_NOT_FOUND",
       message: "No current financial context is available.",
       missingFields: ["currentFinancialContext"]
     });
   }
+  if (currentVersionId !== expectedContextVersionId) {
+    return err({
+      code: "CONTEXT_VERSION_MISMATCH",
+      message: "The requested context version is no longer current.",
+      missingFields: []
+    });
+  }
   const context = await dependencies.contextSource.getContextVersion(expectedContextVersionId);
   if (!context) {
-    if (currentVersionId !== expectedContextVersionId) {
-      return err({
-        code: "CONTEXT_VERSION_MISMATCH",
-        message: "The requested context version is no longer current.",
-        missingFields: []
-      });
-    }
     return err({
-      code: "CONTEXT_NOT_FOUND",
+      code: "CONTEXT_VERSION_NOT_FOUND",
       message: "The requested financial context version was not found.",
       missingFields: ["contextVersionId"]
     });
