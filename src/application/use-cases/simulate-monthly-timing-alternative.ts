@@ -14,7 +14,11 @@ import { toOneOffPurchaseResponse } from "../mappers/domain-to-dto";
 import { oneOffPurchaseRequestToDomain } from "../mappers/request-to-domain";
 import type { SimulatorApplicationDependencies } from "./dependencies";
 import { correlationIdFor, resolveCurrentBaseline } from "./resolve-current-baseline";
-import { scenarioIdFor } from "./simulate-one-off-purchase";
+import { scenarioIdFor, SimulateOneOffPurchaseUseCase } from "./simulate-one-off-purchase";
+import {
+  findIdempotentSimulationRun,
+  saveIdempotentSimulationRun
+} from "./idempotent-simulation-run";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -39,6 +43,30 @@ export class SimulateMonthlyTimingAlternativeUseCase {
   async execute(
     request: TimingAlternativeRequestDTO
   ): Promise<Result<TimingAlternativeResponseDTO, ApplicationError>> {
+    const alternativeRequest = timingRequest(request);
+    const existing = await findIdempotentSimulationRun(
+      this.dependencies.runStore,
+      alternativeRequest
+    );
+    if (!existing.ok) return err(existing.error);
+    if (existing.value) {
+      const option = existing.value.result;
+      return ok({
+        apiVersion: API_VERSION,
+        schemaVersion: TIMING_ALTERNATIVE_RESPONSE_SCHEMA,
+        kind: "timing_alternative",
+        requestId: request.requestId,
+        correlationId: correlationIdFor("simulate-monthly-timing-alternative", request.requestId),
+        sourceScenarioId: option.scenario.derivedFromScenarioId ?? option.scenario.id,
+        baselineId: option.scenario.baselineId,
+        contextVersion: option.context.version,
+        option
+      });
+    }
+    const persistedSource = await new SimulateOneOffPurchaseUseCase(this.dependencies).execute(
+      request.source
+    );
+    if (!persistedSource.ok) return err(persistedSource.error);
     const resolved = await resolveCurrentBaseline(
       this.dependencies,
       request.source.expectedContextVersionId
@@ -88,7 +116,6 @@ export class SimulateMonthlyTimingAlternativeUseCase {
       });
     }
 
-    const alternativeRequest = timingRequest(request);
     const option = toOneOffPurchaseResponse(
       alternativeRequest,
       correlationIdFor("simulate-monthly-timing-alternative", request.requestId),
@@ -98,7 +125,12 @@ export class SimulateMonthlyTimingAlternativeUseCase {
       this.dependencies.calendarMetadata,
       timingLabel(request.targetPaymentPeriod)
     );
-    await this.dependencies.runStore.save(option);
+    const persisted = await saveIdempotentSimulationRun(
+      this.dependencies.runStore,
+      alternativeRequest,
+      option
+    );
+    if (!persisted.ok) return err(persisted.error);
     return ok({
       apiVersion: API_VERSION,
       schemaVersion: TIMING_ALTERNATIVE_RESPONSE_SCHEMA,
@@ -108,7 +140,7 @@ export class SimulateMonthlyTimingAlternativeUseCase {
       sourceScenarioId: sourceId,
       baselineId: resolved.value.baseline.baselineId,
       contextVersion: resolved.value.context.version,
-      option
+      option: persisted.value
     });
   }
 }
