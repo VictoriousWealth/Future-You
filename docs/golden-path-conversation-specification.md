@@ -7,6 +7,10 @@
 **Scope:** User experience and conversation behaviour  
 **Out of scope:** Frontend, backend, database, LLM and deployment architecture
 
+**Slice 5 scoped amendment:** The approved `conversational-orchestration-slice-5.md` contract supersedes
+this document only where it narrows clarification, benefit exploration, intra-month/funding treatments,
+or explanation generation. All other conversation rules remain active.
+
 ## 0. Purpose
 
 This document defines how Sarah experiences the deterministic simulator through conversation. It does not change the simulation contract or Sarah v1.
@@ -143,10 +147,17 @@ Future You MUST ask a clarification when:
 
 - The amount or currency cannot be determined.
 - The decision date cannot be placed in a funding cycle.
-- The user explicitly mentions instalments, credit, savings or split funding but the terms are incomplete.
+- A supported one-off purchase is missing its amount or purchase month, or a supported follow-up has a
+  missing/ambiguous scenario reference.
 - Two plausible interpretations cross a hard-consequence boundary or produce different affordability classes and neither is safely conservative.
 - The user asks to change a numeric policy without supplying the new value, such as lowering the £900 safety target without saying to what amount.
 - A benefit scenario lacks a material eligibility or repayment term required for calculation.
+
+For Slice 5, instalments, split/mixed payments, credit or overdraft funding, goal-savings funding,
+spending substitution and before/after-payday branching within one month are unsupported. They produce a
+server-rendered scope response, no clarification intended to construct that scenario, no simulator call
+and no complete or incomplete branch. The older clarification behavior remains future product context,
+not Slice 5 behavior.
 
 ### 3.3 SHOULD ask
 
@@ -198,7 +209,8 @@ The primary answer states:
 
 > I modelled this as one £650 payment from your current account before your September payday, on top of your usual spending.
 
-Sarah can edit that assumption. If she says the payment occurs after payday or in instalments, Future You creates a new branch.
+Sarah may change the supported purchase month or amount. In Slice 5, an after-payday treatment within the
+same month or an instalment request returns the supported-scope response and creates no branch.
 
 ## 4. Baseline calculation moment
 
@@ -411,6 +423,10 @@ The card MUST NOT say Sarah has the loan or claim a saving amount.
 
 ### 8.2 Branch progression
 
+**Slice 5 amendment:** the `S1-O1` progression below is deferred. Ask may acknowledge that the
+informational opportunity exists, but “use the season-ticket loan” is unsupported and creates no branch,
+clarification checklist or numerical result in Slice 5.
+
 The visible path is:
 
 1. **B0 — Current path:** no loan assumed.
@@ -505,7 +521,7 @@ If Sarah confirms those assumptions, confidence becomes High for the fixture. Co
 | “What if I wait until October?” | Create sibling S1-TOCT from B0 | Usually none | Move the payment into October and disclose that travel/payment timing interpretation |
 | “Why does my emergency fund move back two months?” | Reuse and explain S1 | None | Read S1 ledger; do not create a branch |
 | “What if I don't care about keeping the full £900 buffer?” | Create child policy branch from selected scenario after clarification | **Required:** new desired buffer | Change the buffer target in the child only and rerun allocation/classification |
-| “What if I use the season-ticket loan?” | Create draft child opportunity branch S1-O1 | **Required:** eligibility and quantified terms | Do not show a numeric result until material terms are supplied |
+| “What if I use the season-ticket loan?” | No branch in Slice 5 | None | Return the approved scope response; defer benefit exploration |
 
 ### 10.1 £500 follow-up
 
