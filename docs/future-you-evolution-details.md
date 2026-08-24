@@ -466,3 +466,35 @@
     - Future You needs a general path from account creation to trustworthy simulation without silently assigning Sarah, confusing cash with reserve, or allowing preview, persistence and browser arithmetic to disagree.
   - Effect on Future You:
     - A new user can now reach the existing £650 decision simulator from manually confirmed financial facts, survive a restart, correct those facts immutably and retain historical what-if evidence. Slice 5 remains explicitly deferred.
+
+- **Future refinement — Slice 5 conversation authority and visual delivery frozen**
+  - What changed:
+    - The obsolete alternatives/navigation Slice 5 label was replaced with a constrained conversational-orchestration and persistent Ask-thread contract, and the supplied SVG/PNG screens were made the visual source for the remaining UI sequence.
+  - Previous approach:
+    - Earlier conversation text allowed unsupported funding/payment requests to become clarifications or branches, retained an incomplete season-ticket-loan branch, and allowed model-written connective financial prose. The technical UI proved boundaries but did not yet reproduce the supplied visual identity.
+  - New approach:
+    - Slice 5 clarification is limited to missing purchase amount, purchase month and scenario reference. Instalments, mixed/credit/goal-savings funding, substitution and intra-month payday branching return a server-owned scope response with no simulator call or branch.
+    - Season-ticket-loan simulation and the older `S1-O1` incomplete branch are deferred. The model returns only strict symbolic intent or explanation plans; the server validates fact keys and renders every final financial sentence, amount, date and classification from immutable deterministic DTOs.
+    - Future You owns append-only conversations and context anchoring. OpenAI calls are stateless application inputs with storage disabled; provider conversation state, raw output and hidden reasoning are not authoritative or persisted.
+    - The seven supplied SVGs govern structure and the paired PNGs govern rendered appearance. Slice 5 implements the real Ask visual language, Slice 6 extends it to Home, Goals and Benefits, and Slice 7 refines rather than introduces the design.
+  - Why it changed:
+    - Natural language and visual fidelity must make the deterministic simulator easier to use without letting a model, prototype screenshot or unsupported benefit/funding idea become financial authority.
+  - Effect on Future You:
+    - Sarah can gain a persistent, visually faithful Ask experience whose interpretation and emphasis are flexible while every financial consequence, historical run and supported-scope boundary remains exact and server-controlled.
+
+- **Future refinement — Slice 5 constrained Ask experience implemented and proven**
+  - What changed:
+    - Authenticated users can now create, reopen and continue persistent Ask threads that translate the approved natural-language decisions into the unchanged deterministic simulator operations.
+  - Previous approach:
+    - The browser could render deterministic scenarios and onboarding could create immutable financial contexts, but Ask had no persistent conversation model, typed model boundary, natural-language orchestration or production visual treatment.
+  - New approach:
+    - Forced-RLS conversation, message and turn records are append-only, same-owner/context constrained and linked to immutable simulation runs. Turn creation and completion use security-invoker database functions, exact retries return the original success or safe failure without another provider/run, and conflicting request reuse is rejected.
+    - The strict interpretation provider receives only message, pending clarification, scenario-label and trusted-date metadata. Exact amount quotes are source-verified and parsed as pence; `Europe/London` timing is resolved by the server. The explanation provider receives symbolic fact/template identifiers only, and the server inserts every trusted amount, date and classification.
+    - Existing threads remain anchored to their original context. Stored results and explanations remain readable after a revision, while scenario-producing messages receive the typed `CONVERSATION_CONTEXT_STALE` conflict and cannot mix context versions. A genuinely no-context user is redirected to onboarding rather than receiving an empty Ask shell.
+    - The OpenAI Responses adapter is server-only, forces one strict function, disables parallel calls and provider storage, uses no built-in tools or provider conversation chain, and is replaceable by a deterministic fake with controlled success/failure modes. A versioned 33-case corpus covers canonical, noisy, clarification, follow-up, unsupported and adversarial interpretation.
+    - Screen 7's mobile structure was reconstructed with semantic React and reusable design tokens: welcome-first hierarchy, outlined two-up prompt rail, tall initial composer, floating four-item navigation, persistent thread, deterministic gradient result, before/after impact, scenario sheet, clarification, unsupported, error, fallback, history and stale-context states. Five `414 × 896` captures provide rendered visual evidence without embedding the supplied PNG/SVG screens.
+    - Playwright uses a dedicated non-reused local port, one worker for shared deterministic fixtures and an explicit fake-provider/rate-limit configuration. This isolates browser evidence from unrelated development servers and network/provider availability without changing production limits.
+  - Why it changed:
+    - Future You needed to prove that conversation improves access to deterministic decisions without becoming a calculator, leaking financial context to a provider, weakening RLS or postponing the supplied visual identity to a later polish slice.
+  - Effect on Future You:
+    - The complete Sarah conversation now produces the frozen £650, £500, £400 and October paths, explains the selected stored run, returns to the unchanged current path and survives refresh. Unit, integration, PostgreSQL, browser, build, bundle-boundary, generated-artifact and formatting gates pass with no skipped tests. The authorised live-provider evaluation remains explicitly blocked until an approved API credential and model configuration are supplied; Slice 6 has not started.
