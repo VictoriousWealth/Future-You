@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "./helpers/auth";
 
 const API_ROUTE = "**/api/v1/scenarios/options";
+
+test.beforeEach(async ({ page }) => {
+  await signIn(page, "sarah");
+});
 
 function sentinelResponse() {
   return {
