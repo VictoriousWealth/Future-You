@@ -421,3 +421,18 @@
     - The complete Slice 2 gate requires proof that the entire frozen option set can cross the server/browser boundary reproducibly, not only the first £650 result, and that long-horizon calendar uncertainty remains visible.
   - Effect on Future You:
     - Sarah's current path and four evaluated what-if choices now cross one explicit JSON authority with immutable ancestry and render without browser arithmetic. Persistence and identity can replace only the temporary ports in Slice 3; the simulator, DTO semantics and renderer-authority rule remain unchanged.
+
+- **Future refinement — Slice 3 authenticated persistence and ownership boundary implemented**
+  - What changed:
+    - The temporary Sarah-only runtime context and process-local simulation store were replaced in the production request path by authenticated, immutable Supabase persistence.
+  - Previous approach:
+    - Slice 2 proved JSON transport and browser rendering with a single fixture-backed context and memory-only runs, but it could not survive application recreation or establish ownership between users.
+  - New approach:
+    - Supabase Auth now supplies a cookie-backed, server-verified principal to every personal-finance operation. Request-scoped server clients pass that user's session through explicit context and run adapters, leaving PostgreSQL grants and forced RLS as the database-level isolation authority.
+    - Complete financial-context versions, deterministic baselines, scenario ancestry, audit metadata, authoritative response DTOs and request-idempotency records are stored as immutable user-owned rows. Only the user's current-context pointer is mutable, and composite ownership foreign keys prevent cross-user references.
+    - Canonical minor-unit strings remain exact through JSONB and rehydrate to domain `bigint`; negative values, zero and values beyond JavaScript's safe-integer range are tested without numeric coercion. Stored runs are returned without recalculation.
+    - Local migrations, fixture-derived seeding, generated database types and drift checks are reproducible. Database, integration and browser suites exercise Sarah and an independent no-context user, including anon denial, hostile foreign IDs, login/logout, session continuation, idempotent retries, conflicts, CSRF rejection and renderer authority.
+  - Why it changed:
+    - The simulator cannot become a credible personal product until its context and results are durable, attributable to a verified user and inaccessible to every other user without weakening deterministic financial truth.
+  - Effect on Future You:
+    - Sarah's frozen current path and four decisions now persist behind a tested ownership boundary and survive client/application adapter recreation with their context, rules, calendar, assumptions and output identities intact. Authentication and persistence are proven without introducing AI, benefit arithmetic, onboarding or new simulator behaviour.
