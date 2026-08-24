@@ -82,6 +82,11 @@ test("redirects private pages and returns typed 401 for every unauthenticated fi
     url: string;
   }>[] = [
     { method: "get", url: "/api/v1/financial-context/current" },
+    { method: "get", url: "/api/v1/onboarding/status" },
+    { method: "post", url: "/api/v1/financial-context/previews" },
+    { method: "post", url: "/api/v1/financial-context/versions" },
+    { method: "get", url: "/api/v1/financial-context/current/revisions" },
+    { method: "post", url: "/api/v1/financial-context/current/revisions" },
     { method: "get", url: `/api/v1/contexts/${CONTEXT_VERSION}/current-path` },
     { method: "post", url: "/api/v1/baselines" },
     { method: "post", url: "/api/v1/scenarios/one-off-purchases" },
@@ -158,7 +163,7 @@ test("keeps Sarah's context and run non-enumerable to Alex and unchanged after h
   await signOut(page);
 
   await signIn(page, "alex");
-  await expect(page.getByRole("heading", { name: "Your financial context isn’t ready yet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
   const foreignRun = await browserJson(page, `/api/v1/simulations/${runId}`);
   const unknownRun = await browserJson(page, "/api/v1/simulations/run-0000000000000000");
   expect(foreignRun.status).toBe(404);
