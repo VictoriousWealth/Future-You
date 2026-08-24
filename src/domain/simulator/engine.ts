@@ -1,6 +1,7 @@
 import type { WorkingDayCalendar } from "../calendar/working-day-calendar";
 import {
   addMonths,
+  addDays,
   dateInMonth,
   daysInMonth,
   mustYearMonth,
@@ -187,6 +188,7 @@ function eventBase(
 
 function staticEventsForPeriod(
   period: YearMonth,
+  cycleIndex: number,
   input: ProjectionExecutionInput,
   collector: AssumptionCollector
 ): SimulationOutcome<readonly PendingLedgerEvent[]> {
@@ -195,8 +197,20 @@ function staticEventsForPeriod(
   let sourceOrder = 0;
   let includedObligationsMinor = 0n;
   const incomeDate = payday(period, context, input.calendar, collector);
+  const openingCycleStartsAfterFirstDay =
+    cycleIndex === 0 && context.snapshotDate !== dateInMonth(period, 1);
+  const cycleStartDate = openingCycleStartsAfterFirstDay
+    ? context.snapshotDate
+    : dateInMonth(period, 1);
+  const spendingEnvelopeMinor =
+    cycleIndex === 0
+      ? resolved.reservedSpending.minor
+      : resolved.routineSpendingTotal.minor;
 
-  for (const obligation of context.requiredObligations) {
+  // A mid-cycle snapshot's reserve is an aggregate of what remains from the
+  // snapshot onward. Recurring obligation events begin with the next fully
+  // funded cycle so the engine never replays pre-snapshot activity.
+  for (const obligation of openingCycleStartsAfterFirstDay ? [] : context.requiredObligations) {
     const amount = valueOrThrow(obligation.amount, `required obligation ${obligation.id}`);
     const date = dueDate(period, obligation.due);
     if (obligation.includedInRoutineEnvelope) includedObligationsMinor += amount.minor;
@@ -224,7 +238,7 @@ function staticEventsForPeriod(
     });
   }
 
-  if (includedObligationsMinor > resolved.routineSpendingTotal.minor) {
+  if (includedObligationsMinor > spendingEnvelopeMinor) {
     return err(
       simulationError(
         "INVALID_CONTEXT",
@@ -233,16 +247,28 @@ function staticEventsForPeriod(
     );
   }
 
-  const spreadAmount = resolved.routineSpendingTotal.minor - includedObligationsMinor;
-  const dayCount = Number(incomeDate.slice(8, 10));
+  const spreadAmount = spendingEnvelopeMinor - includedObligationsMinor;
+  if (cycleStartDate > incomeDate) {
+    return err(
+      simulationError(
+        "INVALID_CONTEXT",
+        "The snapshot date must not fall after the opening cycle's funding event."
+      )
+    );
+  }
+  const spreadDates: LocalDate[] = [];
+  for (let date = cycleStartDate; date <= incomeDate; date = addDays(date, 1)) {
+    spreadDates.push(date);
+  }
+  const dayCount = spreadDates.length;
   const quotient = spreadAmount / BigInt(dayCount);
   const remainder = spreadAmount % BigInt(dayCount);
-  for (let day = 1; day <= dayCount; day += 1) {
-    const amount = quotient + (BigInt(day) <= remainder ? 1n : 0n);
+  for (let offset = 0; offset < dayCount; offset += 1) {
+    const amount = quotient + (BigInt(offset + 1) <= remainder ? 1n : 0n);
     if (amount === 0n) continue;
-    const date = dateInMonth(period, day);
+    const date = spreadDates[offset]!;
     events.push({
-      ...eventBase(period, `routine:${period}:${String(day).padStart(2, "0")}`, date, "ROUTINE_SPENDING", sourceOrder++),
+      ...eventBase(period, `routine:${period}:${date}`, date, "ROUTINE_SPENDING", sourceOrder++),
       datePrecision: "EXACT",
       signedCashMinor: -amount,
       reserveDeltaMinor: -amount,
@@ -262,10 +288,25 @@ function staticEventsForPeriod(
     scope: "CURRENT_PATH",
     affectedPeriods: [period]
   });
+  if (openingCycleStartsAfterFirstDay) {
+    collector.add({
+      id: "opening-partial-cycle-reserve",
+      category: "CONFIRMED_FACT",
+      description:
+        "The opening cycle uses only the declared reserve remaining from the snapshot date; pre-snapshot activity is not replayed.",
+      source: context.currentAccount.reservedSpending.evidence.source,
+      material: true,
+      likelyEffect:
+        "The full future-cycle routine-spending amount begins only after the next funding event.",
+      scope: "CURRENT_PATH",
+      affectedPeriods: [period]
+    });
+  }
 
   for (const oneOff of context.confirmedOneOffEvents.filter((event) => event.period === period)) {
     const amount = valueOrThrow(oneOff.amount, `confirmed one-off ${oneOff.id}`);
-    const date = oneOff.date ?? dateInMonth(period, 1);
+    if (cycleIndex === 0 && oneOff.date !== null && oneOff.date < context.snapshotDate) continue;
+    const date = oneOff.date ?? cycleStartDate;
     events.push({
       ...eventBase(period, `confirmed-one-off:${oneOff.id}`, date, "CONFIRMED_ONE_OFF", sourceOrder++),
       datePrecision: oneOff.datePrecision,
@@ -280,7 +321,12 @@ function staticEventsForPeriod(
 
   if (scenario?.change.type === "ONE_OFF_PURCHASE" && scenario.change.paymentPeriod === period) {
     const change = scenario.change;
-    const date = change.paymentDate ?? dateInMonth(period, 1);
+    if (cycleIndex === 0 && change.paymentDate !== null && change.paymentDate < context.snapshotDate) {
+      return err(
+        simulationError("INVALID_CONTEXT", "A scenario payment cannot precede the context snapshot.")
+      );
+    }
+    const date = change.paymentDate ?? cycleStartDate;
     events.push({
       ...eventBase(period, `scenario-one-off:${scenario.id}`, date, "HYPOTHETICAL_ONE_OFF", sourceOrder++),
       datePrecision: change.datePrecision,
@@ -529,7 +575,7 @@ function executeProjection(input: ProjectionExecutionInput): SimulationOutcome<P
     let bufferAtAllocation = cash - activeReserve;
     const periodContributions = new Map(goals.map((goal) => [goal.id, 0n]));
 
-    const pendingResult = staticEventsForPeriod(period, input, collector);
+    const pendingResult = staticEventsForPeriod(period, cycleIndex, input, collector);
     if (!pendingResult.ok) return pendingResult;
     const pending = [...pendingResult.value];
     let incomeProcessed = false;
@@ -668,7 +714,11 @@ function executeProjection(input: ProjectionExecutionInput): SimulationOutcome<P
             signedCashMinor: -actual,
             reserveDeltaMinor: 0n,
             required: false,
-            evidenceState: "CONFIRMED",
+            evidenceState: locked.some(
+              (item) => item.goalId === goal.id && item.evidenceState === "ESTIMATED"
+            )
+              ? "ESTIMATED"
+              : "CONFIRMED",
             scope: input.scenario === null ? "CURRENT_PATH" : { type: "SCENARIO", scenarioId: input.scenario.id },
             dependsOn: [event.id],
             goalId: goal.id,
@@ -724,7 +774,7 @@ function executeProjection(input: ProjectionExecutionInput): SimulationOutcome<P
       openingCash: signedGbp(openingCash),
       openingReservedCash: gbp(openingReserve),
       income: gbp(periodIncome),
-      routineSpending: resolved.routineSpendingTotal,
+      routineSpending: gbp(cycleIndex === 0 ? openingReserve : resolved.routineSpendingTotal.minor),
       requiredObligations: gbp(periodRequired),
       confirmedOneOffs: gbp(periodConfirmedOneOff),
       hypotheticalOneOffs: gbp(periodHypotheticalOneOff),
