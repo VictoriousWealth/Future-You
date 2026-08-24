@@ -8,6 +8,10 @@ export const LOCAL_USERS = {
   alex: {
     email: "alex@example.test",
     password: "Alex-Local-Only-2026!"
+  },
+  onboarding: {
+    email: "onboarding@example.test",
+    password: "Onboarding-Local-Only-2026!"
   }
 } as const;
 
@@ -16,7 +20,7 @@ export async function signIn(page: Page, user: keyof typeof LOCAL_USERS): Promis
   await page.getByLabel("Email").fill(LOCAL_USERS[user].email);
   await page.getByLabel("Password").fill(LOCAL_USERS[user].password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/ask$/);
+  await expect(page).toHaveURL(user === "sarah" ? /\/ask$/ : /\/onboarding$/);
 }
 
 export async function signOut(page: Page): Promise<void> {
