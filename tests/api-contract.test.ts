@@ -9,21 +9,42 @@ import type {
   ScenarioOptionsResponseDTO,
   TimingAlternativeResponseDTO
 } from "../src/application/dto/contracts";
-import { POST as generateBaseline } from "../src/app/api/v1/baselines/route";
-import { GET as getComparison } from "../src/app/api/v1/comparisons/route";
-import { GET as getCurrentPath } from "../src/app/api/v1/contexts/[contextVersionId]/current-path/route";
-import { GET as getCurrentContext } from "../src/app/api/v1/financial-context/current/route";
-import { POST as generateAmounts } from "../src/app/api/v1/scenarios/amount-alternatives/route";
-import { POST as simulateOneOff } from "../src/app/api/v1/scenarios/one-off-purchases/route";
-import { POST as listOptions } from "../src/app/api/v1/scenarios/options/route";
-import { POST as generateTiming } from "../src/app/api/v1/scenarios/timing-alternative/route";
-import { GET as getSimulationRun } from "../src/app/api/v1/simulations/[runId]/route";
+import { handlePOST as handleGenerateBaseline } from "../src/app/api/v1/baselines/route";
+import { handleGET as handleGetComparison } from "../src/app/api/v1/comparisons/route";
+import { handleGET as handleGetCurrentPath } from "../src/app/api/v1/contexts/[contextVersionId]/current-path/route";
+import { handleGET as handleGetCurrentContext } from "../src/app/api/v1/financial-context/current/route";
+import { handlePOST as handleGenerateAmounts } from "../src/app/api/v1/scenarios/amount-alternatives/route";
+import { handlePOST as handleSimulateOneOff } from "../src/app/api/v1/scenarios/one-off-purchases/route";
+import { handlePOST as handleListOptions } from "../src/app/api/v1/scenarios/options/route";
+import { handlePOST as handleGenerateTiming } from "../src/app/api/v1/scenarios/timing-alternative/route";
+import { handleGET as handleGetSimulationRun } from "../src/app/api/v1/simulations/[runId]/route";
 import { SARAH_V1_CONTEXT } from "../src/fixtures/sarah-v1";
 import {
   SARAH_V1_BROWSER_PROOF_COMMAND,
   SARAH_V1_BROWSER_PROOF_OPTIONS_COMMAND
 } from "../src/server/sarah-v1-demo-command";
-import { assertPlainJsonTree } from "./helpers/slice-2";
+import { assertPlainJsonTree, authenticatedSlice2Resolver } from "./helpers/slice-2";
+
+const generateBaseline = (request: Request) =>
+  handleGenerateBaseline(request, authenticatedSlice2Resolver);
+const getComparison = (request: Request) =>
+  handleGetComparison(request, authenticatedSlice2Resolver);
+const getCurrentPath = (
+  request: Request,
+  context: { params: Promise<{ contextVersionId: string }> }
+) => handleGetCurrentPath(request, context, authenticatedSlice2Resolver);
+const getCurrentContext = () => handleGetCurrentContext(authenticatedSlice2Resolver);
+const generateAmounts = (request: Request) =>
+  handleGenerateAmounts(request, authenticatedSlice2Resolver);
+const simulateOneOff = (request: Request) =>
+  handleSimulateOneOff(request, authenticatedSlice2Resolver);
+const listOptions = (request: Request) => handleListOptions(request, authenticatedSlice2Resolver);
+const generateTiming = (request: Request) =>
+  handleGenerateTiming(request, authenticatedSlice2Resolver);
+const getSimulationRun = (
+  request: Request,
+  context: { params: Promise<{ runId: string }> }
+) => handleGetSimulationRun(request, context, authenticatedSlice2Resolver);
 
 function post(url: string, body: unknown): Request {
   return new Request(url, {
@@ -45,7 +66,7 @@ describe("versioned Route Handler contracts", () => {
     const response = await getCurrentContext();
     const body = await json<CurrentFinancialContextResponseDTO>(response);
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
     expect(body).toMatchObject({
       apiVersion: "future-you.api/v1",
       schemaVersion: "financial-context-current/1.0.0",
@@ -122,6 +143,33 @@ describe("versioned Route Handler contracts", () => {
     expect(body.calculation.runId).toMatch(/^run-[a-f0-9]{16}$/);
     expect(body.scenario.baselineId).toBe(body.baseline.identity.baselineId);
     expect(body.result.projection.identity.scenarioId).toBe(body.scenario.id);
+  });
+
+  it("rejects a disallowed origin before it can create a simulation run", async () => {
+    const command = {
+      ...SARAH_V1_BROWSER_PROOF_COMMAND,
+      requestId: "req_api_cross_origin_guard"
+    };
+    const rejected = await simulateOneOff(
+      new Request("http://localhost/api/v1/scenarios/one-off-purchases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://attacker.invalid",
+          "Sec-Fetch-Site": "cross-site"
+        },
+        body: JSON.stringify(command)
+      })
+    );
+    expect(rejected.status).toBe(403);
+    expect(await json<ApiErrorResponseDTO>(rejected)).toMatchObject({
+      error: { code: "INVALID_REQUEST" }
+    });
+
+    const accepted = await simulateOneOff(
+      post("http://localhost/api/v1/scenarios/one-off-purchases", command)
+    );
+    expect(accepted.status).toBe(200);
   });
 
   it("generates £500 and £400 siblings and the October timing sibling", async () => {
@@ -253,6 +301,7 @@ describe("versioned Route Handler contracts", () => {
     const stale = await simulateOneOff(
       post("http://localhost/api/v1/scenarios/one-off-purchases", {
         ...SARAH_V1_BROWSER_PROOF_COMMAND,
+        requestId: "req_sarah_trip_stale_context",
         expectedContextVersionId: "sarah-v0-stale"
       })
     );
@@ -265,7 +314,7 @@ describe("versioned Route Handler contracts", () => {
     );
     expect(missingContext.status).toBe(404);
     expect(await json<ApiErrorResponseDTO>(missingContext)).toMatchObject({
-      error: { code: "CONTEXT_NOT_FOUND", field: "contextVersionId" }
+      error: { code: "CONTEXT_VERSION_NOT_FOUND", field: "contextVersionId" }
     });
 
     const missingRun = await getSimulationRun(
@@ -273,6 +322,8 @@ describe("versioned Route Handler contracts", () => {
       { params: Promise.resolve({ runId: "run-0000000000000000" }) }
     );
     expect(missingRun.status).toBe(404);
-    expect(await json<ApiErrorResponseDTO>(missingRun)).toMatchObject({ error: { code: "SIMULATION_RUN_NOT_FOUND" } });
+    expect(await json<ApiErrorResponseDTO>(missingRun)).toMatchObject({
+      error: { code: "RUN_NOT_FOUND" }
+    });
   });
 });
