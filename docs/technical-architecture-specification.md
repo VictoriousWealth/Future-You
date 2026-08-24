@@ -16,6 +16,11 @@ limits clarification to supported inputs, or defines the current visual-delivery
 slice labels in section 27 are historical sequencing guidance; approved Slice 1–5 contracts now control
 implementation numbering.
 
+**Slice 6 scoped amendment:** `shared-product-surfaces-slice-6.md` is normative for the authenticated
+shell, root routing, Home/Goals/Benefits read models, stored-run goal previews and the benefit-data
+audit. A workplace name never implies a catalogue, eligibility or an opportunity. The older incomplete
+season-ticket-loan UI branch is not part of Slice 6.
+
 The governing product contracts are:
 
 1. `simulation-rules-specification.md` for financial meaning and deterministic calculation rules
