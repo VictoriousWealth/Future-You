@@ -10,6 +10,14 @@ import { mustLocalDate } from "../../domain/shared/date";
 export const ENGLAND_WALES_CALENDAR_VERSION =
   "govuk-england-and-wales-2026-2028@2026-08-23";
 
+export const ENGLAND_WALES_CALENDAR_METADATA = Object.freeze({
+  version: ENGLAND_WALES_CALENDAR_VERSION,
+  jurisdiction: "ENGLAND_AND_WALES" as const,
+  coverageStart: mustLocalDate("2026-01-01"),
+  coverageEnd: mustLocalDate("2028-12-31"),
+  source: "COMMITTED_FIXTURE" as const
+});
+
 const HOLIDAYS = [
   "2026-01-01",
   "2026-04-03",
@@ -38,9 +46,9 @@ const HOLIDAYS = [
 ] as const;
 
 export const ENGLAND_WALES_WORKING_DAY_CALENDAR = new VersionedHolidayCalendar({
-  version: ENGLAND_WALES_CALENDAR_VERSION,
-  jurisdiction: "ENGLAND_AND_WALES",
-  coverageStart: mustLocalDate("2026-01-01"),
-  coverageEnd: mustLocalDate("2028-12-31"),
+  version: ENGLAND_WALES_CALENDAR_METADATA.version,
+  jurisdiction: ENGLAND_WALES_CALENDAR_METADATA.jurisdiction,
+  coverageStart: ENGLAND_WALES_CALENDAR_METADATA.coverageStart,
+  coverageEnd: ENGLAND_WALES_CALENDAR_METADATA.coverageEnd,
   holidays: HOLIDAYS.map(mustLocalDate)
 });
