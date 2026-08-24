@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { AuthenticationBoundaryError } from "../../infrastructure/auth/authentication-error";
 import { publicSupabaseConfiguration } from "../../infrastructure/supabase/config";
 import { resolveAuthenticatedApplication } from "../../server/authenticated-application";
@@ -19,19 +20,8 @@ export default async function AskBoundaryProofPage() {
   const current = await context.application.getCurrentFinancialContext.execute();
   const configuration = publicSupabaseConfiguration();
   if (!current.ok) {
-    return (
-      <main className="app-frame">
-        <header className="product-header">
-          <div className="brand-mark" aria-hidden="true">FY</div>
-          <div>
-            <p className="eyebrow">Future You</p>
-            <h1>Your financial context isn’t ready yet.</h1>
-            <p>Financial onboarding is deliberately deferred beyond Slice 3.</p>
-            <SignOutButton configuration={configuration} />
-          </div>
-        </header>
-      </main>
-    );
+    if (current.error.code === "FINANCIAL_CONTEXT_NOT_FOUND") redirect("/onboarding");
+    throw new Error("The current financial context could not be loaded safely.");
   }
   return (
     <main className="app-frame">
@@ -47,6 +37,9 @@ export default async function AskBoundaryProofPage() {
             recalculates financial outcomes.
           </p>
           <SignOutButton configuration={configuration} />
+          <Link className="context-settings-link" href="/settings/financial-context">
+            Correct financial facts
+          </Link>
         </div>
       </header>
       <SarahResultShell command={slice3DemoOptionsCommand(current.value.context.version)} />
