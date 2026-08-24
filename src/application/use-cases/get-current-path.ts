@@ -17,7 +17,7 @@ export class GetCurrentPathUseCase {
     );
     if (!context) {
       return err({
-        code: "CONTEXT_NOT_FOUND",
+        code: "CONTEXT_VERSION_NOT_FOUND",
         message: "The requested financial context version was not found.",
         missingFields: ["contextVersionId"]
       });
@@ -38,14 +38,14 @@ export class GetCurrentPathUseCase {
         missingFields: baseline.error.missingFields
       });
     }
-    return ok(
-      toBaselineResponse(
-        request.requestId,
-        correlationIdFor("get-current-path", request.requestId),
-        context,
-        baseline.value,
-        this.dependencies.calendarMetadata
-      )
+    const response = toBaselineResponse(
+      request.requestId,
+      correlationIdFor("get-current-path", request.requestId),
+      context,
+      baseline.value,
+      this.dependencies.calendarMetadata
     );
+    await this.dependencies.runStore.saveBaseline(response);
+    return ok(response);
   }
 }
