@@ -3,35 +3,43 @@ import { correlationIdFor } from "../../../../../application/use-cases/resolve-c
 import {
   apiErrorResponse,
   applicationErrorResponse,
-  internalSimulatorErrorResponse,
   jsonResponse,
   readJsonBody
 } from "../../../../../server/http/api-response";
-import { slice2Application } from "../../../../../server/slice-2-application";
+import { withAuthenticatedApplication } from "../../../../../server/http/authenticated-route";
+import { sameOriginMutationError } from "../../../../../server/http/same-origin";
+import type { AuthenticatedApplicationResolver } from "../../../../../server/authenticated-application";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request): Promise<Response> {
+export async function handlePOST(
+  request: Request,
+  resolver?: AuthenticatedApplicationResolver
+): Promise<Response> {
   const invalidCorrelation = correlationIdFor("generate-amount-alternatives", "invalid-request");
-  const body = await readJsonBody(request);
-  if (!body.ok) {
-    return apiErrorResponse(400, "INVALID_JSON", "Request body must be valid JSON.", invalidCorrelation);
-  }
-  const parsed = parseAmountAlternativesRequest(body.value);
-  if (!parsed.ok) {
-    return apiErrorResponse(
-      parsed.code === "UNSUPPORTED_SCENARIO_TYPE" ? 422 : 400,
-      parsed.code,
-      "Request did not match the amount-alternatives contract.",
-      invalidCorrelation,
-      parsed.issues
-    );
-  }
-  const correlationId = correlationIdFor("generate-amount-alternatives", parsed.value.requestId);
-  try {
-    const result = await slice2Application.generateAmountAlternatives.execute(parsed.value);
+  const originError = sameOriginMutationError(request, invalidCorrelation);
+  if (originError) return originError;
+  return withAuthenticatedApplication(invalidCorrelation, async (application) => {
+    const body = await readJsonBody(request);
+    if (!body.ok) {
+      return apiErrorResponse(400, "INVALID_JSON", "Request body must be valid JSON.", invalidCorrelation);
+    }
+    const parsed = parseAmountAlternativesRequest(body.value);
+    if (!parsed.ok) {
+      return apiErrorResponse(
+        parsed.code === "UNSUPPORTED_SCENARIO_TYPE" ? 422 : 400,
+        parsed.code,
+        "Request did not match the amount-alternatives contract.",
+        invalidCorrelation,
+        parsed.issues
+      );
+    }
+    const correlationId = correlationIdFor("generate-amount-alternatives", parsed.value.requestId);
+    const result = await application.generateAmountAlternatives.execute(parsed.value);
     return result.ok ? jsonResponse(result.value) : applicationErrorResponse(result.error, correlationId);
-  } catch {
-    return internalSimulatorErrorResponse(correlationId);
-  }
+  }, resolver);
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return handlePOST(request);
 }
