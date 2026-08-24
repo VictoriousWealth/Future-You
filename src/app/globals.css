@@ -105,6 +105,245 @@ summary {
   font: inherit;
 }
 
+.onboarding-page {
+  width: min(100%, 42rem);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+}
+
+.settings-return {
+  width: min(100%, 42rem);
+  margin: 0 auto;
+  padding: 1rem 1rem 0;
+}
+
+.settings-return a,
+.context-settings-link {
+  color: var(--blue);
+  font-weight: 750;
+}
+
+.onboarding-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.5rem 0 1rem;
+}
+
+.onboarding-header .sign-out {
+  margin: 0;
+}
+
+.onboarding-header span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.step-progress {
+  height: 0.35rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  background: #dfe5f2;
+  border-radius: 999px;
+}
+
+.step-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #7757f8, #2857d9);
+  transition: width 180ms ease;
+}
+
+.onboarding-card,
+.onboarding-preview {
+  padding: clamp(1.25rem, 5vw, 2.25rem);
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 1.7rem;
+  box-shadow: var(--shadow);
+}
+
+.onboarding-card > h1,
+.onboarding-preview h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.7rem, 7vw, 2.55rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.intro-copy,
+.form-stack {
+  display: grid;
+  gap: 1rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.form-stack label,
+.goal-form label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.form-stack input,
+.form-stack select,
+.goal-form input {
+  width: 100%;
+  min-height: 3.15rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: white;
+  border-radius: 0.9rem;
+  font: inherit;
+}
+
+.form-stack small,
+.field-note {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.goal-form,
+.choice-group {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+}
+
+.goal-form legend,
+.choice-group legend {
+  padding: 0 0.4rem;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.choice-group label {
+  display: flex;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.choice-group input {
+  width: auto;
+  min-height: auto;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 2.9rem;
+  padding: 0.7rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.primary-button {
+  margin-left: auto;
+  color: white;
+  background: linear-gradient(145deg, #7757f8, #2857d9);
+}
+
+.secondary-button {
+  color: var(--blue);
+  background: var(--lavender);
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.form-errors,
+.preview-warning {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  color: #702d28;
+  background: #fff0ed;
+  border-radius: 1rem;
+}
+
+.form-errors code {
+  font-size: 0.72rem;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.preview-grid article {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem;
+  background: #f5f6ff;
+  border-radius: 1rem;
+}
+
+.preview-grid span,
+.goal-preview-list p,
+.goal-preview-list span,
+.preview-versions {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.preview-grid strong {
+  font-size: 1.2rem;
+}
+
+.goal-preview-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.goal-preview-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.goal-preview-list h3,
+.goal-preview-list p {
+  margin: 0;
+}
+
+.goal-preview-list article > div:last-child {
+  display: grid;
+  text-align: right;
+}
+
+@media (max-width: 32rem) {
+  .onboarding-header .sign-out {
+    padding: 0.65rem 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .app-frame {
   width: min(100%, 48rem);
   min-height: 100vh;
