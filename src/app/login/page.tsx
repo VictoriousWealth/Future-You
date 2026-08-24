@@ -12,7 +12,7 @@ export default function LoginPage() {
         <div className="brand-mark" aria-hidden="true">FY</div>
         <p className="eyebrow">Future You</p>
         <h1>See where today’s choices could take you.</h1>
-        <p>Sign in to your private financial context and saved simulations.</p>
+        <p>Sign in to your private financial plan, goals and saved what-if conversations.</p>
         <Suspense fallback={<p>Loading sign in…</p>}>
           <LoginForm configuration={configuration} />
         </Suspense>
