@@ -316,7 +316,7 @@ function staticEventsForPeriod(
   }
 
   events.push({
-    ...eventBase(period, `income:${context.income.id}:${period}`, incomeDate, "INCOME", sourceOrder++),
+    ...eventBase(period, `income:${context.income.id}:${period}`, incomeDate, "INCOME", sourceOrder),
     datePrecision: "EXACT",
     signedCashMinor: resolved.incomeAmount.minor,
     reserveDeltaMinor: 0n,
