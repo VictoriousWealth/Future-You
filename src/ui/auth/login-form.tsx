@@ -40,7 +40,7 @@ export function LoginForm({ configuration }: Readonly<{
     const requested = searchParams.get("next");
     const destination = requested?.startsWith("/") && !requested.startsWith("//")
       ? requested
-      : "/ask";
+      : "/home";
     router.replace(destination);
     router.refresh();
   }
