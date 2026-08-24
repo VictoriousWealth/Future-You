@@ -1,170 +1,140 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "./helpers/auth";
 
-const API_ROUTE = "**/api/v1/scenarios/options";
+const MESSAGE_ROUTE = "**/api/v1/conversations/*/messages";
 
 test.beforeEach(async ({ page }) => {
   await signIn(page, "sarah");
+  await startFresh(page);
 });
 
-function sentinelResponse() {
+async function startFresh(page: Page) {
+  await page.getByRole("button", { name: "Open conversation history" }).click();
+  await page.getByRole("button", { name: "+ New conversation", exact: true }).click();
+}
+
+async function ask(page: Page, message: string) {
+  await page.getByLabel("Ask Future You").fill(message);
+  await page.getByRole("button", { name: "Send message" }).click();
+}
+
+function sentinelTurn() {
+  const presentation = {
+    scenarioLabel: "SERVER_SCENARIO_LABEL",
+    classificationLabel: "Noticeable trade-off — SERVER SENTINEL",
+    summary: "SERVER_SUMMARY_SENTINEL",
+    headlineKey: "server_headline",
+    immediateImpact: {
+      cashBefore: "£901 SERVER",
+      cashAfter: "£237 SERVER",
+      safetyBufferBefore: "£901 SERVER",
+      safetyBufferAfter: "£237 SERVER",
+      requiredPayments: "SERVER_REQUIRED_PAYMENTS",
+      borrowing: "SERVER_BORROWING",
+      recovery: "January 2031 SERVER"
+    },
+    goalImpacts: [{
+      goalId: "goal-server",
+      label: "SERVER_GOAL",
+      baselineCompletion: "SERVER_BASELINE_DATE",
+      scenarioCompletion: "March 2032 SERVER",
+      delay: "SERVER_DELAY"
+    }],
+    monthlyPath: [{
+      period: "SERVER_PERIOD",
+      closingCash: "SERVER_MONTH_CASH",
+      closingSafetyBuffer: "SERVER_MONTH_BUFFER",
+      bufferRestoration: "SERVER_MONTH_RESTORATION",
+      goalContribution: "SERVER_MONTH_GOALS"
+    }],
+    assumptionGroups: [{
+      key: "systemAssumptions",
+      label: "SERVER_ASSUMPTIONS",
+      items: ["SERVER_ASSUMPTION_ITEM"]
+    }],
+    confidence: "SERVER_CONFIDENCE",
+    availableActions: []
+  };
+  const result = {
+    calculation: { runId: "run-server-sentinel" },
+    presentation,
+    scenario: { id: "scenario-server-sentinel", change: { amount: { minorUnits: "999999" }, paymentPeriod: "2099-12" } }
+  };
+  const conversation = {
+    apiVersion: "future-you.api/v1",
+    schemaVersion: "conversation/1.0.0",
+    kind: "conversation",
+    conversation: {
+      id: "conversation-server-sentinel",
+      title: "Sentinel",
+      contextVersionId: "context-sentinel-v1",
+      contextIsCurrent: true,
+      selectedRunId: "run-server-sentinel",
+      hasPendingClarification: false,
+      createdAt: "2026-08-24T12:00:00Z",
+      latestActivityAt: "2026-08-24T12:00:01Z"
+    },
+    currentPath: {},
+    messages: [
+      { id: "user-sentinel", sequence: "1", kind: "USER_TEXT", text: "sentinel", templateId: null, explanationFallbackUsed: false, runId: null, result: null, createdAt: "2026-08-24T12:00:00Z" },
+      { id: "assistant-sentinel", sequence: "2", kind: "ASSISTANT_RESULT", text: "trusted", templateId: "PURCHASE_RESULT_NOTICEABLE", explanationFallbackUsed: false, runId: "run-server-sentinel", result, createdAt: "2026-08-24T12:00:01Z" }
+    ],
+    scenarios: [{ runId: "run-server-sentinel", scenarioId: "scenario-server-sentinel", label: "SERVER_SCENARIO_LABEL", paymentPeriod: "2099-12", amount: "£9999.99", presentation }],
+    selectedResult: result,
+    supportedScope: []
+  };
   return {
     apiVersion: "future-you.api/v1",
-    schemaVersion: "scenario-options-result/1.0.0",
-    kind: "scenario_options",
-    requestId: "req_browser_sentinel",
-    correlationId: "corr_browser_sentinel",
-    baselineId: "baseline-server-sentinel",
-    contextVersion: "context-sentinel-v1",
-    selectedScenarioId: "scenario-server-sentinel",
-    selectionAffectsFinancialState: false,
-    options: [
-      {
-        id: "scenario-server-sentinel",
-        label: "SERVER_SCENARIO_LABEL",
-        status: "evaluated",
-        baselineId: "baseline-server-sentinel",
-        parentScenarioId: null,
-        derivedFromScenarioId: null,
-        contextVersion: "context-sentinel-v1",
-        isCurrent: false,
-        isHypothetical: true,
-        initiallySelected: true,
-        selectionAffectsFinancialState: false,
-        runId: "run-server-sentinel",
-        rulesVersion: "SERVER_RULES_VERSION",
-        calendarVersion: "SERVER_CALENDAR_VERSION",
-        presentation: {
-          scenarioLabel: "SERVER_SCENARIO_LABEL",
-          classificationLabel: "Noticeable trade-off — SERVER SENTINEL",
-          summary: "SERVER_SUMMARY_SENTINEL",
-          headlineKey: "server_headline",
-          immediateImpact: {
-            cashBefore: "£901 SERVER",
-            cashAfter: "£237 SERVER",
-            safetyBufferBefore: "£901 SERVER",
-            safetyBufferAfter: "£237 SERVER",
-            requiredPayments: "SERVER_REQUIRED_PAYMENTS",
-            borrowing: "SERVER_BORROWING",
-            recovery: "January 2031 SERVER"
-          },
-          goalImpacts: [
-            {
-              goalId: "goal-server",
-              label: "SERVER_GOAL",
-              baselineCompletion: "SERVER_BASELINE_DATE",
-              scenarioCompletion: "March 2032 SERVER",
-              delay: "SERVER_DELAY"
-            }
-          ],
-          monthlyPath: [
-            {
-              period: "SERVER_PERIOD",
-              closingCash: "SERVER_MONTH_CASH",
-              closingSafetyBuffer: "SERVER_MONTH_BUFFER",
-              bufferRestoration: "SERVER_MONTH_RESTORATION",
-              goalContribution: "SERVER_MONTH_GOALS"
-            }
-          ],
-          assumptionGroups: [
-            {
-              key: "systemAssumptions",
-              label: "SERVER_ASSUMPTIONS",
-              items: ["SERVER_ASSUMPTION_ITEM"]
-            }
-          ],
-          confidence: "SERVER_CONFIDENCE",
-          availableActions: []
-        },
-        simulation: {
-          scenario: {
-            change: { amount: { currency: "GBP", minorUnits: "999999" } }
-          }
-        }
-      }
-    ]
+    schemaVersion: "conversation-turn/1.0.0",
+    kind: "conversation_turn",
+    requestId: "sentinel-request",
+    turnId: "sentinel-turn",
+    intent: "CREATE_ONE_OFF_PURCHASE",
+    providerAttempts: 1,
+    explanationFallbackUsed: false,
+    conversation
   };
 }
 
-test("renders and selects all five options returned by the real simulator API", async ({ page }) => {
-  const apiResponse = page.waitForResponse((response) =>
-    response.url().includes("/api/v1/scenarios/options")
-  );
-  await page.goto("/ask");
-  const response = await apiResponse;
-  expect(response.status()).toBe(200);
-  const dto = await response.json();
-  expect(dto.options.map((option: { label: string }) => option.label)).toEqual([
-    "Your current path", "£650 trip", "£500 option", "£400 option", "Go in October"
-  ]);
-  expect(dto.options[1].simulation.result.comparison.classification.minimumSafetyBuffer).toEqual({
-    currency: "GBP",
-    minorUnits: "25000",
-    display: "£250.00"
-  });
-
-  await expect(page.getByTestId("scenario-result")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Affordable · Significant trade-off" })).toBeVisible();
+test("renders server-produced conversational scenarios and changes viewing state only", async ({ page }) => {
+  await ask(page, "Can I afford a £650 trip next month?");
   await expect(page.getByTestId("buffer-after")).toHaveText("£250");
   await expect(page.getByTestId("required-payments")).toHaveText("Bills covered");
   await expect(page.getByTestId("overdraft-usage")).toHaveText("£0 overdraft");
   await expect(page.getByTestId("buffer-recovery")).toHaveText("Restored in November 2026");
-  await expect(page.getByTestId("scenario-selector").getByRole("button")).toHaveCount(5);
 
-  await page.getByRole("button", { name: /£500 option/ }).click();
-  await expect(page.getByTestId("buffer-after")).toHaveText("£400");
-  await expect(page.getByTestId("buffer-recovery")).toHaveText("Restored in October 2026");
-  await expect(page.getByText("January 2027").first()).toBeVisible();
+  await ask(page, "What about £500?");
+  await expect(page.getByTestId("buffer-after").last()).toHaveText("£400");
+  await ask(page, "What about £400?");
+  await expect(page.getByTestId("buffer-after").last()).toHaveText("£500");
+  await ask(page, "What if I wait until October?");
+  await expect(page.getByTestId("buffer-after").last()).toHaveText("£250");
 
-  await page.getByRole("button", { name: /£400 option/ }).click();
-  await expect(page.getByRole("heading", { name: "Affordable · Noticeable trade-off" })).toBeVisible();
-  await expect(page.getByTestId("buffer-after")).toHaveText("£500");
-
-  await page.getByRole("button", { name: /Go in October/ }).click();
-  await expect(page.getByTestId("buffer-after")).toHaveText("£250");
-  const goals = page.getByRole("region", { name: "What changes for your goals" });
-  await expect(goals.getByText("February 2027")).toBeVisible();
-  await expect(goals.getByText("July 2029")).toBeVisible();
-
-  await page.getByText("Six-month path").click();
-  await expect(page.getByTestId("monthly-path").locator(".month-row")).toHaveCount(6);
-  await page.getByText("How we calculated this").click();
-  await expect(page.getByTestId("assumption-manifest")).toContainText("System assumptions");
-  await page.getByText("Calculation versions").click();
-  await expect(page.getByTestId("run-id")).toHaveText(/^run-[a-f0-9]{16}$/);
+  await page.getByRole("button", { name: "5 paths" }).click();
+  await expect(page.getByTestId("scenario-selector").locator(".fy-scenario-list").getByRole("button")).toHaveCount(5);
+  await page.getByTestId("scenario-selector").getByRole("button", { name: /Current path/ }).click();
+  await expect(page.getByRole("button", { name: "5 paths" })).toBeVisible();
 });
 
-test("shows calculating state while the server result is pending", async ({ page }) => {
+test("shows a neutral interpreting state while the server is pending", async ({ page }) => {
   let releaseResponse: (() => void) | undefined;
-  const release = new Promise<void>((resolve) => {
-    releaseResponse = resolve;
-  });
-  await page.route(API_ROUTE, async (route) => {
+  const release = new Promise<void>((resolve) => { releaseResponse = resolve; });
+  await page.route(MESSAGE_ROUTE, async (route) => {
     await release;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(sentinelResponse())
-    });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sentinelTurn()) });
   });
-  await page.goto("/ask");
-  await expect(page.getByTestId("calculating-state")).toBeVisible();
+  await ask(page, "Can I afford a £650 trip next month?");
+  await expect(page.getByTestId("interpreting-state")).toBeVisible();
   releaseResponse?.();
   await expect(page.getByTestId("scenario-result")).toBeVisible();
 });
 
-test("renders sentinel presentation exactly and ignores non-derivable raw financial data", async ({
-  page
-}) => {
-  await page.route(API_ROUTE, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(sentinelResponse())
-    });
+test("renders sentinel presentation verbatim and ignores non-presented raw money", async ({ page }) => {
+  await page.route(MESSAGE_ROUTE, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sentinelTurn()) });
   });
-  await page.goto("/ask");
-  await expect(page.getByRole("heading", { name: "Noticeable trade-off — SERVER SENTINEL" })).toBeVisible();
+  await ask(page, "Can I afford a £650 trip next month?");
+  await expect(page.getByText("SERVER_SUMMARY_SENTINEL")).toBeVisible();
   await expect(page.getByTestId("cash-after")).toHaveText("£237 SERVER");
   await expect(page.getByTestId("buffer-after")).toHaveText("£237 SERVER");
   await expect(page.getByTestId("buffer-recovery")).toHaveText("January 2031 SERVER");
