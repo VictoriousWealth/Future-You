@@ -7,6 +7,11 @@
 **Behavioural dependencies:** `simulation-rules-specification.md`, `golden-path-conversation-specification.md`, `golden-path-ui-mapping.md`  
 **Out of scope for this document:** Frontend, backend, database, model/provider and deployment architecture
 
+**Slice 6 scoped amendment:** `shared-product-surfaces-slice-6.md` is authoritative for Home, Goals and
+Benefits. Only persisted active facts or authoritative opportunity records may be shown. The current
+Sarah store contains an active 3%/3% pension fact but no 5% match ceiling or season-ticket-loan record,
+so those opportunities are not part of the canonical product surfaces.
+
 ## 0. Scope language
 
 This specification uses:
@@ -74,7 +79,7 @@ Authentication
   → before/after impact
   → £500 and £400 options
   → October option
-  → incomplete employer opportunity
+  → informational Benefits state from persisted facts
   → return to current path
 ```
 
