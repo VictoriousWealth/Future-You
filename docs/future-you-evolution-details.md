@@ -498,3 +498,30 @@
     - Future You needed to prove that conversation improves access to deterministic decisions without becoming a calculator, leaking financial context to a provider, weakening RLS or postponing the supplied visual identity to a later polish slice.
   - Effect on Future You:
     - The complete Sarah conversation now produces the frozen £650, £500, £400 and October paths, explains the selected stored run, returns to the unchanged current path and survives refresh. Unit, integration, PostgreSQL, browser, build, bundle-boundary, generated-artifact and formatting gates pass with no skipped tests. The authorised live-provider evaluation remains explicitly blocked until an approved API credential and model configuration are supplied; Slice 6 has not started.
+
+- **Future refinement — Slice 6 product-surface data authority frozen**
+  - What changed:
+    - The persisted Sarah and workplace contracts were audited before Home, Goals or Benefits application code was written.
+  - Previous approach:
+    - The supplied Home mockup and older walkthrough could be read as permission to show a missed 5% pension match or season-ticket loan from Sarah's workplace name.
+  - New approach:
+    - Sarah's context authoritatively records only an active 3% employee and 3% employer pension fact, already reflected in net pay and not spendable cash. No 5% match ceiling or season-ticket-loan record exists. A workplace association is separate, user-provided, unverified and unable to imply availability or eligibility.
+    - Home shows an opportunity preview only when an authoritative opportunity record exists. Goals preserves confirmed current balances while reading baseline/scenario dates from the current projection or immutable stored run. Historical run previews stay paired with their original context and baseline.
+  - Why it changed:
+    - A polished prototype must not turn employer branding, plausible mock data or a hypothetical benefit into financial authority.
+  - Effect on Future You:
+    - The supporting surfaces can be useful and visually complete without weakening the core distinction between current facts, viewed what-ifs and opportunities.
+
+- **Future refinement — Slice 6 shared product shell and read surfaces implemented**
+  - What changed:
+    - Home, Goals, Ask and Benefits now form one authenticated mobile product with real routes, one fixed navigation and consistent current-plan identity.
+  - Previous approach:
+    - Ask was the only visually implemented product destination; the other navigation items were placeholders and the root always opened Ask.
+  - New approach:
+    - Root routing sends unauthenticated users to login, users without context to onboarding and ready users to decision-first Home. Screens 4 and 5 shape Home, screen 6 shapes Goals and the Slice 5 design system supplies the shared shell and Benefits treatment.
+    - Four private no-store read endpoints return explicit JSON-safe surface DTOs. Goal money, ratios, progress fills, completion labels and stored-run delays are produced on the server. Browser components apply those values verbatim and import no simulator, persistence adapter or provider.
+    - Goals can open a stored £650 what-if without recalculation or commitment. Benefits reads only current context and workplace facts, calls neither the simulator nor a model, and exposes honest no-workplace/no-verified-data states.
+  - Why it changed:
+    - The working deterministic core and Ask journey needed to become a coherent demonstrable product while preserving every authority and isolation boundary established in Slices 1–5.
+  - Effect on Future You:
+    - A user can move from a decision-first Home into Ask, inspect how a stored decision affects their destinations in Goals, and distinguish active benefit facts from unknown opportunities without any screen becoming a second financial calculator.
