@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import type {
   ConversationDetailDTO,
@@ -11,6 +10,7 @@ import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
 import { ConversationResultView } from "./conversation-result-view";
 import { SignOutButton } from "../../auth/sign-out-button";
 import type { BrowserSupabaseConfiguration } from "../../auth/browser-supabase-client";
+import { ProductShell } from "../../product-shell/product-shell";
 
 type RequestState =
   | Readonly<{ status: "idle" }>
@@ -47,31 +47,22 @@ function AskIcon({ name }: Readonly<{ name: string }>) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 3 7-9"/><path d="M16 6h4v4"/></svg>;
 }
 
-function BottomNavigation() {
-  return (
-    <nav className="fy-bottom-nav" aria-label="Product navigation">
-      <Link href="/" aria-label="Home"><AskIcon name="path"/><span>Home</span></Link>
-      <Link href="/" aria-label="Goals"><AskIcon name="calendar"/><span>Goals</span></Link>
-      <Link href="/ask" className="active" aria-current="page"><span className="fy-nav-active"><AskIcon name="spark"/></span><span>Ask</span></Link>
-      <Link href="/" aria-label="Benefits"><AskIcon name="card"/><span>Benefits</span></Link>
-    </nav>
-  );
-}
-
 export function AskConversationShell({
   displayName,
   configuration,
   initialList,
-  initialConversation
+  initialConversation,
+  initialPrompt = ""
 }: Readonly<{
   displayName: string;
   configuration: BrowserSupabaseConfiguration;
   initialList: ConversationListResponseDTO;
   initialConversation: ConversationDetailDTO | null;
+  initialPrompt?: string;
 }>) {
   const [list, setList] = useState(initialList);
   const [conversation, setConversation] = useState(initialConversation);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialPrompt);
   const [request, setRequest] = useState<RequestState>({ status: "idle" });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scenarioOpen, setScenarioOpen] = useState(false);
@@ -156,13 +147,16 @@ export function AskConversationShell({
 
   const isInitial = (!conversation || conversation.messages.length === 0) && request.status === "idle";
   return (
-    <main className={`fy-ask-shell ${isInitial ? "is-initial" : "is-conversation"}`} data-testid="ask-visual-shell">
-      <header className="fy-app-header">
-        <div className="fy-wordmark"><span>FUTURE</span><strong>YOU</strong><i>AI</i></div>
+    <ProductShell
+      active="ask"
+      className={`fy-ask-shell ${isInitial ? "is-initial" : "is-conversation"}`}
+      testId="ask-visual-shell"
+      headerAction={(
         <button type="button" className="fy-history-button" aria-label="Open conversation history" onClick={() => setHistoryOpen(true)}>
           <span/><span/><span/>
         </button>
-      </header>
+      )}
+    >
 
       <div className="fy-context-pill" data-testid="context-pill">
         <span aria-hidden="true"/> {conversation?.conversation.contextIsCurrent === false ? "Earlier financial plan" : "Current plan active"}
@@ -227,7 +221,6 @@ export function AskConversationShell({
         <input id="ask-message" value={message} maxLength={1000} onChange={(event) => setMessage(event.target.value)} placeholder="Ask Future You..." disabled={request.status === "sending"}/>
         <button type="submit" aria-label="Send message" disabled={!message.trim() || request.status === "sending"}>↑</button>
       </form>
-      <BottomNavigation/>
 
       {historyOpen && (
         <div className="fy-sheet-backdrop" role="presentation" onMouseDown={() => setHistoryOpen(false)}>
@@ -261,6 +254,6 @@ export function AskConversationShell({
           </section>
         </div>
       )}
-    </main>
+    </ProductShell>
   );
 }
