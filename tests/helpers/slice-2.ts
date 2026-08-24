@@ -7,6 +7,8 @@ import {
 import { SARAH_V1_CONTEXT } from "../../src/fixtures/sarah-v1";
 import { SarahV1ContextSource } from "../../src/infrastructure/context/sarah-v1-context-source";
 import { InMemorySimulationRunStore } from "../../src/infrastructure/runs/in-memory-simulation-run-store";
+import { createSimulatorApplication } from "../../src/server/simulator-application";
+import type { AuthenticatedApplicationResolver } from "../../src/server/authenticated-application";
 
 export function slice2TestDependencies(): SimulatorApplicationDependencies {
   return {
@@ -19,6 +21,13 @@ export function slice2TestDependencies(): SimulatorApplicationDependencies {
 }
 
 export const SARAH_CONTEXT_VERSION = SARAH_V1_CONTEXT.version;
+
+const routeTestApplication = createSimulatorApplication(slice2TestDependencies());
+
+export const authenticatedSlice2Resolver: AuthenticatedApplicationResolver = async () => ({
+  principal: { userId: "slice-2-route-test-user" },
+  application: routeTestApplication
+});
 
 export function containsRuntimeBigInt(value: unknown): boolean {
   if (typeof value === "bigint") return true;
