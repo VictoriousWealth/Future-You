@@ -81,6 +81,8 @@ export interface LockedGoalAllocation {
   readonly period: YearMonth;
   readonly goalId: string;
   readonly amount: Money;
+  /** CONFIRMED is the canonical default retained for Sarah v1 compatibility. */
+  readonly evidenceState?: "ESTIMATED";
 }
 
 export interface GoalAllocationPolicy {
