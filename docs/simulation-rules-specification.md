@@ -71,6 +71,10 @@ For every current account, context includes:
 - Whether the account participates in the forecast
 - Any amount reserved for the active spending cycle
 
+For a context captured after an active cycle has begun, the reserved amount is explicitly supplied as
+the remaining reserve from the snapshot point until the next funding event. It is not inferred or
+prorated from the normal complete-cycle spending amount.
+
 The simulator MUST distinguish:
 
 - **Actual current-account balance:** cash currently present.
@@ -82,6 +86,10 @@ For Sarah at the start of September 2026:
 - Actual current-account balance: £2,750
 - Reserved September routine spending: £1,850
 - Unallocated safety buffer: £900
+
+Sarah's snapshot is at the start of her active cycle, so her £1,850 remaining reserve happens to equal
+one complete future-cycle spending envelope. That equality is fixture-specific and MUST NOT become a
+general-user default.
 
 #### Savings
 
@@ -274,6 +282,16 @@ Known fixed bills use their due dates. An undated monthly spending envelope is s
 
 This is a system assumption. It gives deterministic intra-month cash flow without claiming that the user spends identically every day.
 
+For an opening partial cycle, spending before the context snapshot MUST NOT be generated again. The
+declared remaining active-cycle reserve is the authoritative total spending still reserved through the
+next funding event. Known current-cycle items consume that reserve; only the unitemised remainder is
+spread from the snapshot through the funding event. Itemised amounts plus the spread remainder MUST
+equal the declared reserve. The complete routine-spending envelope begins with the next fully funded
+cycle.
+
+If the snapshot and funding event share a date, the existing conservative event ordering controls and
+the timing assumption is disclosed. The engine MUST NOT introduce an undocumented ordering.
+
 ### 2.6 Payday dates
 
 A recurrence such as “last working day” MUST use the user's jurisdictional working-day calendar. If the jurisdiction or holiday calendar is unknown, Monday-to-Friday is used provisionally and disclosed.
@@ -439,6 +457,13 @@ A goal-allocation policy consists of:
 - An overflow destination or a retain-as-cash fallback
 - Any current-cycle transfers already locked as confirmed events
 
+The normal contribution budget is derived as the sum of the active ordered allocation slots' normal
+caps. It is not an independently editable input:
+
+> Normal contribution budget = sum of active goal slot caps
+
+A constructed or persisted policy whose budget does not equal that sum is invalid.
+
 The allocation order is a cash-flow rule. It is separate from emotional importance, display order or target-date urgency.
 
 ### 5.2 Locked current-cycle transfers
@@ -448,6 +473,12 @@ A transfer already marked as committed for the active cycle executes as a ledger
 Automatic buffer restoration applies to future uncommitted allocation events. It does not retroactively cancel a committed transfer.
 
 Sarah's £600 September goal transfers are locked in both the baseline and £650-trip scenario. This is why the trip first reduces her buffer to £250 rather than automatically cancelling September savings.
+
+Onboarding MUST explicitly record either that no active-cycle transfers are committed or a list of
+committed transfers with goal, exact amount, effective date or funding-event dependency, and evidence.
+An omitted declaration is unknown, not “none.” Normal slot caps and the derived budget never imply a
+locked transfer. A locked transfer consumes the allocation event and MUST NOT be followed by a second
+automatic allocation for that same event; future uncommitted events resume the normal policy.
 
 ### 5.3 Allocation algorithm
 
@@ -505,6 +536,12 @@ Her ordered slots are:
 3. Emergency fund: up to £300
 
 Her overflow destination is the house deposit.
+
+The £600 budget is derived under the general invariant: £200 house-deposit cap + £100 holiday cap +
+£300 emergency-fund cap. Her explicit locked September transfers are £200, £100 and £300 after the
+September payday. Her opening £1,850 reserve and £2,750 cleared cash still derive a £900 current safety
+buffer. These mappings preserve every frozen Sarah result without supplying a Sarah-specific default
+to ordinary users.
 
 Therefore:
 
