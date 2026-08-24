@@ -11,7 +11,7 @@ import {
 } from "../../application/mappers/error-to-dto";
 
 const JSON_HEADERS = {
-  "Cache-Control": "no-store",
+  "Cache-Control": "private, no-store, max-age=0",
   "Content-Type": "application/json; charset=utf-8"
 } as const;
 
@@ -38,24 +38,33 @@ export function applicationErrorResponse(
   error: ApplicationError,
   correlationId: string
 ): NextResponse<ApiErrorResponseDTO> {
-  const status =
-    error.code === "CONTEXT_NOT_FOUND"
-      ? 404
-      : error.code === "CONTEXT_VERSION_MISMATCH"
-        ? 409
-        : error.code === "SIMULATION_RUN_NOT_FOUND"
-          ? 404
-          : error.code === "INTERNAL_SIMULATOR_FAILURE"
-            ? 500
-            : error.code === "SIMULATION_REJECTED" ||
-                error.code === "MATERIAL_INFORMATION_MISSING" ||
-                error.code === "HORIZON_EXHAUSTED" ||
-                error.code === "UNSUPPORTED_SCENARIO_TYPE"
-          ? 422
-          : error.code === "INVALID_MONEY"
-            ? 400
-            : 500;
+  const status = applicationErrorStatus(error.code);
   return jsonResponse(applicationErrorToDTO(error, correlationId), status);
+}
+
+function applicationErrorStatus(code: ApplicationError["code"]): number {
+  switch (code) {
+    case "FINANCIAL_CONTEXT_NOT_FOUND":
+    case "CONTEXT_VERSION_NOT_FOUND":
+    case "RUN_NOT_FOUND":
+      return 404;
+    case "CONTEXT_VERSION_MISMATCH":
+    case "IDEMPOTENCY_KEY_REUSED":
+      return 409;
+    case "PERSISTENCE_FAILURE":
+      return 503;
+    case "SIMULATION_REJECTED":
+    case "MATERIAL_INFORMATION_MISSING":
+    case "HORIZON_EXHAUSTED":
+    case "UNSUPPORTED_SCENARIO_TYPE":
+      return 422;
+    case "INVALID_MONEY":
+      return 400;
+    case "PERSISTED_DATA_INVALID":
+    case "PERSISTED_SCHEMA_UNSUPPORTED":
+    case "INTERNAL_SIMULATOR_FAILURE":
+      return 500;
+  }
 }
 
 export function internalSimulatorErrorResponse(correlationId: string): NextResponse<ApiErrorResponseDTO> {
