@@ -389,3 +389,35 @@
     - The product needs executable evidence that scenario numbers are reproducible, that overdraft and opportunities do not become cash, and that alternative branches cannot mutate Sarah's current path or one another.
   - Effect on Future You:
     - The frozen baseline, £650 decision, £500 and £400 options, and October timing path now come from one tested deterministic engine. Slice 2 can be reviewed against a stable domain boundary without importing UI, persistence or AI concerns into financial truth.
+
+- **Future refinement — Slice 2 JSON and browser boundary proven**
+  - What changed:
+    - The deterministic simulator gained a framework-facing application boundary and a minimal browser proof without adding persistence, authentication, conversation or AI.
+  - Previous approach:
+    - Slice 1 could reproduce Sarah entirely in TypeScript, but its `bigint` values and domain structures could not be sent directly through JSON, and there was no executable proof that a browser would render rather than recalculate the result.
+  - New approach:
+    - Domain money remains integer `bigint` pence while API money and rational metrics use decimal strings. Dates remain local date/month strings, and every successful envelope carries explicit API/schema, context, scenario, rules, calendar, application, horizon, assumption and reproducibility metadata.
+    - Strict runtime schemas reject numeric/fractional/negative/foreign-currency money, unsupported shapes, stale context versions and client-supplied calculated fields. Baseline, scenario and correlation identities are server-derived and stable for the same command.
+    - Replaceable application use cases load current context through a narrow port. Slice 2 supplies Sarah through a temporary immutable source, while versioned Route Handlers expose only current context, baseline generation and one-off purchase simulation.
+    - The minimal Ask shell receives serialisable presentation data and contains no financial simulator import or `bigint` calculation. Browser tests render both the real Sarah result and server-controlled sentinel values, proving the displayed figures come from the response.
+    - ESLint and executable import-direction tests keep domain, application, Route Handler and browser responsibilities separate.
+  - Why it changed:
+    - The product needs a safe and reviewable server/browser contract before authentication and persistence can be added. Explicit mapping prevents accidental `bigint` serialization failures and blocks UI or request payloads from becoming a second source of financial truth.
+  - Effect on Future You:
+    - Sarah's £650 result now crosses a real versioned JSON endpoint and renders in Chromium with its identity, assumptions and source versions intact. Slice 3 can replace the temporary context source and add ownership without changing simulator mathematics or allowing the browser to calculate outcomes.
+
+- **Future refinement — Slice 2 expanded to the complete alternatives and serialization contract**
+  - What changed:
+    - The initial Slice 2 boundary proof was completed against the full approved message, including amount/timing operations, run retrieval, scenario comparison, scenario selection and exhaustive calendar/serialization metadata.
+  - Previous approach:
+    - The first boundary pass exposed current context, baseline and the £650 one-off result, represented API money with a decimal string only, and rendered a single hypothetical result.
+  - New approach:
+    - API money now carries canonical `minorUnits` strings plus server-produced `display` text; ratios retain exact numerator/denominator strings plus deterministic basis points and display text.
+    - Calculation metadata includes run, baseline, scenario, parent, context, rules, calendar and horizon identity. The response states the 2026–2028 committed calendar coverage, whether it was used, whether weekday fallback was used and the first fallback period. Goal completions beyond coverage identify the fallback source instead of implying a confirmed holiday calendar.
+    - Thin use cases and Route Handlers now cover current path, £650 simulation, £500/£400 amount siblings, the October timing sibling, comparison, five-option listing and process-local JSON run retrieval. Sarah remains behind a replaceable context port; the process-local run store contains DTOs rather than domain objects.
+    - The minimal Ask proof displays Your current path, £650 trip, £500 option, £400 option and Go in October. Selecting one changes view state only. A static dependency rule blocks client imports of simulator, fixture, use-case and mapper modules, while sentinel tests prove the browser does not recalculate money, severity, recovery or goal dates.
+    - Strict validation and a stable sanitised error envelope distinguish invalid money, unsupported currency/scenario, missing or stale context, missing information, horizon exhaustion, missing runs and internal failure. Recursive tests reject `bigint`, dates, collections, functions and undefined required fields from API JSON.
+  - Why it changed:
+    - The complete Slice 2 gate requires proof that the entire frozen option set can cross the server/browser boundary reproducibly, not only the first £650 result, and that long-horizon calendar uncertainty remains visible.
+  - Effect on Future You:
+    - Sarah's current path and four evaluated what-if choices now cross one explicit JSON authority with immutable ancestry and render without browser arithmetic. Persistence and identity can replace only the temporary ports in Slice 3; the simulator, DTO semantics and renderer-authority rule remain unchanged.
