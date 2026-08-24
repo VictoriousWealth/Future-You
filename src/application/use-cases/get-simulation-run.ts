@@ -11,7 +11,7 @@ export class GetSimulationRunUseCase {
     return result
       ? ok(result)
       : err({
-          code: "SIMULATION_RUN_NOT_FOUND",
+          code: "RUN_NOT_FOUND",
           message: "The requested simulation run was not found.",
           missingFields: []
         });
