@@ -157,7 +157,7 @@ Desired result:
 Completion check:
 
 - Do not remove useful privacy information without an explicit content decision.
-- Preserve the existing Sign in and Create account destinations.
+- Preserve the existing `/login` and `/signup` destinations behind the approved Login and Register labels.
 
 ### UI-06 — Reproduce the Login/Signup curved-header geometry
 
@@ -357,7 +357,7 @@ Completion check:
 Implementation under review:
 
 - The reusable compact lockup now renders at 20px and always places the angular symbol before the name.
-- The angular symbol now uses the supplied transparent logo PNG rather than a CSS approximation, preserving the source artwork's proportions.
+- The angular symbol now uses the supplied SVG logo rather than a CSS approximation, preserving the source artwork's proportions at every size.
 - Login, Signup, onboarding, settings, Home, Goals, and Benefits show `FutureYou` without the `AI` suffix.
 - Ask initial and conversation states show `FutureYou AI`.
 - Welcome retains the full-size angular identity mark with `Future You`.
@@ -475,7 +475,8 @@ These items were already reviewed and should not be reopened incidentally while 
 - Horizontal goal bars use the cyan-blue gradient, staccato separators, 1.5× height, and a flat right edge until the server supplies `100%`.
 - Interactive arrow glyphs use the mockup-style rotated triangle.
 - Visible text and meaningful icons follow the Apple-aligned size floors and scaling checks.
-- The shared angular brand symbol uses the supplied transparent logo artwork rather than reconstructed CSS bars.
+- The shared angular brand symbol uses the supplied SVG artwork rather than reconstructed CSS bars.
+- Welcome now presents only the core identity and Login/Register actions; its three promotional copy blocks were deliberately removed.
 
 ## Working method
 
