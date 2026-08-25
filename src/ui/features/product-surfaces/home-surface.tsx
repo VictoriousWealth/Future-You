@@ -48,7 +48,7 @@ export function HomeSurface() {
         <>
           <ContextPill label={`${data.context.label} active`}/>
           <section className="fy-home-intro">
-            <p className="fy-personal-greeting">Welcome back,<br/><strong>{data.displayName}!</strong></p>
+            <h1 className="fy-personal-greeting">Welcome back,<br/><strong>{data.displayName}!</strong></h1>
             <p className="fy-home-question">What are you thinking about?</p>
             <Link className="fy-home-hero" href={`/ask?prompt=${encodeURIComponent(DECISIONS[0].prompt)}`}>
               <span className="fy-home-spark" aria-hidden="true">✦</span>
@@ -76,7 +76,9 @@ export function HomeSurface() {
               <i>{data.safetyBuffer.statusLabel}</i>
             </article>
             <div className="fy-home-goals">
-              {data.goals.map((goal) => <GoalCard goal={goal} compact key={goal.id}/>) }
+              {data.goals.length > 0
+                ? data.goals.map((goal) => <GoalCard goal={goal} compact key={goal.id}/>)
+                : <section className="fy-inline-empty"><strong>No goals are confirmed yet.</strong><span>Add them through your financial-context settings before modelling their dates.</span></section>}
             </div>
           </section>
 
