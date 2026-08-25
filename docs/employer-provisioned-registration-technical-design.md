@@ -1,7 +1,7 @@
 # Future You — Employer-Provisioned Registration Technical Design
 
-**Version:** 0.1.0-proposal
-**Status:** Proposed for review; no implementation authorised
+**Version:** 1.1.0
+**Status:** Implemented; clean-state evidence recorded in `employer-provisioned-registration-evidence-report.md`
 **Product authority:** `employer-provisioned-registration-contract.md`
 **Prepared:** 2026-08-25
 **Scope:** Employer provisioning, first-time activation, personal account creation and registration/onboarding handoff
@@ -29,7 +29,24 @@ The browser never receives a Supabase secret key, provisioning-row identity, cod
 
 This design recommends a narrowly isolated privileged registration adapter because first-time users are not yet authenticated and Supabase Auth administrative user creation is server-only. The adapter may invoke only approved registration database functions and Supabase Auth Admin operations; it must never become the client used by Home, Ask, Goals, Benefits, onboarding confirmation or simulation.
 
-## 2. Current repository baseline
+## 1.1 Locked first-implementation decisions
+
+- Personal email must differ from the verified work email.
+- Existing-account employer linking is deferred; an existing personal email produces neutral Login/recovery guidance and no duplicate account or automatic membership.
+- Provisions are valid for 30 days from issuance, immutable in identity, retained after expiry/revocation/claim and reissued only as new records.
+- Only one claimable provision may exist per employer + normalised work email.
+- Work-email codes are six numeric digits, expire after 10 minutes, allow 5 failed attempts, use a 60-second resend cooldown, allow 3 resends per hour and at most 10 sends per 24 hours.
+- Every resend invalidates every earlier unconsumed code for that registration attempt.
+- Work-email activation state expires after 30 minutes of inactivity, rotates at important transitions and is invalidated by account activation or changing workplace details.
+- Personal-email confirmation may happen alongside onboarding, but both confirmation and onboarding completion gate full-app access.
+- Unused provisions can be revoked immediately. Post-activation revocation may deactivate membership/opportunities but cannot delete or transfer the personal account or financial data and does not automatically remove personal Login access.
+- One verified active employer membership per user is supported. Employer changes, multiple memberships, email changes and account linking are deferred.
+- Loss of work-email access cannot bypass pre-activation verification; after activation, routine Login continues through personal email/password.
+- Provisioning uses controlled seed data, a restricted import or a narrowly scoped operational script; no employer portal is included.
+
+These values are configuration-backed and versioned rather than duplicated through application code.
+
+## 2. Pre-implementation repository baseline
 
 The current release candidate has the following relevant behaviour:
 
@@ -98,7 +115,7 @@ The registration-only adapter:
 
 This is a deliberate, auditable exception for pre-auth account activation, not a weakening of ordinary RLS.
 
-## 5. Proposed persistence model
+## 5. Persistence model
 
 Names are proposals; constraints and ownership semantics are normative for the eventual design.
 
@@ -137,7 +154,7 @@ The response to an initial request must not reveal whether the Company ID exists
 | `work_email_fingerprint text` | Keyed lookup/audit fingerprint that is safe to log only in abbreviated form |
 | `external_reference text null` | Optional employer-controlled idempotency reference, not an employee identifier returned to the browser |
 | `status text` | `ELIGIBLE`, `CLAIMED`, `REVOKED` or `EXPIRED` |
-| `available_from`, `expires_at` | Eligibility window |
+| `available_from`, `expires_at` | Eligibility window; first version expires 30 days after issuance |
 | `revoked_at`, `revocation_reason_code` | Explicit revocation evidence |
 | `claimed_user_id uuid null` | Supabase Auth user after atomic claim |
 | `claimed_at timestamptz null` | Claim time |
@@ -151,7 +168,7 @@ Required constraints:
 - A claim cannot change owners.
 - An eligible record cannot be deleted through ordinary runtime operations.
 - Concurrent claims serialise on the provision row.
-- Re-provisioning semantics remain unresolved in section 23.
+- A new provision is permitted only after the preceding record is expired, revoked or consumed; a new row is always created.
 
 ### 5.4 `private.registration_attempts`
 
@@ -200,7 +217,7 @@ This replaces verified use of the legacy `workplace_associations` table.
 | `employer_id uuid` | Verified employer |
 | `provision_id uuid unique` | One-time source record |
 | `work_email_normalized text` | User-visible verified work address |
-| `status text` | Initially `ACTIVE`; later lifecycle is unresolved |
+| `status text` | `ACTIVE` or `INACTIVE`; deactivation removes employer opportunities but not the personal account/data |
 | `source text` | Fixed to `employer_provisioned` |
 | `verified_at`, `created_at`, `updated_at` | Provenance |
 
@@ -285,15 +302,13 @@ HMAC-SHA-256(
 
 Store the digest, salt and key version; keep the pepper outside the database in server secret management. Compare in constant time. Key rotation must preserve verification for unexpired challenges only.
 
-### 7.3 Proposed operational limits
-
-These are recommendations requiring approval:
+### 7.3 Locked operational limits
 
 - code expiry: 10 minutes;
 - maximum failed verification attempts per issued code: 5;
 - resend cooldown: 60 seconds;
-- maximum resends: 5 per hour and 10 per provision per day;
-- activation-token expiry after successful work verification: 30 minutes.
+- maximum resends: 3 per hour and 10 code sends per provision within 24 hours;
+- activation-token inactivity expiry after successful work verification: 30 minutes.
 
 The database enforces the counters and timestamps atomically. Provider-level limits supplement rather than replace application limits.
 
@@ -350,7 +365,7 @@ Only a digest is stored. It is bound to:
 - current state and expiry; and
 - the personal-account creation request once reserved.
 
-It is one-time for account creation. It is not an Auth session, bearer credential for the full app or proof of financial-data ownership.
+It rotates after important stage transitions and its inactivity window is refreshed only by an accepted registration action. Selecting `Change workplace details` invalidates it and starts a new work-verification attempt. It is invalid after account activation. It is not an Auth session, bearer credential for the full app or proof of financial-data ownership.
 
 ## 10. Personal Supabase Auth identity
 
@@ -429,7 +444,7 @@ No recovery path stores or replays the chosen password. If the Auth operation ou
 
 Supabase personal-email confirmation remains distinct from work-email eligibility verification.
 
-Recommended product-fitting approach:
+Approved product flow:
 
 - create an unconfirmed personal Auth identity and send the Supabase confirmation link/OTP;
 - allow an onboarding draft through the existing verified registration session, not through a full authenticated financial-data session;
@@ -438,9 +453,7 @@ Recommended product-fitting approach:
 - create no immutable financial-context version until the confirmed Auth user explicitly reviews and confirms onboarding; and
 - block Home, Ask, Goals, Benefits and normal financial APIs until personal email and onboarding are complete.
 
-This preserves “confirmation alongside onboarding” without falsely marking the personal email confirmed or granting unconfirmed users ordinary RLS access.
-
-However, whether onboarding begins before personal-email confirmation is explicitly unresolved. The simpler alternative is to block onboarding until the confirmation link is used. Section 23 requests approval before implementation.
+This preserves “confirmation alongside onboarding” without falsely marking the personal email confirmed or granting unconfirmed users ordinary RLS access. Onboarding and personal-email confirmation may finish in either order; Home, Ask, Goals, Benefits and ordinary financial APIs remain blocked until both are complete.
 
 ## 13. Identity separation
 
@@ -487,11 +500,11 @@ Existing owner-scoped RLS remains unchanged. Employer, provision and membership 
 - Add an allowlist-based repository boundary test so the credential may appear only in the registration Auth Admin adapter and deployment configuration.
 - Continue asserting that all ordinary application modules contain no bypass-RLS credential or client.
 
-## 15. Registration API proposal
+## 15. Registration API
 
 Exact field names may follow repository DTO conventions; behaviours are normative.
 
-### `POST /api/v1/registration/challenges`
+### `POST /api/v1/registration/attempts`
 
 Request:
 
@@ -507,33 +520,33 @@ Response for both real and decoy attempts: `202`, private/no-store.
 
 ```json
 {
-  "schemaVersion": "fy-registration/1.0.0",
+  "schemaVersion": "employer-registration-attempt/1.0.0",
   "registrationId": "opaque-id",
-  "state": "CODE_PENDING",
-  "maskedDestination": "e•••••••@example.test",
-  "resendAvailableAt": "trusted timestamp"
+  "accepted": true,
+  "maskedWorkEmail": "e•••••••@example.test",
+  "nextStep": "VERIFY_WORK_EMAIL"
 }
 ```
 
-### `POST /api/v1/registration/:registrationId/verification`
+### `POST /api/v1/registration/attempts/:registrationId/work-code-verifications`
 
 Accepts request ID and six-digit code. A valid code returns `WORK_EMAIL_VERIFIED`; invalid, expired and decoy cases use sanitised bounded outcomes without provisioning detail.
 
-### `POST /api/v1/registration/:registrationId/resend`
+### `POST /api/v1/registration/attempts/:registrationId/work-code-resends`
 
 Always returns a neutral accepted envelope when request shape/rate limit permits. An accepted real resend invalidates the prior code before delivery.
 
-### `POST /api/v1/registration/:registrationId/account`
+### `POST /api/v1/registration/attempts/:registrationId/personal-account`
 
 Accepts request ID, personal email, password and confirmation. Requires the HttpOnly activation cookie. Password and confirmation are validated in memory, passed only to Auth Admin and never persisted/logged. Success returns a personal-confirmation/onboarding state, not raw Auth data.
 
-### `GET /api/v1/registration/:registrationId/status`
+### `GET /api/v1/registration/status`
 
 Requires the registration cookie. Returns only the current user-facing state and next allowed action.
 
-### Personal-email confirmation callback
+### Personal-email confirmation and resend
 
-A dedicated server callback validates the Supabase confirmation code using the SSR/PKCE-compatible flow, refreshes secure cookies, verifies the Auth user matches the claimed registration, then routes to onboarding or the pending onboarding draft. Redirect allowlists are exact.
+`POST /api/v1/registration/attempts/:registrationId/personal-email-verifications` validates the source code through a request-scoped Supabase Auth client and establishes the cookie-authenticated personal session. The sibling `personal-email-resends` endpoint reserves each resend under the database cooldown/hour/day limits before requesting a replacement code.
 
 ### Common API rules
 
@@ -545,7 +558,7 @@ A dedicated server callback validates the Supabase confirmation code using the S
 - generic errors;
 - no owner/employer/provision ID accepted as authority from the browser;
 - no raw provider payloads or links;
-- bounded rate limiting backed by shared Postgres state rather than process memory; and
+- bounded request-size and per-process/IP abuse limiting, supplemented by authoritative per-attempt cooldown/hour/day limits in Postgres; and
 - no email/code/password/request-body logging.
 
 ## 16. Screen and route-state mapping
@@ -589,17 +602,17 @@ A dedicated server callback validates the Supabase confirmation code using the S
 - only minimum financial context is collected; and
 - the app shell remains unavailable until the required confirmation/completion gates pass.
 
+The personal-account screen validates that personal email and verified work email are different and explains the distinction before submission. A collision with an existing personal account never creates a duplicate or attaches membership; it produces neutral Login/account-recovery guidance.
+
 The registration UI state is server returned. The browser may validate presentation constraints but does not decide eligibility, verification, claim or access state.
 
 ## 17. Controlled provisioning mechanism
 
-The first implementation should provide a committed, reproducible, server-only provisioning command rather than a dashboard-only manual process.
-
-Proposed operation:
+The first implementation provides committed, reproducible, server-only single-record operations rather than a dashboard-only manual process:
 
 ```text
-npm run registration:provision -- --input approved-employees.csv --dry-run
-npm run registration:provision -- --input approved-employees.csv --apply
+npm run registration:provision -- <company-id> <work-email> [external-reference]
+npm run registration:revoke -- <provision-id> <reason-code>
 ```
 
 The future command must:
@@ -608,8 +621,7 @@ The future command must:
 - refuse unknown or production targets without an explicit production approval mechanism;
 - validate Company ID, work-email syntax, expiry and external idempotency reference;
 - show counts and masked examples only;
-- support dry-run by default;
-- be idempotent by employer + external reference;
+- prevent a second claimable row for the same employer + normalised work email;
 - never overwrite claimed records;
 - record who/what provisioned each row;
 - avoid printing complete work emails; and
@@ -633,6 +645,8 @@ Future implementation requirements:
 - No registration migration recalculates or rewrites financial contexts, scenarios, runs or conversations.
 
 Before a public release, the product must decide whether legacy controlled-demo accounts remain permitted outside local/evaluator environments.
+
+Legacy seeded access is explicitly permitted only for the existing controlled demonstration and automated test environments in this implementation slice.
 
 ## 19. Security and abuse cases
 
@@ -738,42 +752,38 @@ Additional browser cases cover wrong code, expiry, resend, reload/resume, exact 
 
 ## 21. Release-status impact
 
-The approved release remains:
+The controlled-demo MVP tag remains preserved at `mvp-rc-controlled-demo-2026-08-25`. Track A replaces the former public Register implementation and satisfies the employer-provisioned registration contract in the verified local/test configuration.
 
-> MVP release candidate for controlled demonstration using seeded identities.
-
-It is not registration compliant and is not ready for open/public or employer rollout.
-
-Completing registration will require a separately approved implementation slice and a new release gate covering email delivery, Auth Admin configuration, migrations, RLS, provisioning operations, abuse controls, accessibility and clean-state browser evidence.
+Production employer rollout still requires production secret provisioning, an approved email-delivery provider, operational monitoring and a deployment-specific acceptance run. The in-memory email sink and test mailbox endpoint are test-only and fail closed outside the loopback `APP_ENV=test` configuration.
 
 The live OpenAI status remains unrelated and unchanged:
 
 > BLOCKED — authorised credential/model configuration unavailable
 
-## 22. Implementation phases recommended after approval
+## 22. Implemented phases
 
-### Phase A — Persistence and fake infrastructure
+### Phase A — Persistence and fake infrastructure — complete
 
 - migrations, state machine, constraints, grants and RLS;
 - deterministic provisioning fixtures;
 - fake mailer and fake Auth Admin ports;
 - unit, integration and pgTAP tests.
 
-### Phase B — Real Auth boundary and recovery
+### Phase B — Real Auth boundary and recovery — complete
 
 - isolated Supabase Auth Admin adapter;
 - Auth hook/trigger claim finalisation;
 - personal-email confirmation callback;
 - failure injection, idempotency and reconciliation tests.
 
-### Phase C — Registration UI and onboarding handoff
+### Phase C — Registration UI and onboarding handoff — complete
 
 - three approved Register states;
 - reload/resume/error/accessibility behaviour;
 - removal of legacy browser `signUp()`;
 - no-employer-field onboarding path for provisioned users.
 
-### Phase D — Operational and release hardening
+### Phase D — Operational and release hardening — complete
 
 - controlled provisioning CLI;
 - email provider configuration;
@@ -781,42 +791,61 @@ The live OpenAI status remains unrelated and unchanged:
 - browser acceptance and complete Slice 1–7 regression;
 - new release evidence report.
 
-No phase starts automatically from this design.
+No Track B implementation is authorised by completion of these phases.
 
-## 23. Explicit unresolved product and operational decisions
+## 23. Locked decisions and remaining operational choices
 
-These questions remain open and must be approved before or during implementation planning. Recommendations are advisory, not silent decisions.
+The product decisions formerly listed here are now locked by section 1.1. The following implementation-detail choices remain reviewable without changing the product contract:
 
-| Question | Recommendation | Why it remains unresolved |
-|---|---|---|
-| May personal email equal work email? | Initially require a distinct personal email | Portability and privacy favour separation, but some users may have no alternative address |
-| What if personal email already belongs to an account? | Require Login and a separately designed authenticated employer-link flow | Creating a duplicate is unsafe; the linking UX is not approved |
-| Can a work email be provisioned again? | Only by explicit admin reissue after an unclaimed record expires/revokes; never duplicate a claimed record | Rehire and correction cases need lifecycle policy |
-| Provisioning expiry | Propose 30 days by default with explicit employer-selected shorter/longer policy | No duration has been approved |
-| Revocation before claim | Block immediately and invalidate attempts | Operational notification and audit policy still need approval |
-| Revocation after claim | Do not silently delete the personal account; define access/retention separately | Employment ending and user data ownership are major product/legal decisions |
-| Multiple employer memberships | Keep one active membership in the first implementation | The canonical contract says initial single membership; future switching/linking is undefined |
-| Personal-email changes | Use authenticated secure email change with confirmation of the new address, potentially both addresses | Exact recovery and employer interaction are unapproved |
-| Work-email changes | Require a new employer-provisioned verification event | Aliases, transfers and employer-domain changes need rules |
-| Loss of work-email access before activation | Employer support/re-provision only | Bypassing work proof would defeat the access contract |
-| Does personal confirmation block onboarding or only full app? | Permit a private registration-bound onboarding draft; block immutable context confirmation and full app until personal confirmation | Best match to approved journey, but adds complexity requiring explicit approval |
-| Code expiry/attempt/resend limits | 10 minutes, 5 attempts, 60-second cooldown, 5/hour | Concrete abuse limits have not been product-approved |
-| Provisioning interface | Start with audited CLI/import, no employer portal | Operational owner and input format are not approved |
-| Email provider and retention | Select through operational/privacy review; retain delivery metadata only | No provider or DPA decision exists |
-| CAPTCHA threshold | Risk-triggered only, never default without usability review | Abuse volumes are not yet known |
-| Legacy seeded accounts outside local review | Keep local/evaluator-only | Public grandfathering could undermine the new access contract |
+| Question | Boundary |
+|---|---|
+| Email provider and retention | Select through operational/privacy review; retain delivery metadata only and never code/password content |
+| CAPTCHA threshold | May be risk-triggered after usability review; never replaces provisioning, rate limits or work-email proof |
+| Import file format and operator identity | Must be deterministic, validated, audited and inaccessible to public users |
+| Exact membership-inactive presentation | Must remove employer-specific opportunities without deleting personal data or implying benefit uptake |
+| Future account linking, employer transition and personal/work-email changes | Explicitly deferred to separately approved contracts |
 
-## 24. Approval gate
+## 24. Implementation completion gate
 
-Before implementation, approval must confirm:
+Track A is complete only when the required product outcomes, security boundaries, clean-state migrations, concurrency/recovery cases, email/confirmation flow, UI journey and complete Slice 1–7 regressions pass without weakening Sarah or financial authority.
 
-- the privileged registration-adapter exception and its isolation;
-- the Auth Admin `generateLink` + database trigger strategy or an approved replacement;
-- the onboarding-before-personal-confirmation decision;
-- provisioning, revocation and re-provisioning rules;
-- personal/work email equality and existing-account handling;
-- code and activation limits;
-- local fixture compatibility; and
-- the proposed implementation phases.
+The evidence is recorded in `employer-provisioned-registration-evidence-report.md`. Track B remains separately gated.
 
-Until then, the current Register surface remains legacy/non-compliant and controlled demonstrations must continue to use seeded identities.
+## 25. As-built implementation record
+
+The implementation uses:
+
+- migration `20260825120000_track_a_employer_registration.sql`;
+- private employer, provision, attempt, idempotency, delivery and audit tables;
+- forced-RLS `public.employer_memberships` with owner-read-only grants;
+- a Before User Created Auth hook that rejects public `signUp()` unless a one-time registration claim or explicitly gated local fixture is present;
+- an atomic Auth insertion trigger that claims one provision and creates one membership;
+- an account-activation profile gate requiring both personal-email confirmation and financial-context confirmation;
+- a server-only registration orchestrator, persistence adapter, Auth Admin adapter, cryptographic security adapter and replaceable mailer;
+- versioned strict request and response DTOs;
+- same-origin, private/no-store registration route handlers;
+- an opaque HttpOnly activation cookie that rotates at work verification and personal-account reservation;
+- deterministic retry, concurrency-follower and pre-Auth compensation behaviour;
+- `/register` workplace, work-code and personal-Login stages;
+- `/register/onboarding` for simultaneous personal confirmation and financial onboarding;
+- `/signup` as a redirect to the canonical Register route;
+- an environment-guarded operational provision/revoke script; and
+- a test-only loopback mailbox that cannot be enabled as a production mail path.
+
+The as-built endpoints are:
+
+```text
+POST /api/v1/registration/attempts
+POST /api/v1/registration/attempts/:registrationId/work-code-verifications
+POST /api/v1/registration/attempts/:registrationId/work-code-resends
+POST /api/v1/registration/attempts/:registrationId/personal-account
+POST /api/v1/registration/attempts/:registrationId/personal-email-verifications
+POST /api/v1/registration/attempts/:registrationId/personal-email-resends
+GET  /api/v1/registration/status
+```
+
+The test-mailbox route exists only when `APP_ENV=test`, the Supabase URL is loopback, memory mail is selected and the dedicated test token matches. It is not a product API.
+
+Public existing-account collisions use `REGISTRATION_PERSONAL_LOGIN_UNAVAILABLE`, neutral Login/recovery wording and no automatic employer linking. `ACCOUNT_EXISTS` remains an internal audited application category only.
+
+The verified employer membership is presented read-only in onboarding and Benefits. It activates no benefit, creates no spendable amount and changes no simulator input or result.
