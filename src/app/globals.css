@@ -1534,7 +1534,7 @@ summary {
   display: grid;
   width: 100%;
   gap: clamp(1rem, 2vh, 1.35rem);
-  margin-top: clamp(5rem, 11vh, 7rem);
+  margin-top: clamp(6.5rem, 16vh, 11rem);
 }
 
 .onboarding-page {
@@ -1754,6 +1754,10 @@ summary {
   .auth-heading h1 { font-size: 4rem; }
   .auth-form { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin-top: 0; }
   .auth-page--welcome .auth-panel { width: min(100%, 42rem); }
+}
+
+@media (min-width: 769px) {
+  .auth-page--welcome .auth-brand-break { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
