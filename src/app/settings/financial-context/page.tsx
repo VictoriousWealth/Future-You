@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthenticationBoundaryError } from "../../../infrastructure/auth/authentication-error";
+import { AccountActivationRequiredError } from "../../../infrastructure/auth/account-activation-error";
 import { publicSupabaseConfiguration } from "../../../infrastructure/supabase/config";
 import { resolveAuthenticatedOnboardingApplication } from "../../../server/authenticated-onboarding-application";
 import { ManualOnboardingFlow } from "../../../ui/features/onboarding/manual-onboarding-flow";
@@ -13,6 +14,7 @@ export default async function CorrectFinancialContextPage() {
   try {
     resolved = await resolveAuthenticatedOnboardingApplication();
   } catch (error) {
+    if (error instanceof AccountActivationRequiredError) redirect("/onboarding");
     if (error instanceof AuthenticationBoundaryError) {
       redirect("/login?next=/settings/financial-context");
     }
