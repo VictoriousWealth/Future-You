@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { HomeSurfaceDTO } from "../../../application/product-surfaces/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
-import { ProductIcon } from "../../product-shell/product-icon";
+import { ActionTriangleIcon, ProductIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
 import { GoalCard } from "./goal-card";
@@ -52,12 +52,12 @@ export function HomeSurface() {
               <span className="fy-home-spark" aria-hidden="true">✦</span>
               <small>Ask Future You</small>
               <strong>{DECISIONS[0].label}</strong>
-              <i aria-hidden="true">→</i>
+              <span className="fy-home-hero-action"><ActionTriangleIcon/></span>
             </Link>
             <div className="fy-home-decisions" aria-label="Supported questions">
               {DECISIONS.slice(1).map((decision) => (
                 <Link className={`fy-home-decision ${decision.tone}`} href={`/ask?prompt=${encodeURIComponent(decision.prompt)}`} key={decision.prompt}>
-                  <ProductIcon name={decision.icon}/><strong>{decision.label}</strong><span aria-hidden="true">→</span>
+                  <ProductIcon name={decision.icon}/><strong>{decision.label}</strong><ActionTriangleIcon/>
                 </Link>
               ))}
             </div>
@@ -87,7 +87,7 @@ export function HomeSurface() {
             </section>
           ) : (
             <Link className="fy-benefits-handoff" href="/benefits">
-              <span>Benefits</span><strong>See the workplace facts in your plan</strong><i aria-hidden="true">→</i>
+              <span>Benefits</span><strong>See the workplace facts in your plan</strong><ActionTriangleIcon/>
             </Link>
           )}
         </>
