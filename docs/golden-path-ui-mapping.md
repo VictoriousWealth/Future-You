@@ -8,6 +8,10 @@
 **Scope:** Screen hierarchy, states, transitions and content  
 **Out of scope:** Frontend, backend, database, LLM and deployment architecture
 
+**Registration-flow supersession:** `employer-provisioned-registration-contract.md` is authoritative
+for Register and Login. The supplied Company ID concept is now retained and expanded into workplace
+details, work-email code verification and personal-account creation before financial onboarding.
+
 ## 0. Closure of unresolved golden-path behaviours
 
 None of the five items blocks this UI mapping, provided incomplete and assumption-dependent states remain explicit. They are classified as follows.
@@ -689,7 +693,7 @@ If Sarah confirms the payment timing, pattern and source, the selected scenario 
 |---|---|---|
 | 1 — Welcome/login choice | **Keep almost unchanged** | Retain brand, proportions, buttons and palette. It is outside the returning-Sarah golden path. |
 | 2 — Login form | **Keep almost unchanged** | Retain the authentication layout. It is not shown because Sarah is already signed in. |
-| 3 — Signup/company ID | **Keep but modify content** | Authentication remains limited to account creation. Remove mandatory Company ID/employer association; workplace details and any verification move to financial onboarding after account creation. |
+| 3 — Signup/company ID | **Keep and expand** | Register begins with Company ID + provisioned work email, continues to work-email code verification, then requests personal email + chosen password. The verified employer association is established before financial onboarding and is not re-entered there. |
 | 4 — Greeting, Ask hero and prompt cards | **Keep but modify content/layout** | This is Home's upper section. Preserve composition; fix text overlap, use Sarah consistently and keep navigation fixed. |
 | 5 — Future right now and opportunity | **Repurpose** | This becomes Home's lower scroll section, not a separate dashboard. Replace prototype progress, dates and fabricated benefit value with Sarah v1 data. |
 | 6 — Goals list | **Keep but modify content/layout** | Preserve the goal-card structure. Add current balance, correct target/date values and a clearly labelled hypothetical-preview state. |
