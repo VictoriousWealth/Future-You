@@ -704,3 +704,17 @@
     - The percentage needed a clearly noticeable increase rather than another marginal adjustment, particularly for comfortable reading inside the solid centre.
   - Effect on Future You:
     - Goal completion now has stronger visual presence and more comfortable label spacing without affecting any financial data or calculation.
+
+- **Accessibility refinement — Apple handheld typography baseline adopted product-wide**
+  - What changed:
+    - Future You adopted Apple's iOS/iPad default and minimum text-size guidance as the responsive web app's typography floor: 17px default inherited text and no rendered user-facing text below 11px.
+  - Previous approach:
+    - The interface used many compact metadata sizes between 8px and 10.88px. Those labels could satisfy layout constraints but fell below Apple's recommended handheld minimum and were unnecessarily difficult to read.
+  - New approach:
+    - Shared `--fy-type-body` and `--fy-type-min` tokens govern the 17px default and 11px floor. Forty explicit sub-minimum rules across navigation, results, goals, benefits, sheets, onboarding notices and generated labels now use the common floor.
+    - The stricter handheld baseline remains active at desktop widths instead of dropping to Apple's lower Mac minimum, because Future You is one responsive browser product rather than separate native binaries.
+    - A computed-style browser audit checks real visible text and pseudo-content on Login, Signup, onboarding review, Home, Goals, Ask and Benefits, including four approved viewports. Seven regenerated visual baselines pass without an update flag after a clean local reset; the complete Slice 7 suite passes 7/7 and all 231 Vitest regressions remain green.
+  - Why it changed:
+    - The smallest text should follow an explicit, testable readability floor rather than being reduced until it merely fits a component.
+  - Effect on Future You:
+    - Supporting labels and metadata remain compact but are materially easier to read across phone, tablet and desktop, with no change to financial authority or functionality.
