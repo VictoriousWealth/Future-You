@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import {
   createBrowserSupabaseClient,
   type BrowserSupabaseConfiguration
@@ -12,9 +13,11 @@ export function LoginForm({ configuration }: Readonly<{
 }>) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const messageId = useId();
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => setReady(true), []);
 
@@ -46,13 +49,21 @@ export function LoginForm({ configuration }: Readonly<{
   }
 
   return (
-    <form className="login-form" onSubmit={submit}>
-      <label htmlFor="email">Email</label>
-      <input id="email" name="email" type="email" autoComplete="email" required />
-      <label htmlFor="password">Password</label>
-      <input id="password" name="password" type="password" autoComplete="current-password" required />
-      {message ? <p role="alert">{message}</p> : null}
-      <button type="submit" disabled={pending || !ready}>{pending ? "Signing in…" : "Sign in"}</button>
+    <form className="auth-form login-form" onSubmit={submit} aria-describedby={message ? messageId : undefined}>
+      <div className="auth-field">
+        <label htmlFor="email">Email</label>
+        <input id="email" name="email" type="email" autoComplete="email" required />
+      </div>
+      <div className="auth-field">
+        <label htmlFor="password">Password</label>
+        <div className="auth-password-control">
+          <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required />
+          <button type="button" aria-controls="password" aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button>
+        </div>
+      </div>
+      {message ? <p id={messageId} className="auth-message error" role="alert">{message}</p> : null}
+      <button className="auth-primary" type="submit" disabled={pending || !ready}>{pending ? "Signing in…" : "Sign in"}</button>
+      <p className="auth-switch">New to Future You? <Link href="/signup">Create an account</Link></p>
     </form>
   );
 }
