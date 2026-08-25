@@ -56,6 +56,10 @@ describe("Slice 6 renderer authority", () => {
     const markup = renderToStaticMarkup(createElement(ProductHeader, {}));
     expect(markup).toContain("%2Fimages%2Fsarah-profile.png");
     expect(markup).toContain('aria-label="Open financial context settings"');
+    expect(markup).toContain('aria-label="Future You home"');
+    expect(markup).toContain("FUTURE");
+    expect(markup).toContain("YOU");
+    expect(markup).toContain("AI");
     expect(markup).toContain('alt=""');
     expect(markup).not.toContain('<svg viewBox="0 0 24 24"><circle cx="12" cy="8"');
   });
