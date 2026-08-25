@@ -5,8 +5,8 @@ export const SARAH_DEMO_USER_ID = "11111111-1111-4111-8111-111111111111";
 
 export const SARAH_STORY_MANIFEST = Object.freeze({
   storyId: "sarah-trip-story",
-  storyVersion: "1.0.0",
-  narrativeTemplateVersion: "sarah-trip-narrative/1.0.0",
+  storyVersion: "1.1.0",
+  narrativeTemplateVersion: "sarah-trip-narrative/1.1.0",
   requiredContextVersion: "sarah-v1@2026-09-01",
   requiredBaselineId: "baseline-ec13101a3fe66f17",
   requiredRulesVersion: "fy-sim/1.0.0",
@@ -206,9 +206,9 @@ export const SARAH_STORY_MANIFEST = Object.freeze({
     {
       id: "opportunity-information",
       state: "OPPORTUNITY_INFORMATION",
-      eyebrow: "Opportunities stay separate",
-      title: "Nothing unconfirmed becomes cash",
-      dialogueTemplate: "Workplace opportunities can be explored later, but none is assumed active, eligible or numerically valuable in this trip result.",
+      eyebrow: "Sourced opportunity",
+      title: "Information stays separate from cash",
+      dialogueTemplate: "{{OPPORTUNITY_EMPLOYER}} lists a {{OPPORTUNITY_NAME}}. Sarah’s eligibility is unknown, and it is not included in her current plan or any trip result.",
       templateId: "SARAH_OPPORTUNITY_BOUNDARY",
       narrativeState: "THINKING",
       characterPosition: "three_quarters",
@@ -240,9 +240,9 @@ export const SARAH_STORY_MANIFEST = Object.freeze({
       scenarioKey: null
     }
   ],
-  opportunityBoundary: {
-    title: "Information, not assumed money",
-    explanation: "No employer opportunity is treated as active cash, eligibility or a numerical saving in Sarah’s trip scenarios.",
-    includedInCalculation: false
+  requiredOpportunity: {
+    benefitKey: "SEASON_TICKET_LOAN",
+    employerName: "OniBank",
+    referenceDate: "2026-08-31"
   }
 } as const satisfies SarahStoryManifest);
