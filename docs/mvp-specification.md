@@ -13,10 +13,11 @@ optional-post-onboarding workplace rules in this document. Registration now requ
 Company ID and provisioned work email, work-email code verification, and subsequent creation of a
 personal-email/password account before financial onboarding.
 
-**Slice 6 scoped amendment:** `shared-product-surfaces-slice-6.md` is authoritative for Home, Goals and
-Benefits. Only persisted active facts or authoritative opportunity records may be shown. The current
-Sarah store contains an active 3%/3% pension fact but no 5% match ceiling or season-ticket-loan record,
-so those opportunities are not part of the canonical product surfaces.
+**Post-B1 employer/Benefits correction:** `sarah-employer-and-benefits-correction-contract.md` is now
+authoritative for Sarah's workplace and informational Benefits state. Sarah has a verified OniBank
+membership plus explicit, numerically inert additional-match and season-ticket-loan offering records.
+Her active 3%/3% pension still comes only from her immutable financial context. Neither opportunity
+changes cash, goals, simulations or Ask behaviour.
 
 ## 0. Scope language
 
