@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(61);
+select plan(62);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.employer_memberships'::regclass), 'membership RLS is enabled');
 select ok((select relforcerowsecurity from pg_class where oid = 'public.employer_memberships'::regclass), 'membership RLS is forced');
@@ -295,7 +295,16 @@ select throws_ok($$update public.employer_memberships set status = 'INACTIVE'$$,
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
-select is((select count(*)::integer from public.employer_memberships), 0, 'another user cannot read the provisioned membership');
+select is((
+  select count(*)::integer
+  from public.employer_memberships
+  where provision_id = '55555555-5555-4555-8555-555555555555'
+), 0, 'Sarah cannot read the registration-test user membership');
+select is((
+  select count(*)::integer
+  from public.employer_memberships
+  where provision_id = '55555555-5555-4555-8555-555555555559'
+), 1, 'Sarah reads only her own canonical OniBank membership');
 
 select * from finish();
 rollback;
