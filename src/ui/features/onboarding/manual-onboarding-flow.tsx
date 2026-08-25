@@ -7,6 +7,7 @@ import type {
 } from "../../../application/onboarding/contracts";
 import type { BrowserSupabaseConfiguration } from "../../auth/browser-supabase-client";
 import { SignOutButton } from "../../auth/sign-out-button";
+import { FutureYouWordmark } from "../../brand/future-you-wordmark";
 import { FinancialContextPreviewView } from "./financial-context-preview-view";
 
 interface GoalForm {
@@ -375,9 +376,9 @@ export function ManualOnboardingFlow({
   return (
     <main className={`onboarding-page ${mode === "revision" ? "is-revision" : ""}`} aria-busy={busy}>
       <header className="onboarding-header">
-        <div className="brand-mark" aria-hidden="true">FY</div>
+        <div className="fy-wordmark" aria-label="Future You"><FutureYouWordmark/></div>
         <div>
-          <p className="eyebrow">{mode === "initial" ? "Future You" : "Correct current facts"}</p>
+          <p className="eyebrow">{mode === "initial" ? "Build current path" : "Correct current facts"}</p>
           <span>Step {step + 1} of {STEP_TITLES.length}</span>
         </div>
         <SignOutButton configuration={configuration} />
