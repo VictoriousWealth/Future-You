@@ -344,3 +344,11 @@ The final no-update responsive Welcome comparison passes 1/1. The full Vitest su
 The white Login/Register splash increased from approximately `3.15rem × 3rem` to `4.5rem × 4.25rem`. The auth-only gap between the symbol and `FutureYou` increased at the same time so the substantially larger backing shape remains visually separate from the white wordmark.
 
 Browser geometry requires the backdrop to be at least 2.2 times the artwork width and 2.1 times its height, remain stacked below the logo, overlap the logo, and stop before the wordmark copy begins. The refreshed Login baseline protects the resulting scale and placement.
+
+The final no-update Login/Register visual comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Reference-sized Welcome Login action
+
+The Welcome action hierarchy now follows supplied Screen 1 more closely. The primary Login pill grows to the available width up to `20.75rem` and has a `4.25rem` minimum height, while Register remains centred at 85% of that action-group width. These rules are scoped to Welcome and do not enlarge authentication form submission controls.
+
+At `414 × 896`, browser geometry requires Login to be at least 320px wide and 68px tall and at least 15% wider than Register. Mobile and desktop Welcome baselines protect the revised primary/secondary hierarchy.
