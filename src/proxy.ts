@@ -6,6 +6,11 @@ import {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const session = await refreshSupabaseSession(request);
+  if (request.nextUrl.pathname.startsWith("/story/sarah")) {
+    session.response.headers.set("Cache-Control", "private, no-store, max-age=0");
+    session.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return session.response;
+  }
   if (
     (request.nextUrl.pathname.startsWith("/ask") ||
       request.nextUrl.pathname.startsWith("/onboarding") ||
@@ -26,5 +31,5 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ["/ask/:path*", "/onboarding/:path*", "/settings/:path*", "/login", "/api/v1/:path*"]
+  matcher: ["/ask/:path*", "/onboarding/:path*", "/settings/:path*", "/story/sarah/:path*", "/login", "/api/v1/:path*"]
 };
