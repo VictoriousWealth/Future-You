@@ -164,10 +164,6 @@ export function AskConversationShell({
       )}
     >
 
-      <div className="fy-context-pill" data-testid="context-pill">
-        <span aria-hidden="true"/> {conversation?.conversation.contextIsCurrent === false ? "Earlier financial plan" : "Current plan active"}
-      </div>
-
       {isInitial ? (
         <section className="fy-ask-intro">
           <h1 className="fy-welcome">Welcome back,<br/>{displayName}!</h1>
