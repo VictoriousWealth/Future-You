@@ -9,7 +9,7 @@ export default function WelcomePage() {
     <AuthFrame variant="welcome">
       <div className="auth-choice-actions">
         <Link className="auth-primary" href="/login">Login</Link>
-        <Link className="auth-secondary" href="/signup">Register</Link>
+        <Link className="auth-secondary" href="/register">Register</Link>
       </div>
     </AuthFrame>
   );
