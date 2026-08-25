@@ -312,3 +312,11 @@ Renderer coverage asserts the local SVG URL. Browser coverage verifies the suppl
 Welcome now retains only the full Future You identity and the Login/Register actions. The former headline, explanatory sentence and trust-note paragraph were removed together rather than left as empty heading chrome. `AuthFrame` now omits its heading container and `aria-labelledby` when no heading content is supplied, while Login and Signup continue to provide their existing labelled headings.
 
 Unit and browser regressions assert that all three removed strings are absent while the Login and Register actions retain the existing `/login` and `/signup` destinations and the supplied SVG remains present. A dedicated Welcome visual baseline records the simplified composition. Authentication, routing and financial behaviour are unchanged.
+
+The Login/Register label refinement passes its final no-update Welcome comparison 1/1. The full Vitest suite passes 234/234; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Welcome vertical-rhythm refinement
+
+The Welcome identity and entry actions remain centred, but no longer read as one cramped cluster. Responsive spacing now increases the logo-to-name separation, the identity-to-actions separation and the gap between Login and Register. Clamp bounds preserve the intended rhythm across shorter phones and taller screens.
+
+Browser geometry requires at least 72px between the completed identity block and the action group and at least 16px between the two actions at `414 × 896`. A `360 × 640` compact-height check proves that the brand and actions remain inside the viewport rather than being clipped. The Welcome visual baseline records the revised vertical composition.
