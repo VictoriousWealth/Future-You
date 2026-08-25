@@ -796,9 +796,9 @@ summary {
   top: 50%;
   left: 50%;
   display: block;
-  width: 3.15rem;
+  width: 4.5rem;
   max-width: none;
-  height: 3rem;
+  height: 4.25rem;
   object-fit: contain;
   pointer-events: none;
   transform: translate(-50%, -50%);
@@ -1427,6 +1427,7 @@ summary {
   color: inherit;
   text-decoration: none;
 }
+.auth-back-brand.fy-wordmark { gap: 1.25rem; }
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > span,
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > strong { color: #fff; }
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > i { color: #d8d0ff; }
