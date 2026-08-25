@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   FinancialContextPreviewDTO,
   FinancialOnboardingDraftDTO
@@ -243,6 +243,16 @@ export function ManualOnboardingFlow({
   const [preview, setPreview] = useState<FinancialContextPreviewDTO | null>(null);
   const [issues, setIssues] = useState<readonly { path: string; message: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
+
+  useEffect(() => {
+    if (issues.length > 0) errorRef.current?.focus();
+  }, [issues]);
 
   const update = (field: keyof Omit<FormState, "goals" | "obligations">, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -363,7 +373,7 @@ export function ManualOnboardingFlow({
   };
 
   return (
-    <main className="onboarding-page">
+    <main className={`onboarding-page ${mode === "revision" ? "is-revision" : ""}`} aria-busy={busy}>
       <header className="onboarding-header">
         <div className="brand-mark" aria-hidden="true">FY</div>
         <div>
@@ -372,11 +382,26 @@ export function ManualOnboardingFlow({
         </div>
         <SignOutButton configuration={configuration} />
       </header>
-      <div className="step-progress" aria-hidden="true">
+      {mode === "revision" ? (
+        <aside className="revision-notice" aria-labelledby="revision-notice-title">
+          <span>Immutable correction</span>
+          <h2 id="revision-notice-title">You’re creating a new version of your financial plan.</h2>
+          <p>Your current version and every historical what-if remain unchanged. Preview comes before activation.</p>
+        </aside>
+      ) : null}
+      <div
+        className="step-progress"
+        role="progressbar"
+        aria-label="Financial context progress"
+        aria-valuemin={1}
+        aria-valuemax={STEP_TITLES.length}
+        aria-valuenow={step + 1}
+        aria-valuetext={`Step ${step + 1} of ${STEP_TITLES.length}: ${STEP_TITLES[step]}`}
+      >
         <span style={{ width: `${((step + 1) / STEP_TITLES.length) * 100}%` }} />
       </div>
       <section className="onboarding-card">
-        <h1>{STEP_TITLES[step]}</h1>
+        <h1 ref={headingRef} tabIndex={-1}>{STEP_TITLES[step]}</h1>
         {step === 0 && (
           <div className="intro-copy">
             <p>Tell Future You what is true today. We’ll use it to show where your current path leads before you test any new decision.</p>
@@ -450,14 +475,15 @@ export function ManualOnboardingFlow({
           </div>
         )}
         {step === 7 && (
-          <div>
-            {!preview && <p>Future You will now model your current path on the server. No financial context has been saved yet.</p>}
+          <div className="onboarding-review-stage">
+            {!preview && <p>Future You will now model your current path on the server. {mode === "initial" ? "No financial context has been saved yet." : "Your current version will remain active until you confirm the preview."}</p>}
             {preview && <FinancialContextPreviewView preview={preview} />}
-            {!preview && <button type="button" className="primary-button" disabled={busy} onClick={requestPreview}>{busy ? "Modelling…" : "Preview my current path"}</button>}
+            {!preview && <button type="button" className="primary-button" disabled={busy} onClick={requestPreview}>{busy ? "Building preview…" : "Preview my current path"}</button>}
             {preview && <button type="button" className="primary-button" disabled={busy} onClick={confirm}>{busy ? "Confirming…" : "Confirm this financial context"}</button>}
           </div>
         )}
-        {issues.length > 0 && <div className="form-errors" role="alert"><strong>Check these fields</strong><ul>{issues.map((item, index) => <li key={`${item.path}-${index}`}><code>{item.path}</code>: {item.message}</li>)}</ul></div>}
+        {busy ? <p className="onboarding-busy" role="status">Your confirmed values are being handled securely…</p> : null}
+        {issues.length > 0 && <div className="form-errors" role="alert" ref={errorRef} tabIndex={-1}><strong>Check these fields</strong><ul>{issues.map((item, index) => <li key={`${item.path}-${index}`}><code>{item.path}</code>: {item.message}</li>)}</ul></div>}
         <footer className="onboarding-actions">
           {step > 0 && <button type="button" className="secondary-button" onClick={() => setStep((current) => current - 1)}>Back</button>}
           {step < STEP_TITLES.length - 1 && <button type="button" className="primary-button" disabled={step === 5 && form.transferDeclaration === ""} onClick={() => setStep((current) => current + 1)}>{step === 0 ? "Build my current path" : "Continue"}</button>}
