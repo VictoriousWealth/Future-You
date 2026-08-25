@@ -1533,9 +1533,18 @@ summary {
 .auth-page--welcome .auth-heading > span { max-width: 31ch; color: var(--fy-muted); }
 .auth-choice-actions {
   display: grid;
-  width: 100%;
+  width: min(20.75rem, calc(100vw - 5rem));
   gap: clamp(1rem, 2vh, 1.35rem);
   margin-top: clamp(6.5rem, 16vh, 11rem);
+}
+.auth-page--welcome .auth-primary {
+  width: 100%;
+  min-height: 4.25rem;
+  font-size: 1.125rem;
+}
+.auth-page--welcome .auth-secondary {
+  width: 85%;
+  justify-self: center;
 }
 
 .onboarding-page {
