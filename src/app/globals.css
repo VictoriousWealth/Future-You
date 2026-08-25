@@ -914,7 +914,17 @@ summary {
 }
 
 .fy-prompt-card strong { align-self: end; padding: 0 0 0.5rem; font-size: 1.02rem; line-height: 1.18; }
-.fy-prompt-card > i { position: absolute; right: 1.05rem; bottom: 0.78rem; font-size: 1.4rem; font-style: normal; }
+.fy-action-triangle {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  overflow: visible;
+  fill: currentColor;
+  stroke: none;
+  transform-origin: center;
+}
+.fy-action-triangle.is-right { transform: rotate(90deg); }
+.fy-prompt-card > .fy-action-triangle { position: absolute; right: 1.05rem; bottom: 0.9rem; width: 0.9rem; height: 0.9rem; fill: currentColor; stroke: none; }
 
 .fy-composer {
   position: fixed;
@@ -953,6 +963,7 @@ summary {
   font-weight: 900;
 }
 .fy-composer button:disabled { opacity: 0.38; cursor: default; }
+.fy-composer button .fy-action-triangle { width: 1rem; height: 1rem; fill: currentColor; stroke: none; }
 
 .fy-ask-shell.is-initial .fy-composer {
   min-height: 7.8rem;
@@ -1093,6 +1104,7 @@ summary {
 .fy-scenario-list small { color: #7387a5; font-size: var(--fy-type-min); }
 .fy-history-list i,
 .fy-scenario-list i { color: var(--fy-pink); font-size: var(--fy-type-min); font-style: normal; font-weight: 800; }
+.fy-history-list > button > .fy-action-triangle { width: 0.8rem; height: 0.8rem; color: var(--fy-pink); }
 .fy-scenario-list > button.selected { color: #fff; background: linear-gradient(145deg, var(--fy-blue), var(--fy-blue-bright)); border-color: transparent; }
 .fy-scenario-list > button.selected small,
 .fy-scenario-list > button.selected i { color: #fff; opacity: 0.76; }
@@ -1137,7 +1149,8 @@ summary {
 .fy-home-hero::after { position: absolute; right: -2.5rem; bottom: -4rem; width: 12rem; height: 12rem; content: ""; background: radial-gradient(circle, rgba(222,83,173,.6), transparent 66%); }
 .fy-home-hero small { margin-left: 2.3rem; font-size: 1.35rem; font-weight: 900; letter-spacing: -.05em; }
 .fy-home-hero strong { align-self: end; max-width: 9ch; font-size: 2.35rem; line-height: .93; letter-spacing: -.075em; }
-.fy-home-hero i { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.25rem; display: grid; width: 3rem; height: 3rem; place-items: center; color: var(--fy-blue); background: #9bc3ff; border-radius: 50%; font-size: 1.35rem; font-style: normal; }
+.fy-home-hero-action { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.25rem; display: grid; width: 3rem; height: 3rem; place-items: center; color: var(--fy-blue); background: #9bc3ff; border-radius: 50%; }
+.fy-home-hero-action .fy-action-triangle { width: 1.05rem; height: 1.05rem; }
 .fy-home-spark { position: absolute; top: .95rem; left: 1.2rem; color: #ffdc28; font-size: 2rem; }
 
 .fy-home-decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-top: .8rem; }
@@ -1159,7 +1172,7 @@ summary {
 .fy-home-decision.cyan { background: linear-gradient(145deg, #e3f8ff, #fff); }
 .fy-home-decision svg { width: 1.7rem; height: 1.7rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .fy-home-decision strong { align-self: end; max-width: 12ch; font-size: 1rem; line-height: 1.08; }
-.fy-home-decision > span { position: absolute; right: .85rem; bottom: .7rem; font-size: 1.25rem; }
+.fy-home-decision > .fy-action-triangle { position: absolute; right: .9rem; bottom: .85rem; width: .8rem; height: .8rem; fill: currentColor; stroke: none; }
 
 .fy-overview-section { margin-top: 2.5rem; padding-top: .25rem; }
 .fy-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; margin-bottom: .9rem; }
@@ -1206,15 +1219,16 @@ summary {
 .fy-goal-money { display: flex; align-items: baseline; gap: .3rem; margin: 1rem 0 .6rem; }
 .fy-goal-money strong { font-size: 1.25rem; }
 .fy-goal-money span { color: #7186a5; font-size: var(--fy-type-min); }
-.fy-progress-track { height: .52rem; overflow: hidden; background: #fff; border: 1px solid var(--fy-blue-bright); border-radius: 999px; }
+.fy-progress-track { height: .78rem; overflow: hidden; background: #fff; border: 1px solid var(--fy-blue-bright); border-radius: 999px; }
 .fy-progress-track span {
   display: block;
   height: 100%;
   background:
     repeating-linear-gradient(90deg, transparent 0 .55rem, rgba(255,255,255,.92) .55rem .65rem),
     linear-gradient(90deg, var(--fy-cyan), var(--fy-blue-bright));
-  border-radius: inherit;
+  border-radius: 999px 0 0 999px;
 }
+.fy-progress-track span.is-complete { border-radius: inherit; }
 .fy-goal-card footer { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-top: .7rem; color: #7186a5; font-size: var(--fy-type-min); }
 .fy-goal-card footer strong { color: var(--fy-pink); }
 .fy-goal-card.compact { min-width: 0; padding: .85rem; border-radius: 1.2rem; }
@@ -1229,7 +1243,7 @@ summary {
 .fy-benefits-handoff span,
 .fy-opportunity-preview > p { margin: 0; color: #acd4ff; font-size: var(--fy-type-min); font-weight: 900; text-transform: uppercase; }
 .fy-benefits-handoff strong { max-width: 18ch; }
-.fy-benefits-handoff i { position: absolute; right: 1rem; bottom: .9rem; font-style: normal; }
+.fy-benefits-handoff > .fy-action-triangle { position: absolute; right: 1rem; bottom: 1rem; width: .85rem; height: .85rem; }
 .fy-opportunity-preview h2 { margin: 0; }
 .fy-opportunity-preview > a { color: #fff; font-size: .7rem; font-weight: 850; }
 
