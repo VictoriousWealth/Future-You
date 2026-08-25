@@ -886,3 +886,14 @@
     - The first spacing increase remained too visually concentrated, and the stacked name did not make good use of wider screens.
   - Effect on Future You:
     - Welcome has a calmer vertical composition on phones and a more natural horizontal identity on larger displays while retaining compact-height containment.
+
+- **Authentication brand refinement — White splash becomes substantially larger**
+  - What changed:
+    - The auth-only white backing shape increased from `3.15rem × 3rem` to `4.5rem × 4.25rem` behind the fixed-size angular artwork.
+  - Clearance rule:
+    - Login/Register use a wider icon-to-wordmark gap so the enlarged splash stops before the white `FutureYou` copy begins.
+    - Browser geometry requires the splash to exceed 2.2 times the artwork width and 2.1 times its height while remaining below and overlapping the artwork.
+  - Why it changed:
+    - The first backing treatment was visible but too restrained relative to the requested splash effect.
+  - Effect on Future You:
+    - The decorative white layer now reads clearly against the blue auth header without obscuring the product name or affecting any other brand surface.
