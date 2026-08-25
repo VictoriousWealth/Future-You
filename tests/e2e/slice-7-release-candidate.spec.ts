@@ -13,7 +13,7 @@ const releasePassword = LOCAL_USERS.alex.password;
 async function signInWithCredentials(page: Page, email: string, password: string, destination = "/home") {
   await page.goto(`/login?next=${encodeURIComponent(destination)}`);
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(new RegExp(`${destination.replace("/", "\\/")}$`));
 }
@@ -120,15 +120,26 @@ test("completes the new-user auth and canonical onboarding release journey", asy
 
   await page.getByRole("link", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  const loginPassword = page.locator("#password");
+  await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
+  await page.getByRole("button", { name: "Show password" }).click();
+  await expect(loginPassword).toHaveAttribute("type", "text");
+  await page.getByRole("button", { name: "Hide password" }).click();
+  await expect(loginPassword).toHaveAttribute("type", "password");
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
   await expect(page.getByText(/Company ID/i)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Show passwords" })).toBeVisible();
+  await page.getByRole("button", { name: "Show passwords" }).click();
+  await expect(page.locator("#signup-password")).toHaveAttribute("type", "text");
+  await expect(page.getByLabel("Confirm password")).toHaveAttribute("type", "text");
+  await page.getByRole("button", { name: "Hide passwords" }).click();
   await page.screenshot({ path: evidence("03-signup-414x896.png") });
   await page.getByLabel("Personal email").fill("new-user@example.test");
-  await page.getByLabel("Password", { exact: true }).fill("Release-Local-Only-2026!");
+  await page.locator("#signup-password").fill("Release-Local-Only-2026!");
   await page.getByLabel("Confirm password").fill("Different-Local-Password-2026!");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.locator(".auth-message[role='alert']")).toHaveText("The passwords do not match.");
