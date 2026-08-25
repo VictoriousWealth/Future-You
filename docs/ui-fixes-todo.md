@@ -482,6 +482,8 @@ These items were already reviewed and should not be reopened incidentally while 
 - Welcome's primary Login action now follows the reference hierarchy with a near-full-width 68px pill; Register remains a narrower secondary action.
 - Login and Register layer the supplied white splash SVG behind the angular logo so it remains distinct from their blue header artwork; other brand surfaces do not use the backing layer.
 - The auth-only splash is now roughly 100×94px—more than three times the logo artwork's rendered width—with added card and wordmark clearance so it is neither clipped nor obscures `FutureYou`.
+- Within the auth splash only, the coloured angular artwork uses the approved `top: -7px` and `right: 1px` optical offset.
+- Authentication terminology is now consistent across Welcome and the forms: Login/Logging in and Register/Registering replace the previous Sign in/Create account labels and links.
 
 ## Working method
 
