@@ -1,9 +1,10 @@
 # Future You — Sarah Guided Story Mode Technical Design
 
-**Version:** 0.1.0  
-**Status:** Proposed for approval; no Track B application code is authorised  
-**Prepared:** 2026-08-25  
-**Product authority:** `character-led-story-and-human-context-contract.md`  
+**Version:** 1.0.0
+**Status:** Approved and implemented as Track B Phase B1
+**Prepared:** 2026-08-25
+**Implemented:** 2026-08-25
+**Product authority:** `character-led-story-and-human-context-contract.md`
 **Phase:** B1 — explicit deterministic “Play Sarah’s story” demonstration only
 
 ## 1. Outcome
@@ -78,7 +79,7 @@ Broadening the story to every signed-in user or a public landing page would requ
 
 Neither is approved in B1. The implementation must not bypass run RLS or use the registration administrative client to serve story data.
 
-If this access restriction is not desired, approval of this design should explicitly select the safe projection model before application code begins.
+The B1 approval selected this restriction. A broader public/all-user projection remains deferred and would require a new contract.
 
 ## 4. Financial authority and story bundle
 
@@ -133,32 +134,43 @@ For every animation/motion mode:
 
 The sequence is fixed and versioned. A user may skip motion or steps, but dialogue and financial facts do not branch into new outcomes.
 
-| Step | Purpose | Sarah state | Financial view | Approved meaning |
+| Step | Controller state | Sarah state | Financial view | Approved meaning |
 |---|---|---|---|---|
-| 0. Ready | Wait for explicit start | `IDLE` | None/intro | Sarah has a money decision to explore |
-| 1. Question | Introduce the trip | `CURIOUS` | Current path summary | “Can I afford a £650 trip next month?” |
-| 2. £650 impact | Reveal consequences | `UNCERTAIN` | £650 September run | Affordable, with a significant short-term safety-buffer trade-off |
-| 3. Explain trade-off | Make the result understandable | `CONCERNED` | £650 facts | Bills remain covered; buffer falls; emergency fund moves later |
-| 4. £500 option | Compare a sibling | `THINKING` | £500 September run | Shows changed consequences without calling it better |
-| 5. £400 option | Compare another sibling | `SURPRISED` | £400 September run | Shows the smaller effect using stored facts only |
-| 6. Wait until October | Move timing | `THINKING` | £650 October run | Pressure moves month; frozen goal dates do not improve |
-| 7. Understanding | Summarise choices | `RELIEVED_TO_UNDERSTAND` | Scenario selector + current path | Sarah understands the trade-offs; no choice is prescribed |
-| 8. Complete | Offer restart or exit | `COMPLETE` | Last selected result | User controls what happens next |
+| 0. Ready | `NOT_STARTED` | `IDLE` | None/intro | Playback waits for an explicit user action |
+| 1. Introduction | `INTRODUCTION` | `IDLE` | Demonstration boundary | Sarah is a demonstration character, not the viewer |
+| 2. Meet Sarah | `MEET_SARAH` | `CURIOUS` | Approved profile context | Only audited canonical demographic/context facts are shown |
+| 3. Decision setup | `DECISION_SETUP` | `CURIOUS` | Current path | Preferred buffer and frozen baseline goal dates |
+| 4. Question | `QUESTION` | `UNCERTAIN` | £650 scenario identity | “Can I afford a £650 trip next month?” |
+| 5. Retrieve | `CALCULATING` | `THINKING` | Stored-run boundary | The existing immutable run is read; no provider calculates it |
+| 6. £650 impact | `TRIP_RESULT` | `CONCERNED` | £650 September run | Affordable, with a significant safety-buffer trade-off |
+| 7. Alternatives | `ALTERNATIVES` | `SURPRISED` | £500 and £400 siblings | Consequences are compared without recommendation |
+| 8. Timing | `TIMING_ALTERNATIVE` | `THINKING` | £650 October sibling | Pressure moves month; frozen goal dates do not improve |
+| 9. Opportunity boundary | `OPPORTUNITY_INFORMATION` | `THINKING` | No calculated opportunity | Unconfirmed employer opportunities are not treated as cash |
+| 10. Understanding | `SUMMARY` | `RELIEVED_TO_UNDERSTAND` | Current path + four scenarios | Sarah understands the trade-offs; no choice is prescribed |
+| 11. Complete | `COMPLETE` | `COMPLETE` | Static completion | The user may restart or exit |
 
-Skipping a step selects the next deterministic step. Skipping all animation advances to Step 7 with the complete textual summary and all scenario controls available.
+Skipping a step selects the next deterministic step. Skipping to the summary advances to Step 10 with the complete current path and all four scenario results available.
 
 ## 6. Story state machine
 
-Story playback state and Sarah’s narrative pose are separate.
+Story playback state and Sarah’s narrative pose are separate. The implemented controller uses the approved explicit states rather than timer-derived phases.
 
 ```ts
-type PlaybackState =
-  | "READY"
-  | "PLAYING"
+type SarahStoryControllerState =
+  | "NOT_STARTED"
+  | "INTRODUCTION"
+  | "MEET_SARAH"
+  | "DECISION_SETUP"
+  | "QUESTION"
+  | "CALCULATING"
+  | "TRIP_RESULT"
+  | "ALTERNATIVES"
+  | "TIMING_ALTERNATIVE"
+  | "OPPORTUNITY_INFORMATION"
+  | "SUMMARY"
+  | "COMPLETE"
   | "PAUSED"
-  | "STEP_COMPLETE"
-  | "STORY_COMPLETE"
-  | "EXITED";
+  | "ERROR";
 
 type SarahNarrativeState =
   | "IDLE"
@@ -174,15 +186,16 @@ type SarahNarrativeState =
 Allowed transitions:
 
 ```text
-READY -> PLAYING
-PLAYING -> PAUSED | STEP_COMPLETE | STORY_COMPLETE | EXITED
-PAUSED -> PLAYING | STEP_COMPLETE | STORY_COMPLETE | EXITED
-STEP_COMPLETE -> PLAYING | PAUSED | STORY_COMPLETE | EXITED
-STORY_COMPLETE -> READY (restart) | EXITED
-EXITED -> route exit only
+NOT_STARTED -> INTRODUCTION
+each story step -> the next ordered story step
+any active non-final story step -> PAUSED -> the exact prior step
+any active story step -> SUMMARY (skip to summary)
+any story state -> NOT_STARTED (restart)
+any story state -> normal route exit
+controller failure -> ERROR
 ```
 
-Invalid events are ignored safely and do not advance financial selection. Reload starts at `READY` in B1; story progress persistence is not required.
+Invalid events are ignored safely and do not advance financial selection. Reload starts at `NOT_STARTED` in B1; story progress persistence is not required.
 
 ## 7. Server-owned dialogue templates
 
@@ -247,8 +260,8 @@ Rules:
 - Pause freezes decorative and positional motion immediately.
 - Text and result cards remain readable while paused.
 - Skip this animation completes only the current visual transition and reveals the same step content.
-- Skip to story summary reveals the complete static Step 7 state.
-- Restart resets step, selection, announcements and Sarah pose to `READY`; it does not recreate runs.
+- Skip to story summary reveals the complete static Step 10 state.
+- Restart resets step, selection, announcements and Sarah pose to `NOT_STARTED`; it does not recreate runs.
 - Exit uses a normal route transition and never traps the user in full-screen mode.
 - Disable animation persists only as a local presentation preference in B1; it is not financial or human-context data.
 - No financial claim appears in a partially animated/streamed state.
@@ -262,7 +275,7 @@ When `prefers-reduced-motion: reduce` is true:
 - Sarah changes between static poses;
 - all dialogue, controls, scenario cards and explanations remain present;
 - step advancement remains explicit and keyboard operable; and
-- the story starts in the same `READY` state rather than autoplaying.
+- the story starts in the same `NOT_STARTED` state rather than autoplaying.
 
 An explicit user choice to enable motion may be offered, but reduced motion remains the default for that session and no essential meaning depends on motion.
 
@@ -423,15 +436,15 @@ Phase B1 is complete only when:
 - no human-context persistence is added; and
 - no test is skipped.
 
-## 18. Approval decisions requested
+## 18. Approval and implementation record
 
-Before Track B code begins, approve or amend:
+The B1 approval resolved the design choices as follows:
 
-1. The recommended B1 route `/story/sarah`.
-2. The controlled-Sarah-demo-only access boundary for B1.
-3. The eight-step deterministic sequence and narrative-state names.
-4. Runtime reading of pre-created immutable runs with a fail-closed missing-run state.
-5. Local-only animation preference with no story-progress persistence.
-6. The visual-evidence matrix and explicit approval requirement for new baseline PNGs.
+1. The route is `/story/sarah`.
+2. Access is restricted server-side to the canonical Sarah demonstration identity, its demo flag and its exact current Sarah v1 context version.
+3. The implementation uses the later approved explicit eleven-step sequence plus `NOT_STARTED`, `PAUSED` and `ERROR` controller states.
+4. Runtime reads the four pre-created immutable scenario runs and fails closed when an identity or frozen fact is missing or incompatible.
+5. Story progress is session-only. Only the non-financial animation-disable preference is stored locally.
+6. Review captures are stored under `artifacts/track-b1-visual/`; they are evidence captures, not Playwright visual-regression baselines.
 
-Approval of this document would authorise only Phase B1 implementation. It would not authorise an everyday avatar, public demo projection, human-context schema, voice, customisation or AI-generated dialogue.
+Implementation remains limited to Phase B1. It does not authorise an everyday avatar, public demo projection, real-user human-context schema, voice, customisation, AI-generated dialogue or Phase B2.
