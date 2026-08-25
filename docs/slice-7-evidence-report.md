@@ -330,3 +330,11 @@ Login and Register now place the supplied splash SVG between the compact angular
 Renderer coverage verifies the local backdrop source, white fill, absence of the original black fill, removal of the source DOCTYPE, and absence of scripts. Browser coverage verifies the SVG is present on both Login and Register and absent from Welcome and the authenticated Home header. Updated auth visual evidence protects the final layering and contrast.
 
 The focused no-update Welcome/auth run passes 2/2 and proves the white backdrop is stacked below the coloured logo. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Welcome spacing and responsive-name refinement
+
+The Welcome identity-to-actions gap increased again and now scales from a larger short-screen minimum toward a taller-screen maximum. At the canonical `414 × 896` viewport the browser gate requires at least 128px of clear space between the identity and Login/Register group, while the existing `360 × 640` containment gate remains in force.
+
+The full identity name stays stacked as `Future` and `You` through `768px`. At `769px` and wider the explicit line break is hidden, producing the single-line `FutureYou` treatment. Browser checks exercise both adjacent breakpoint widths, verify the two word segments share one vertical position above the breakpoint, and preserve mobile and desktop visual baselines.
+
+The final no-update responsive Welcome comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
