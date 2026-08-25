@@ -99,8 +99,9 @@ function StepEvidence({ story, contentKind, scenario }: Readonly<{
   if (contentKind === "opportunity_boundary") {
     return (
       <article className="fy-story-opportunity" data-testid="story-opportunity-boundary">
-        <span>Information only</span><h3>{story.opportunityBoundary.title}</h3>
+        <span>{story.opportunityBoundary.statusLabel}</span><h3>{story.opportunityBoundary.title}</h3>
         <p>{story.opportunityBoundary.explanation}</p>
+        <small>Source: {story.opportunityBoundary.sourceReference} · {story.opportunityBoundary.referenceDate}</small>
         <strong>Not included in calculation</strong>
       </article>
     );
