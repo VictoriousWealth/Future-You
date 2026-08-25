@@ -11,19 +11,21 @@ import { handleGET as benefitsGET } from "../src/app/api/v1/benefits/route";
 import { slice2TestDependencies } from "./helpers/slice-2";
 import { AuthenticationBoundaryError } from "../src/infrastructure/auth/authentication-error";
 import { AccountActivationRequiredError } from "../src/infrastructure/auth/account-activation-error";
+import { SARAH_EMPLOYER_BENEFIT_SOURCE } from "./fixtures/employer-benefits";
 
 function resolver(): AuthenticatedProductSurfaceResolver {
   const contextSource = new SarahV1ContextSource();
   const simulator = createSimulatorApplication({ ...slice2TestDependencies(), contextSource });
   const workplaceSource: WorkplaceAssociationSource = {
     async getWorkplace() {
-      return { name: "OniBank", associationSource: "user_provided", verificationStatus: "unverified" };
+      return { name: "OniBank", associationSource: "employer_provisioned", verificationStatus: "verified" };
     }
   };
   const application = new ProductSurfaceApplication({
     displayName: "Sarah Wonk",
     contextSource,
     workplaceSource,
+    employerBenefitSource: SARAH_EMPLOYER_BENEFIT_SOURCE,
     simulator
   });
   return async () => ({
@@ -50,7 +52,11 @@ describe("Slice 6 product-surface API contracts", () => {
     const benefits = await expectPrivateJson(await benefitsGET(appResolver), "benefits_surface");
     expect(home.apiVersion).toBe("future-you.product-surfaces/v1");
     expect(goals.schemaVersion).toBe("goals-surface/1.0.0");
-    expect(benefits.opportunities).toEqual([]);
+    expect(benefits.opportunities).toHaveLength(2);
+    expect(benefits.opportunities.map((opportunity: { benefitKey: string }) => opportunity.benefitKey)).toEqual([
+      "ADDITIONAL_PENSION_MATCH",
+      "SEASON_TICKET_LOAN"
+    ]);
   });
 
   it("validates preview IDs before application access", async () => {
