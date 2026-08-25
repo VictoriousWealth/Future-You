@@ -8,7 +8,7 @@ const typesPath = fileURLToPath(
   new URL("../src/infrastructure/supabase/database.types.ts", import.meta.url)
 );
 
-const expectedSeed = createSupabaseSeed();
+const expectedSeed = await createSupabaseSeed();
 const committedSeed = readFileSync(seedPath, "utf8");
 if (committedSeed !== expectedSeed) {
   throw new Error("supabase/seed.sql has drifted; run npm run db:seed:generate.");
