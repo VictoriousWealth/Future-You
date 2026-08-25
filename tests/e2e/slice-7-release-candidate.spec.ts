@@ -197,7 +197,8 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.getByText("Private financial context. Deterministic what-if results. You stay in control.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
-  await expect(page.locator(".auth-brand-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-brand-symbol .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".fy-angular-backdrop")).toHaveCount(0);
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
   await page.getByRole("link", { name: "Login", exact: true }).click();
@@ -209,7 +210,8 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(loginWordmark).not.toContainText("AI");
   await expect(loginWordmark.locator(".auth-brand-symbol")).toHaveCount(0);
   await expect(loginWordmark.locator(".fy-angular-symbol")).toBeVisible();
-  await expect(loginWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(loginWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(loginWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   expect(Number.parseFloat(await loginWordmark.evaluate((element) => getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(17);
   const loginWordmarkSizes = await loginWordmark.locator(".fy-wordmark-copy > *").evaluateAll(
     (segments) => segments.map((segment) => Number.parseFloat(getComputedStyle(segment).fontSize))
@@ -250,7 +252,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.locator(".onboarding-header .fy-wordmark")).toContainText("FUTUREYOU");
   await expect(page.locator(".onboarding-header .fy-wordmark")).not.toContainText("AI");
   await expect(page.locator(".onboarding-header .fy-angular-symbol")).toBeVisible();
-  await expect(page.locator(".onboarding-header .fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".onboarding-header .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
 
   await fillCanonicalOnboarding(page);
@@ -298,7 +300,8 @@ test("captures the returning Sarah journey and every canonical visual state", as
   await expect(homeWordmark).toContainText("FUTUREYOU");
   await expect(homeWordmark).not.toContainText("AI");
   await expect(homeWordmark.locator(".fy-angular-symbol")).toBeVisible();
-  await expect(homeWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(homeWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(homeWordmark.locator(".fy-angular-backdrop")).toHaveCount(0);
   await expectHeaderWordmarkInsideViewport(page);
   const homeHero = page.locator(".fy-home-hero");
   await expect(homeHero.locator(".fy-home-hero-action .fy-action-triangle.is-right")).toBeVisible();
@@ -474,7 +477,8 @@ test("uses the generated profile portrait for the financial-context settings lin
 
 test("keeps Welcome focused on the supplied identity and authentication actions", async ({ page }) => {
   await page.goto("/welcome");
-  await expect(page.locator(".auth-brand-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-brand-symbol .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".fy-angular-backdrop")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Sign in", exact: true })).toHaveCount(0);
@@ -520,14 +524,34 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
 test("scales meaningful interface icons with the Apple-aligned body type", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-  await expect(page.locator(".auth-back-brand .fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
+  const authLogoStack = await page.locator(".auth-back-brand .fy-angular-symbol").evaluate((symbol) => {
+    const backdrop = symbol.querySelector<HTMLElement>(".fy-angular-backdrop");
+    const artwork = symbol.querySelector<HTMLElement>(".fy-angular-artwork");
+    if (!backdrop || !artwork) throw new Error("Authentication logo layers are incomplete.");
+    const backdropBox = backdrop.getBoundingClientRect();
+    const artworkBox = artwork.getBoundingClientRect();
+    return {
+      backdropZ: Number.parseInt(getComputedStyle(backdrop).zIndex, 10),
+      artworkZ: Number.parseInt(getComputedStyle(artwork).zIndex, 10),
+      overlaps:
+        backdropBox.left < artworkBox.right &&
+        backdropBox.right > artworkBox.left &&
+        backdropBox.top < artworkBox.bottom &&
+        backdropBox.bottom > artworkBox.top
+    };
+  });
+  expect(authLogoStack.backdropZ).toBeLessThan(authLogoStack.artworkZ);
+  expect(authLogoStack.overlaps).toBe(true);
   await expectAppleMeaningfulIconScale(page);
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
   await page.goto("/signup");
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
-  await expect(page.locator(".auth-back-brand .fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expectAppleMeaningfulIconScale(page);
   await page.screenshot({ path: evidence("03-signup-414x896.png") });
 
@@ -552,7 +576,7 @@ test("captures the shared onboarding lockup without confirming financial context
   await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
   const onboardingWordmark = page.locator(".onboarding-header .fy-wordmark");
   await expect(onboardingWordmark.locator(".fy-angular-symbol")).toBeVisible();
-  await expect(onboardingWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(onboardingWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await expect(onboardingWordmark).toContainText("FUTUREYOU");
   await expect(onboardingWordmark).not.toContainText("AI");
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
@@ -591,7 +615,7 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
       const headerWordmark = page.getByRole("link", { name: "Future You home" });
       await expect(headerWordmark).toContainText(route === "/ask" ? "FUTUREYOUAI" : "FUTUREYOU");
       if (route !== "/ask") await expect(headerWordmark).not.toContainText("AI");
-      await expect(headerWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.svg/);
+      await expect(headerWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
       await expectHeaderWordmarkInsideViewport(page);
       const h1Count = await page.getByRole("heading", { level: 1 }).count();
       expect(h1Count).toBe(1);
