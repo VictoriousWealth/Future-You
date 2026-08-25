@@ -639,3 +639,16 @@
     - The icon treatment is more compact and visually familiar while retaining the complete accessible interaction contract.
   - Effect on Future You:
     - Authentication fields are cleaner and closer to expected consumer-app conventions without changing authentication logic, validation or security behavior.
+
+- **Release refinement — Goal percentage badges become proportional progress rings**
+  - What changed:
+    - The circular percentage indicator on Home and Goals now draws only the proportion of the ring represented by the confirmed goal progress; only a 100% goal closes the complete ring.
+  - Previous approach:
+    - The percentage text was surrounded by a permanently complete purple border, so a 29% or 73% goal could visually resemble a completed goal even though the adjacent horizontal bar was proportional.
+  - New approach:
+    - A reusable circular-progress renderer applies the existing server-produced bounded `fill` percentage verbatim to a top-starting conic arc, with the unfunded portion shown as a pale-purple track. Current-path, compact Home and stored hypothetical goal cards share the same renderer.
+    - Renderer-authority coverage now checks the circular `12.345%` sentinel as well as the linear bar. Focused mobile Chromium coverage confirms the server value crosses the browser boundary unchanged and the refreshed Home and Goals visual baselines reproduce the partial arcs.
+  - Why it changed:
+    - The supplied UI reference uses a partially drawn ring to communicate progress, making the percentage immediately legible as incomplete unless it reaches 100%.
+  - Effect on Future You:
+    - Goal progress is now visually consistent with both the displayed percentage and reference design without changing goal maths, DTOs, financial context or browser authority.
