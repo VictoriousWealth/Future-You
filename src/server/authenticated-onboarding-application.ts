@@ -16,6 +16,7 @@ import { createRequestSupabaseClient } from "../infrastructure/supabase/server-c
 
 export interface AuthenticatedOnboardingApplicationContext {
   readonly principal: AuthenticatedPrincipal;
+  readonly provisionedEmployerName?: string | null;
   readonly application: OnboardingApplication;
 }
 
@@ -28,8 +29,15 @@ export const resolveAuthenticatedOnboardingApplication: AuthenticatedOnboardingA
     const principal = await new SupabasePrincipalProvider(client).requirePrincipal();
     const contextSource = new SupabaseFinancialContextSource(client, principal);
     const versionRepository = new SupabaseFinancialContextVersionRepository(client, principal);
+    const { data: membership, error: membershipError } = await client
+      .from("employer_memberships")
+      .select("employer_display_name, status")
+      .eq("user_id", principal.userId)
+      .maybeSingle();
+    if (membershipError) throw new Error("The verified employer membership could not be loaded.");
     return {
       principal,
+      provisionedEmployerName: membership?.status === "ACTIVE" ? membership.employer_display_name : null,
       application: createOnboardingApplication({
         contextSource,
         versionRepository,
