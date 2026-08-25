@@ -612,3 +612,17 @@
     - The small visual request should remain protected against accidental reintroduction during later shell or route styling changes.
   - Effect on Future You:
     - Normal product screens remain free of the repeated banner at phone and desktop widths, while exceptional context states retain their explicit safety messaging.
+
+- **Release refinement — Generated portrait replaces the profile glyph**
+  - What changed:
+    - The generic outlined profile icon in the authenticated product header was replaced with a fictional AI-generated portrait for the Sarah demonstration persona.
+  - Previous approach:
+    - Home, Goals and Benefits used an abstract person SVG inside the financial-context settings link.
+  - New approach:
+    - The built-in image-generation workflow created a friendly, racially ambiguous young-adult portrait with natural texture, circular-crop-safe framing and a pale blue/lavender backdrop aligned with the product palette. The selected project asset is a resized `512 × 512` PNG at `public/images/sarah-profile.png` and is delivered through Next.js image optimisation.
+    - The link retains the accessible name “Open financial context settings”; the portrait has empty alternative text to avoid duplicate announcement. Unit and browser regressions prove the generated asset is rendered at a usable size and the former profile SVG is absent.
+    - Home, Goals and Benefits visual baselines were explicitly regenerated. The rebuilt Slice 7 suite passes 7/7, the clean full Chromium suite passes 22/22, and all 231 Vitest tests pass.
+  - Why it changed:
+    - A real portrait makes the authenticated shell feel more personal and closer to a finished consumer product than a generic account glyph.
+  - Effect on Future You:
+    - Sarah's demonstration experience now has a consistent visual identity without changing the settings destination, authentication, financial authority, persistence or any post-MVP behavior.
