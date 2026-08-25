@@ -758,3 +758,16 @@
     - The stronger height better balances the goal cards, while the flat unfinished edge makes the precise stopping point easier to read and avoids visually implying completion.
   - Effect on Future You:
     - Goal progress is clearer and more deliberate without changing its gradient, segmented structure, accessible label, server-authored width or any financial calculation.
+
+- **Accessibility refinement — Meaningful icons scale with the Apple-aligned body type**
+  - What changed:
+    - Meaningful interface icons now follow the same responsive scale as Future You's 17px body typography instead of using smaller independent dimensions.
+  - Previous approach:
+    - Most navigation, prompt, password and financial icons already exceeded 17px, but action triangles ranged from 12.8px to 16.8px and therefore did not participate consistently in the established type scale.
+  - New approach:
+    - `--fy-icon-body` references `--fy-type-body`, giving all action triangles a 17px frame at the default root size and allowing them to grow with user text scaling. The filled triangle artwork also occupies more of its SVG view box for stronger optical sizing.
+    - Existing larger icon families remain unchanged. Interactive parents retain at least the established 44px touch target. A rendered browser audit checks every visible meaningful SVG on Login, Signup and the primary product surfaces, while a dedicated assertion proves a 17px Home action icon reaches at least 34px at 200% root text scaling.
+  - Why it changed:
+    - Apple's guidance recommends matching symbol emphasis to adjacent type, increasing meaningful icon size with larger text and providing sufficiently sized controls rather than treating a tiny text minimum as the icon target.
+  - Effect on Future You:
+    - Icons are more legible and adapt alongside text without changing their semantics, accessible names, control destinations or financial behaviour.
