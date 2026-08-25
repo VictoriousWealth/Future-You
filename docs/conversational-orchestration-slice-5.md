@@ -7,6 +7,10 @@
 **Explanation prompt:** `fy-conversation-explanation/1.0.0`  
 **Explanation schema:** `fy-explanation-plan/1.0.0`
 
+> **Registration supersession:** The Signup reference inherited by this historical Slice 5 contract
+> has been superseded by `employer-provisioned-registration-contract.md`. Conversation behaviour is
+> unchanged; the new registration flow remains a separate future implementation concern.
+
 This contract replaces the obsolete alternatives/navigation label for Slice 5. It is a scoped
 supersession of earlier conversation and architecture rules: non-conflicting simulation, product,
 security, UI-mapping and persistence rules remain active.
