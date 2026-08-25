@@ -305,6 +305,71 @@ export type Database = {
           },
         ]
       }
+      employer_benefit_offerings: {
+        Row: {
+          benefit_key: string
+          category: string
+          created_at: string
+          display_name: string
+          employer_id: string
+          further_information_required: boolean
+          last_confirmed_date: string | null
+          numerical_simulation_supported: boolean
+          offering_id: string
+          offering_status: string
+          provenance_source_type: string
+          record_version: number
+          reference_date: string
+          schema_version: string
+          source_reference: string
+          supersedes_offering_id: string | null
+        }
+        Insert: {
+          benefit_key: string
+          category: string
+          created_at?: string
+          display_name: string
+          employer_id: string
+          further_information_required: boolean
+          last_confirmed_date?: string | null
+          numerical_simulation_supported: boolean
+          offering_id: string
+          offering_status: string
+          provenance_source_type: string
+          record_version: number
+          reference_date: string
+          schema_version: string
+          source_reference: string
+          supersedes_offering_id?: string | null
+        }
+        Update: {
+          benefit_key?: string
+          category?: string
+          created_at?: string
+          display_name?: string
+          employer_id?: string
+          further_information_required?: boolean
+          last_confirmed_date?: string | null
+          numerical_simulation_supported?: boolean
+          offering_id?: string
+          offering_status?: string
+          provenance_source_type?: string
+          record_version?: number
+          reference_date?: string
+          schema_version?: string
+          source_reference?: string
+          supersedes_offering_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_benefit_offerings_supersedes_offering_id_fkey"
+            columns: ["supersedes_offering_id"]
+            isOneToOne: false
+            referencedRelation: "employer_benefit_offerings"
+            referencedColumns: ["offering_id"]
+          },
+        ]
+      }
       employer_memberships: {
         Row: {
           created_at: string
@@ -666,6 +731,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "scenarios"
             referencedColumns: ["user_id", "scenario_id"]
+          },
+        ]
+      }
+      user_benefit_states: {
+        Row: {
+          created_at: string
+          eligibility_status: string
+          employer_id: string
+          included_in_financial_baseline: boolean
+          information_completeness: string
+          last_confirmed_date: string | null
+          offering_id: string
+          provenance_source_type: string
+          schema_version: string
+          source_reference: string
+          state_id: string
+          uptake_status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          eligibility_status: string
+          employer_id: string
+          included_in_financial_baseline: boolean
+          information_completeness: string
+          last_confirmed_date?: string | null
+          offering_id: string
+          provenance_source_type: string
+          schema_version: string
+          source_reference: string
+          state_id: string
+          uptake_status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          eligibility_status?: string
+          employer_id?: string
+          included_in_financial_baseline?: boolean
+          information_completeness?: string
+          last_confirmed_date?: string | null
+          offering_id?: string
+          provenance_source_type?: string
+          schema_version?: string
+          source_reference?: string
+          state_id?: string
+          uptake_status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_benefit_states_membership_fk"
+            columns: ["user_id", "employer_id"]
+            isOneToOne: false
+            referencedRelation: "employer_memberships"
+            referencedColumns: ["user_id", "employer_id"]
+          },
+          {
+            foreignKeyName: "user_benefit_states_offering_fk"
+            columns: ["offering_id", "employer_id"]
+            isOneToOne: false
+            referencedRelation: "employer_benefit_offerings"
+            referencedColumns: ["offering_id", "employer_id"]
           },
         ]
       }
