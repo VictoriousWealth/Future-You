@@ -1432,6 +1432,10 @@ summary {
   margin-top: 0.5rem;
   margin-left: 1.125rem;
 }
+.auth-back-brand .fy-angular-artwork {
+  top: -7px;
+  right: 1px;
+}
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > span,
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > strong { color: #fff; }
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > i { color: #d8d0ff; }
