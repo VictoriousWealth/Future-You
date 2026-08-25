@@ -108,7 +108,9 @@ describe("automated dependency-direction enforcement", () => {
       join(SOURCE_ROOT, "server", "authenticated-product-surface-application.ts"),
       "utf8"
     );
+    expect(composition).toContain("SupabaseEmployerBenefitSource");
     expect(composition).not.toMatch(/Conversation|OpenAI|resolveConversationProvider/);
+    expect(composition).not.toMatch(/service[_-]?role|SUPABASE_REGISTRATION_SECRET_KEY/i);
 
     const benefitsRoute = readFileSync(
       join(SOURCE_ROOT, "app", "api", "v1", "benefits", "route.ts"),
@@ -144,6 +146,7 @@ describe("automated dependency-direction enforcement", () => {
       "utf8"
     );
     expect(composition).toContain("SupabaseSimulationRunStore");
+    expect(composition).toContain("SupabaseEmployerBenefitSource");
     expect(composition).toContain("SupabasePrincipalProvider");
     expect(composition).toContain("isSarahStoryAuthorised");
     expect(composition).not.toMatch(/OpenAI|ConversationModelProvider|service[_-]?role|SUPABASE_REGISTRATION_SECRET_KEY/i);
