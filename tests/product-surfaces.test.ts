@@ -89,7 +89,8 @@ describe("Slice 6 product-surface application", () => {
         denominator: "450000",
         basisPoints: 7333,
         display: "73%",
-        fill: "73.33%"
+        fill: "73.33%",
+        ringDasharray: "7333 2667"
       },
       completion: { month: "2026-12", display: "December 2026", statusLabel: "On track" }
     });
