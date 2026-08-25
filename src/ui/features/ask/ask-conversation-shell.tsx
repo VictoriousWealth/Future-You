@@ -10,6 +10,7 @@ import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
 import { ConversationResultView } from "./conversation-result-view";
 import { SignOutButton } from "../../auth/sign-out-button";
 import type { BrowserSupabaseConfiguration } from "../../auth/browser-supabase-client";
+import { ModalSheet } from "../../product-shell/modal-sheet";
 import { ProductShell } from "../../product-shell/product-shell";
 
 type RequestState =
@@ -66,6 +67,7 @@ export function AskConversationShell({
   const [request, setRequest] = useState<RequestState>({ status: "idle" });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [historyStatus, setHistoryStatus] = useState<"idle" | "loading" | "failed">("idle");
 
   async function refreshList() {
     const response = await fetch("/api/v1/conversations", { cache: "no-store" });
@@ -118,11 +120,15 @@ export function AskConversationShell({
 
   async function openConversation(id: string) {
     setRequest({ status: "idle" });
+    setHistoryStatus("loading");
     const response = await fetch(`/api/v1/conversations/${id}`, { cache: "no-store" });
     const body = await responseBody(response);
     if (response.ok) {
       setConversation(body as ConversationDetailDTO);
       setHistoryOpen(false);
+      setHistoryStatus("idle");
+    } else {
+      setHistoryStatus("failed");
     }
   }
 
@@ -204,7 +210,7 @@ export function AskConversationShell({
           {request.status === "sending" && (
             <>
               <article className="fy-message user pending"><div className="fy-message-content"><p>{request.message}</p></div></article>
-              <div className="fy-thinking" aria-live="polite" data-testid="interpreting-state"><span/><span/><span/> Interpreting your decision and calculating the future impact…</div>
+              <div className="fy-thinking" role="status" aria-live="polite" data-testid="interpreting-state"><span/><span/><span/> Understanding your request and preparing a trusted result…</div>
             </>
           )}
           {request.status === "failed" && (
@@ -223,26 +229,25 @@ export function AskConversationShell({
       </form>
 
       {historyOpen && (
-        <div className="fy-sheet-backdrop" role="presentation" onMouseDown={() => setHistoryOpen(false)}>
-          <section className="fy-bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="history-title" onMouseDown={(event) => event.stopPropagation()} data-testid="conversation-history">
-            <div className="fy-sheet-handle"/><header><h2 id="history-title">Your conversations</h2><button type="button" onClick={() => setHistoryOpen(false)}>Close</button></header>
+        <ModalSheet labelledBy="history-title" onClose={() => setHistoryOpen(false)} testId="conversation-history">
+            <div className="fy-sheet-handle" aria-hidden="true"/><header><h2 id="history-title">Your conversations</h2><button type="button" data-dialog-initial-focus onClick={() => setHistoryOpen(false)}>Close</button></header>
             <button className="fy-new-thread" type="button" onClick={() => { setConversation(null); setHistoryOpen(false); }}>+ New conversation</button>
-            <div className="fy-history-list">
+            <div className="fy-history-list" aria-busy={historyStatus === "loading"}>
               {list.conversations.length === 0 ? <p>No saved conversations yet.</p> : list.conversations.map((item) => (
-                <button type="button" key={item.id} onClick={() => void openConversation(item.id)}>
+                <button type="button" key={item.id} disabled={historyStatus === "loading"} onClick={() => void openConversation(item.id)}>
                   <span><strong>{item.title}</strong><small>{item.contextIsCurrent ? "Current plan" : "Earlier plan"}</small></span><i>→</i>
                 </button>
               ))}
             </div>
+            {historyStatus === "loading" ? <p className="fy-sheet-status" role="status">Retrieving conversation history…</p> : null}
+            {historyStatus === "failed" ? <p className="fy-sheet-status error" role="alert">That conversation could not be opened safely. You can try again.</p> : null}
             <SignOutButton configuration={configuration}/>
-          </section>
-        </div>
+        </ModalSheet>
       )}
 
       {scenarioOpen && conversation && (
-        <div className="fy-sheet-backdrop" role="presentation" onMouseDown={() => setScenarioOpen(false)}>
-          <section className="fy-bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="scenario-title" onMouseDown={(event) => event.stopPropagation()} data-testid="scenario-selector">
-            <div className="fy-sheet-handle"/><header><div><p>Compare paths</p><h2 id="scenario-title">What would you like to view?</h2></div><button type="button" onClick={() => setScenarioOpen(false)}>Close</button></header>
+        <ModalSheet labelledBy="scenario-title" onClose={() => setScenarioOpen(false)} testId="scenario-selector">
+            <div className="fy-sheet-handle" aria-hidden="true"/><header><div><p>Compare paths</p><h2 id="scenario-title">What would you like to view?</h2></div><button type="button" data-dialog-initial-focus onClick={() => setScenarioOpen(false)}>Close</button></header>
             <div className="fy-scenario-list">
               <button className={conversation.conversation.selectedRunId === null ? "selected" : ""} type="button" onClick={() => void selectScenario(null)}><span><strong>Current path</strong><small>No hypothetical purchase</small></span><i>Current</i></button>
               {conversation.scenarios.map((item) => (
@@ -251,8 +256,7 @@ export function AskConversationShell({
                 </button>
               ))}
             </div>
-          </section>
-        </div>
+        </ModalSheet>
       )}
     </ProductShell>
   );
