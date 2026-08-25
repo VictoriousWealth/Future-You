@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import {
   createBrowserSupabaseClient,
   type BrowserSupabaseConfiguration
@@ -68,7 +69,15 @@ export function SignupForm({ configuration }: Readonly<{
         <label htmlFor="signup-password">Password</label>
         <div className="auth-password-control">
           <input id="signup-password" name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} aria-describedby={passwordHelpId} required/>
-          <button type="button" aria-controls="signup-password password-confirmation" aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button>
+          <button
+            type="button"
+            aria-label={showPassword ? "Hide passwords" : "Show passwords"}
+            aria-controls="signup-password password-confirmation"
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((value) => !value)}
+          >
+            {showPassword ? <FiEyeOff aria-hidden="true"/> : <FiEye aria-hidden="true"/>}
+          </button>
         </div>
         <small id={passwordHelpId}>At least eight characters.</small>
       </div>
