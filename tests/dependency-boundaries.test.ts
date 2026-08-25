@@ -117,6 +117,38 @@ describe("automated dependency-direction enforcement", () => {
     expect(benefitsRoute).not.toMatch(/simulator|conversation|provider|openai/i);
   });
 
+  it("Sarah story presentation imports no simulator, provider, fixture, persistence, mapper, or server code", () => {
+    const storyRoot = join(SOURCE_ROOT, "ui", "features", "story");
+    const storyFiles = sourceFiles(storyRoot);
+    const forbidden = ["domain", "fixtures", "infrastructure", "server"].map((part) =>
+      join(SOURCE_ROOT, part)
+    );
+    const violations = storyFiles.flatMap((file) =>
+      importsIn(file)
+        .map((imported) => resolvedImport(file, imported))
+        .filter((imported): imported is string => imported !== null)
+        .filter((imported) => forbidden.some((root) => isInside(imported, root)))
+        .map((imported) => `${relative(SOURCE_ROOT, file)} -> ${relative(SOURCE_ROOT, imported)}`)
+    );
+    expect(violations).toEqual([]);
+    const source = storyFiles.map((file) => readFileSync(file, "utf8")).join("\n");
+    expect(source).not.toMatch(
+      /\bBigInt\b|\bbigint\b|\.minorUnits\b|simulateOneOffPurchase|generateBaseline|OpenAI|ConversationModelProvider|SarahV1ContextSource/
+    );
+    expect(source).not.toMatch(/application\/(?:use-cases|mappers)|infrastructure\/(?:persistence|runs|ai)/);
+  });
+
+  it("Sarah story server composition reads owner-scoped runs and has no provider or administrative path", () => {
+    const composition = readFileSync(
+      join(SOURCE_ROOT, "server", "sarah-story-application.ts"),
+      "utf8"
+    );
+    expect(composition).toContain("SupabaseSimulationRunStore");
+    expect(composition).toContain("SupabasePrincipalProvider");
+    expect(composition).toContain("isSarahStoryAuthorised");
+    expect(composition).not.toMatch(/OpenAI|ConversationModelProvider|service[_-]?role|SUPABASE_REGISTRATION_SECRET_KEY/i);
+  });
+
   it("Route Handlers remain thin and do not import domain or fixtures directly", () => {
     const routeFiles = sourceFiles(join(SOURCE_ROOT, "app", "api"));
     const violations = routeFiles.flatMap((file) =>
