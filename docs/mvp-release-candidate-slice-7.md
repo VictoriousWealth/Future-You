@@ -92,7 +92,8 @@ Legacy aliases may remain temporarily when removing them would create risky chur
 
 Consolidation is limited to demonstrated value:
 
-- retain and harden `ProductShell`, `ProductHeader`, `ProductNavigation`, `ContextPill`, `GoalCard` and surface states;
+- retain and harden `ProductShell`, `ProductHeader`, `ProductNavigation`, `GoalCard` and surface states;
+- retire the repeated top-of-screen `ContextPill`; current-plan state is the normal default, while material historical/stale state continues to use explicit warnings;
 - introduce shared auth framing, brand mark, field/action/error primitives through semantic components/classes;
 - introduce one reusable accessible modal-sheet primitive with focus trap, Escape close and trigger-focus restoration;
 - reuse one warning/empty/status visual language across product routes;
