@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, type ReactNode } from "react";
 import { ProductIcon, type ProductIconName } from "./product-icon";
@@ -26,7 +27,7 @@ export function ProductHeader({ action }: Readonly<{ action?: ReactNode }>) {
       </Link>
       {action ?? (
         <Link className="fy-profile-link" href="/settings/financial-context" aria-label="Open financial context settings">
-          <ProductIcon name="profile" />
+          <Image src="/images/sarah-profile.png" alt="" width={44} height={44} priority/>
         </Link>
       )}
     </header>
