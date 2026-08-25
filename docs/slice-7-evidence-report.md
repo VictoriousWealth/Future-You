@@ -232,3 +232,9 @@ Recommended post-MVP priorities, outside the approved MVP: first authorise and r
 - Preserve the local-only migration, reset and committed-fixture process.
 
 The repository is frozen at this verified release-candidate state. Any post-MVP work requires a separately approved contract.
+
+## Approved post-release visual refinement
+
+On 2026-08-25, the repeated “Current plan”/“Current plan active” banner was removed from the top of Home, Goals, Ask and Benefits. Current-plan state is now treated as the normal default rather than repeated chrome. Material exceptions remain explicit: hypothetical, historical-plan and stale-conversation warnings were not removed.
+
+The unused `ContextPill` component and its CSS were deleted, desktop grid placement was tightened, and affected renderer tests now assert that the banner is absent. Five approved visual baselines—Home, Goals, Ask initial, Ask £650 result and Benefits—were regenerated. The rebuilt Slice 7 suite passed 5/5, followed by a clean local reset and a no-update full Chromium result of 20/20. TypeScript, ESLint and the production build pass.
