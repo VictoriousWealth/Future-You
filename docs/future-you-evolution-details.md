@@ -784,3 +784,20 @@
     - Brand recognition should not depend on an undersized or screen-specific lockup. Reusing the text wordmark creates a consistent identity across entry and authenticated states.
   - Effect on Future You:
     - The brand is easier to read and more coherent without changing authentication, navigation, account state or any financial behaviour.
+
+- **Superseding brand refinement — Angular symbol becomes universal and AI becomes Ask-only**
+  - What changed:
+    - The prior decision to reserve the angular symbol for Welcome was superseded. A compact angular symbol now precedes the text name across auth forms, onboarding/settings and every signed-in product surface.
+    - The compact wordmark increased again from 17px to 20px.
+  - Naming rule:
+    - Login, Signup, onboarding, settings, Home, Goals and Benefits display `FutureYou`.
+    - Ask initial and conversation states display `FutureYou AI` because AI is the conversational interface there.
+    - Welcome retains the full-size angular identity mark and `Future You` name.
+  - Implementation rule:
+    - One reusable lockup owns the compact angular geometry and page-specific AI suffix.
+    - The product shell derives the suffix from the active destination; the browser cannot choose an arbitrary brand variant.
+    - Accessible link names and destinations remain unchanged.
+  - Why it changed:
+    - The angular mark is part of the core Future You identity, while the `AI` suffix should identify the conversational Ask surface rather than label the entire financial product.
+  - Effect on Future You:
+    - Every screen now carries a larger, recognisable brand mark with a clear distinction between the product and its AI conversation interface.
