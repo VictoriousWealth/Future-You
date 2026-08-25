@@ -11,6 +11,7 @@ import { ConversationResultView } from "./conversation-result-view";
 import { SignOutButton } from "../../auth/sign-out-button";
 import type { BrowserSupabaseConfiguration } from "../../auth/browser-supabase-client";
 import { ModalSheet } from "../../product-shell/modal-sheet";
+import { ActionTriangleIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
 
 type RequestState =
@@ -173,7 +174,7 @@ export function AskConversationShell({
               <button type="button" className={`fy-prompt-card ${prompt.tone}`} key={prompt.text} onClick={() => void submit(prompt.text)}>
                 <span><AskIcon name={prompt.icon}/></span>
                 <strong>{prompt.text}</strong>
-                <i aria-hidden="true">→</i>
+                <ActionTriangleIcon/>
               </button>
             ))}
           </div>
@@ -221,7 +222,7 @@ export function AskConversationShell({
       <form className="fy-composer" onSubmit={onSubmit} data-testid="ask-composer">
         <label className="sr-only" htmlFor="ask-message">Ask Future You</label>
         <input id="ask-message" value={message} maxLength={1000} onChange={(event) => setMessage(event.target.value)} placeholder="Ask Future You..." disabled={request.status === "sending"}/>
-        <button type="submit" aria-label="Send message" disabled={!message.trim() || request.status === "sending"}>↑</button>
+        <button type="submit" aria-label="Send message" disabled={!message.trim() || request.status === "sending"}><ActionTriangleIcon direction="up"/></button>
       </form>
 
       {historyOpen && (
@@ -231,7 +232,7 @@ export function AskConversationShell({
             <div className="fy-history-list" aria-busy={historyStatus === "loading"}>
               {list.conversations.length === 0 ? <p>No saved conversations yet.</p> : list.conversations.map((item) => (
                 <button type="button" key={item.id} disabled={historyStatus === "loading"} onClick={() => void openConversation(item.id)}>
-                  <span><strong>{item.title}</strong><small>{item.contextIsCurrent ? "Current plan" : "Earlier plan"}</small></span><i>→</i>
+                  <span><strong>{item.title}</strong><small>{item.contextIsCurrent ? "Current plan" : "Earlier plan"}</small></span><ActionTriangleIcon/>
                 </button>
               ))}
             </div>
