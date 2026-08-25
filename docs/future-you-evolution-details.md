@@ -801,3 +801,49 @@
     - The angular mark is part of the core Future You identity, while the `AI` suffix should identify the conversational Ask surface rather than label the entire financial product.
   - Effect on Future You:
     - Every screen now carries a larger, recognisable brand mark with a clear distinction between the product and its AI conversation interface.
+
+- **Brand-asset refinement — Supplied transparent logo replaces reconstructed geometry**
+  - What changed:
+    - The temporary CSS approximation of the angular Future You symbol was replaced with the newly supplied transparent PNG artwork.
+  - Asset rule:
+    - The approved source is stored in the repository as `public/images/future-you-logo.png` so the product does not depend on Downloads or a remote service at runtime.
+    - The original `109 × 135` proportions are preserved with contained rendering in both the full Welcome mark and every compact wordmark.
+    - The white-background duplicate was not used.
+  - Accessibility and ownership:
+    - The artwork remains decorative because the surrounding identity container or link already has the complete accessible brand name.
+    - One shared renderer remains responsible for the icon everywhere; page-specific code does not duplicate the asset.
+  - Effect on Future You:
+    - Every screen now displays the exact supplied logo while retaining the approved `FutureYou` and Ask-only `FutureYou AI` naming rule.
+
+- **Superseding brand-asset refinement — SVG becomes the canonical logo source**
+  - What changed:
+    - The subsequently supplied SVG supersedes the briefly selected transparent PNG as the canonical angular logo asset.
+  - Asset rule:
+    - The SVG is stored in the repository as `public/images/future-you-logo.svg` and is rendered locally without a network dependency.
+    - Its native `109 × 135` aspect ratio is preserved in both compact and full-size uses.
+    - The earlier PNG remains an unused historical source; runtime brand rendering now references only the SVG.
+  - Why it changed:
+    - Vector artwork stays crisp across phone, tablet, desktop and user-scaled interfaces while retaining the exact supplied geometry and colours.
+  - Effect on Future You:
+    - Every brand surface now uses the supplied scalable logo without changing the approved product naming or accessibility semantics.
+
+- **Welcome refinement — Promotional copy is removed**
+  - What changed:
+    - Welcome no longer displays `Your decisions. Your future.`, the sentence beginning `See how a money choice today`, or the private-context trust note.
+  - New presentation:
+    - The screen contains the full Future You identity followed directly by the Sign in and Create account actions.
+    - The shared auth frame does not emit an empty heading container or dangling `aria-labelledby` when Welcome supplies no heading copy.
+  - Why it changed:
+    - The welcome experience is intended to be a quieter identity and entry screen rather than another explanatory product surface.
+  - Effect on Future You:
+    - Entry is visually simpler while authentication destinations, brand artwork and all downstream product behaviour remain unchanged.
+
+- **Welcome terminology refinement — Entry actions become Login and Register**
+  - What changed:
+    - The Welcome action labels `Sign in` and `Create account` were replaced by `Login` and `Register`.
+  - Routing rule:
+    - Login continues to navigate to `/login`.
+    - Register continues to navigate to `/signup`.
+    - The Login form heading and Signup form heading are unchanged; this refinement applies to the two Welcome entry actions.
+  - Effect on Future You:
+    - Welcome uses the requested concise terminology without changing authentication behaviour or account creation semantics.
