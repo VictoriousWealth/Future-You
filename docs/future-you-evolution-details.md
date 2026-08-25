@@ -731,3 +731,30 @@
     - The segmented rhythm is a distinctive structural detail of the approved reference UI, while the existing gradient is stronger than the reference's flat fill colour.
   - Effect on Future You:
     - Goal bars now align more closely with the mockup without changing their percentage, accessibility label or deterministic source.
+
+- **Visual refinement — Action arrows adopt the reference triangle treatment**
+  - What changed:
+    - Straight `→` and `↑` text glyphs inside interactive controls were replaced with one reusable filled triangle icon, rotated right for navigation and upward for message submission.
+  - Previous approach:
+    - Home actions, Ask suggestions, the Ask send control, conversation-history rows and the inactive Benefits handoff used font-rendered arrow characters whose shape and weight varied from the supplied UI reference.
+  - New approach:
+    - A shared `ActionTriangleIcon` renders a compact filled SVG triangle. The Home hero retains its circular pale-blue action button and now contains the reference-like play triangle; smaller Home, Ask, history and Benefits actions use the same geometry without the circle unless their existing component already provides one.
+    - Financial before/after arrows, goal-date changes and arrow suffixes in explanatory links remain unchanged because they communicate relationships or reading direction rather than acting as button icons.
+    - The controls keep their existing accessible names, destinations and touch-target sizes. Browser coverage proves the right- and up-facing triangle variants are present and that the former arrow glyphs are absent from the affected controls.
+  - Why it changed:
+    - The rotated triangle is a distinctive interaction cue in the approved mockup and creates a more consistent geometric icon language than platform-dependent arrow text.
+  - Effect on Future You:
+    - Action controls now align more closely with the visual reference without changing navigation, conversation behaviour, financial authority or any deterministic result.
+
+- **Visual refinement — Segmented goal bars become taller with completion-aware end caps**
+  - What changed:
+    - Horizontal goal-progress tracks were increased to 1.5 times their previous height, and incomplete fills now end with a flat right edge.
+  - Previous approach:
+    - The `0.52rem` track was visually light beside the enlarged circular progress indicator, and every funded fill inherited a fully rounded pill shape even when the server reported less than 100% completion.
+  - New approach:
+    - The shared track height is `0.78rem`. A reusable `GoalProgressBar` applies the server-supplied width unchanged and marks only an exact server-supplied `100%` width as complete. Partial fills keep a rounded leading edge but use a square trailing edge; complete fills retain both rounded ends.
+    - Home, current Goals and stored hypothetical Goals now share this renderer. Unit coverage proves both completion classes, while browser geometry coverage requires a track of at least 12px and a zero-radius right edge for Sarah's partial goals.
+  - Why it changed:
+    - The stronger height better balances the goal cards, while the flat unfinished edge makes the precise stopping point easier to read and avoids visually implying completion.
+  - Effect on Future You:
+    - Goal progress is clearer and more deliberate without changing its gradient, segmented structure, accessible label, server-authored width or any financial calculation.
