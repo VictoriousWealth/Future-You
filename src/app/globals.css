@@ -781,9 +781,28 @@ summary {
   font-size: inherit;
   font-style: normal;
 }
-.fy-angular-symbol { display: block; width: 2rem; height: 2rem; flex: 0 0 2rem; }
-.fy-angular-symbol img,
-.auth-brand-symbol img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.fy-angular-symbol {
+  position: relative;
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  isolation: isolate;
+}
+.fy-angular-artwork { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; }
+.fy-angular-backdrop {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 3.15rem;
+  max-width: none;
+  height: 3rem;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
 
 .fy-history-button {
   display: grid;
