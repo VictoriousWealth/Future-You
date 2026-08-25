@@ -341,13 +341,13 @@ Screens: Login, Signup, Home, Goals, Ask, Benefits
 
 Current inconsistency:
 
-- Reference uses a larger `FUTUREYOUAI` wordmark and a quiet grey three-line history/menu glyph without a surrounding circle.
-- The current signed-in wordmark is smaller, and Login/Signup introduce a compact angular symbol-and-copy lockup that is not used elsewhere in the app.
+- The shared compact wordmark and page-specific naming rule are now aligned with the approved treatment.
+- The reference uses a quiet grey three-line history/menu glyph without a surrounding circle.
 - The current Ask history control is a bordered circular button with strong blue lines.
 
 Desired result:
 
-- Use one larger text wordmark across auth forms and the signed-in shell. Reserve the full angular symbol for the Welcome identity screen rather than introducing a unique compact version on Login/Signup.
+- Keep the approved universal angular symbol and larger compact wordmark: `FutureYou` on product surfaces and `FutureYou AI` only on Ask.
 - Reduce the Ask history control's visual weight while retaining a 44px hit region, focus state, dialog semantics, and accessible name.
 
 Completion check:
@@ -356,8 +356,11 @@ Completion check:
 
 Implementation under review:
 
-- The shared `FUTURE YOU AI` wordmark now renders at 17px in the signed-in shell and on Login/Signup.
-- The compact angular symbol was removed from Login/Signup; the full symbol remains on Welcome only.
+- The reusable compact lockup now renders at 20px and always places the angular symbol before the name.
+- The angular symbol now uses the supplied transparent logo PNG rather than a CSS approximation, preserving the source artwork's proportions.
+- Login, Signup, onboarding, settings, Home, Goals, and Benefits show `FutureYou` without the `AI` suffix.
+- Ask initial and conversation states show `FutureYou AI`.
+- Welcome retains the full-size angular identity mark with `Future You`.
 - The Ask history-control styling remains open within this item.
 
 ### UI-15 — Reconcile the bottom-navigation geometry
@@ -472,6 +475,7 @@ These items were already reviewed and should not be reopened incidentally while 
 - Horizontal goal bars use the cyan-blue gradient, staccato separators, 1.5× height, and a flat right edge until the server supplies `100%`.
 - Interactive arrow glyphs use the mockup-style rotated triangle.
 - Visible text and meaningful icons follow the Apple-aligned size floors and scaling checks.
+- The shared angular brand symbol uses the supplied transparent logo artwork rather than reconstructed CSS bars.
 
 ## Working method
 
