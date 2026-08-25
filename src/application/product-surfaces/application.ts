@@ -86,6 +86,7 @@ function ratio(numerator: bigint, denominator: bigint, label: string): SurfacePr
   return {
     ...base,
     fill: `${bounded / 100}%`,
+    ringDasharray: `${bounded} ${10_000 - bounded}`,
     accessibleLabel: `${label} is ${wholePercent}% funded`
   };
 }
