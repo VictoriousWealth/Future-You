@@ -1,10 +1,26 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { SARAH_V1_CONTEXT } from "../src/fixtures/sarah-v1";
+import { SLICE_1_RULES } from "../src/domain/simulator/engine";
+import {
+  ENGLAND_WALES_CALENDAR_METADATA,
+  ENGLAND_WALES_WORKING_DAY_CALENDAR
+} from "../src/fixtures/calendar/england-wales-bank-holidays";
+import { SarahV1ContextSource } from "../src/infrastructure/context/sarah-v1-context-source";
+import { InMemorySimulationRunStore } from "../src/infrastructure/runs/in-memory-simulation-run-store";
 import {
   FINANCIAL_CONTEXT_PERSISTENCE_SCHEMA,
   financialContextToPersistence
 } from "../src/infrastructure/persistence/financial-context-persistence";
+import {
+  jsonValueToPersistence,
+  requestToJson,
+  simulationResponseToJson
+} from "../src/infrastructure/persistence/simulation-run-persistence";
+import { requestIdentityFor } from "../src/application/use-cases/idempotent-simulation-run";
+import type { OneOffPurchaseRequestDTO, OneOffPurchaseResponseDTO } from "../src/application/dto/contracts";
+import { createSimulatorApplication } from "../src/server/simulator-application";
+import { SARAH_V1_BROWSER_PROOF_COMMAND, SARAH_V1_BROWSER_PROOF_OPTIONS_COMMAND } from "../src/server/sarah-v1-demo-command";
 
 const SARAH_USER_ID = "11111111-1111-4111-8111-111111111111";
 const ALEX_USER_ID = "22222222-2222-4222-8222-222222222222";
@@ -13,6 +29,14 @@ const VISUAL_ONBOARDING_USER_ID = "88888888-8888-4888-8888-888888888888";
 
 function sqlString(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
+}
+
+function sqlNullable(value: string | null): string {
+  return value === null ? "null" : sqlString(value);
+}
+
+function jsonSql(value: unknown): string {
+  return `${sqlString(JSON.stringify(jsonValueToPersistence(value)))}::jsonb`;
 }
 
 function authUser(input: Readonly<{
@@ -63,8 +87,115 @@ insert into auth.identities (
 );`;
 }
 
-export function createSupabaseSeed(): string {
+async function sarahStoryRunsSql(): Promise<string> {
+  const runStore = new InMemorySimulationRunStore();
+  const application = createSimulatorApplication({
+    contextSource: new SarahV1ContextSource(),
+    rules: SLICE_1_RULES,
+    calendar: ENGLAND_WALES_WORKING_DAY_CALENDAR,
+    calendarMetadata: ENGLAND_WALES_CALENDAR_METADATA,
+    runStore
+  });
+  const generated = await application.listScenarioOptions.execute(
+    SARAH_V1_BROWSER_PROOF_OPTIONS_COMMAND
+  );
+  if (!generated.ok) throw new Error(`Sarah story runs could not be generated: ${generated.error.code}`);
+  const runs = generated.value.options
+    .map((option) => option.simulation)
+    .filter((run): run is OneOffPurchaseResponseDTO => run !== null);
+  if (runs.length !== 4) throw new Error("Sarah story requires exactly four immutable scenario runs.");
+  const baseline = runs[0]?.baseline;
+  if (!baseline) throw new Error("Sarah story baseline was not generated.");
+
+  const baselineSql = `insert into public.simulation_baselines (
+  user_id, baseline_id, context_version_id, rules_version, calendar_version,
+  input_identity, projection_payload
+) values (
+  ${sqlString(SARAH_USER_ID)},
+  ${sqlString(baseline.identity.baselineId)},
+  ${sqlString(baseline.identity.contextVersion)},
+  ${sqlString(baseline.versions.rules)},
+  ${sqlString(baseline.versions.calendar)},
+  ${sqlString(baseline.identity.inputIdentity)},
+  ${jsonSql(baseline)}
+);`;
+
+  const scenarioRows = runs.map((run) => {
+    const definition = { ...run.scenario, scenarioKind: "one_off_purchase" };
+    return `(
+  ${sqlString(SARAH_USER_ID)}, ${sqlString(run.scenario.id)}, ${sqlString(run.scenario.baselineId)},
+  ${sqlString(run.scenario.contextVersion)}, ${sqlNullable(run.scenario.parentScenarioId)},
+  ${sqlNullable(run.scenario.derivedFromScenarioId)}, 'one_off_purchase', ${jsonSql(definition)}
+)`;
+  }).join(",\n");
+
+  const requests = new Map<string, OneOffPurchaseRequestDTO>(runs.map((run) => [
+    run.requestId,
+    { ...SARAH_V1_BROWSER_PROOF_COMMAND, requestId: run.requestId }
+  ]));
+  for (const run of runs) {
+    const request = requests.get(run.requestId);
+    const applicationRecord = await runStore.findByRequestId(run.requestId);
+    if (
+      !request
+      || !applicationRecord
+      || applicationRecord.result.calculation.runId !== run.calculation.runId
+      || applicationRecord.requestIdentity !== requestIdentityFor(request)
+    ) {
+      throw new Error(`Sarah story request metadata did not match application output for ${run.requestId}.`);
+    }
+  }
+  const runRows = runs.map((run) => {
+    const request = requests.get(run.requestId);
+    if (!request) throw new Error(`Missing canonical request for ${run.requestId}.`);
+    return `(
+  ${sqlString(SARAH_USER_ID)}, ${sqlString(run.calculation.runId)}, ${sqlString(run.requestId)},
+  ${sqlString(requestIdentityFor(request))}, ${sqlString(run.context.version)},
+  ${sqlString(run.calculation.baselineId)}, ${sqlString(run.scenario.id)},
+  ${sqlNullable(run.scenario.parentScenarioId)}, 'one_off_purchase', ${jsonSql(requestToJson(request))},
+  ${jsonSql(run.result.projection.assumptions)}, ${sqlString(run.calculation.rulesVersion)},
+  ${sqlString(run.calculation.calendarVersion)}, ${jsonSql(run.calculation.calendar)},
+  ${jsonSql(run.calculation.projectionHorizon)}, ${sqlString(run.result.comparison.classification.code)},
+  ${sqlString(run.reproducibility.inputIdentity)}, ${sqlString(run.reproducibility.outputIdentity)},
+  ${sqlString(run.schemaVersion)}, ${jsonSql(simulationResponseToJson(run))}
+)`;
+  }).join(",\n");
+
+  const requestKeyRows = runs.map((run) => {
+    const request = requests.get(run.requestId);
+    if (!request) throw new Error(`Missing request identity for ${run.requestId}.`);
+    return `(
+  ${sqlString(SARAH_USER_ID)}, ${sqlString(run.requestId)}, 'simulate_one_off_purchase',
+  ${sqlString(requestIdentityFor(request))}, ${sqlString(run.calculation.runId)}
+)`;
+  }).join(",\n");
+
+  return `${baselineSql}
+
+insert into public.scenarios (
+  user_id, scenario_id, baseline_id, context_version_id, parent_scenario_id,
+  derived_from_scenario_id, scenario_kind, definition_payload
+) values
+${scenarioRows};
+
+insert into public.simulation_runs (
+  user_id, run_id, request_id, request_identity, context_version_id, baseline_id,
+  scenario_id, parent_scenario_id, scenario_kind, canonical_request, material_assumptions,
+  rules_version, calendar_version, calendar_fallback_metadata, projection_horizons,
+  deterministic_classification, input_identity, output_identity, response_schema_version,
+  response_payload
+) values
+${runRows};
+
+insert into public.api_request_keys (
+  user_id, request_id, operation, request_identity, run_id
+) values
+${requestKeyRows};`;
+}
+
+export async function createSupabaseSeed(): Promise<string> {
   const contextPayload = JSON.stringify(financialContextToPersistence(SARAH_V1_CONTEXT));
+  const storyRuns = await sarahStoryRunsSql();
   return `-- GENERATED by scripts/generate-supabase-seed.ts. Do not hand-edit.
 -- Local-only credentials are deterministic so browser and API isolation tests are reproducible.
 
@@ -125,6 +256,9 @@ set current_financial_context_version_id = ${sqlString(SARAH_V1_CONTEXT.version)
     updated_at = statement_timestamp()
 where user_id = ${sqlString(SARAH_USER_ID)};
 
+-- Track B1 reads these pre-created immutable DTO runs. Story playback never calculates them.
+${storyRuns}
+
 insert into private.employers (
   employer_id, public_company_id, display_name, status
 ) values (
@@ -180,7 +314,7 @@ insert into private.employee_provisions (
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(
     fileURLToPath(new URL("../supabase/seed.sql", import.meta.url)),
-    createSupabaseSeed(),
+    await createSupabaseSeed(),
     { encoding: "utf8" }
   );
 }
