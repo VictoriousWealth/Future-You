@@ -1,7 +1,7 @@
 # Future You — Character-Led Story and Human-Context Contract
 
-**Version:** 0.1.0-proposal
-**Status:** Proposed for review; no implementation authorised
+**Version:** 1.0.0
+**Status:** Approved product direction; Phase B1 technical design authorised, application implementation not authorised
 **Prepared:** 2026-08-25
 **Scope:** Guided Sarah story mode, optional everyday character treatment and user-owned human-context profile
 **Financial authority:** Existing deterministic simulator and immutable stored results remain unchanged
@@ -24,6 +24,22 @@ The recommended initial implementation order is:
 - defer user-selected or personalised likenesses.
 
 This contract does not authorise implementation.
+
+## 1.1 Locked Phase B1 decisions
+
+- Sarah is the canonical demonstration character only.
+- `Play Sarah's story` is an explicit user-selected route or mode; it never starts from opening the normal application.
+- The everyday product has no animated avatar by default.
+- Phase B1 includes no character selection, customisation, user likeness, uploads or AI-generated avatar.
+- Dialogue uses visible text, accessible speech bubbles/story panels and optional static captions; voice, TTS, cloning and automatic audio are excluded.
+- Story motion includes pause, resume, skip step, skip all animation, restart, exit, disable animation and a reduced-motion equivalent.
+- The emotional arc is uncertainty to understanding, never bad choice to good choice.
+- All financial facts come from canonical Sarah context, immutable runs and approved server templates.
+- Phase B1 operates without OpenAI or another live provider.
+- Real-user human-context persistence is not included and requires another technical design.
+- “Financial twin” remains internal language only.
+
+The next authorised output is `sarah-guided-story-mode-technical-design.md`. No Track B application code may begin until that design is approved.
 
 ## 2. Product purpose
 
@@ -628,7 +644,7 @@ Any future implementation must prove:
 
 ## 23. Recommended implementation phases
 
-### Phase A — Static guided story proof
+### Phase B1-A — Static guided story proof
 
 - separate demo route/mode;
 - Sarah static illustrations;
@@ -637,28 +653,28 @@ Any future implementation must prove:
 - no live provider;
 - no human-profile persistence.
 
-### Phase B — Accessible animation
+### Phase B1-B — Accessible animation
 
 - bounded story-stage motion;
 - pause/skip/disable;
 - reduced-motion/static equivalent;
 - obstruction, zoom and keyboard tests.
 
-### Phase C — Transparent Your story profile
+### Later separate track — Transparent Your story profile
 
 - separate human-context persistence;
 - provenance, use explanation, edit/remove and disable-personalisation controls;
 - employer isolation and RLS proof;
 - no simulator connection.
 
-### Phase D — Bounded everyday experiments
+### Later separate track — Bounded everyday experiments
 
 - optional static/generic companion variants;
 - user research and accessibility review;
 - no default continuous movement;
 - no user likeness.
 
-### Phase E — Provider-assisted tone only if justified
+### Later separate track — Provider-assisted tone only if justified
 
 - strict symbolic schema;
 - allowlisted fact keys;
@@ -667,40 +683,30 @@ Any future implementation must prove:
 
 Each phase requires separate approval. Later phases are not implied by approval of earlier ones.
 
-## 24. Explicit unresolved decisions
+## 24. Locked Phase B1 decisions and later unresolved scope
 
-| Decision | Current recommendation | Status |
+| Decision | Approved Phase B1 position | Status |
 |---|---|---|
-| Is the avatar only Sarah in demo mode? | Yes for the first implementation | Unresolved pending approval |
-| Is there a generic everyday companion? | Research after the guided demo | Unresolved |
-| Is animation enabled by default? | Only inside explicitly started story mode; not normal app use | Unresolved |
-| Can users choose/customise a character? | Defer | Unresolved |
-| Does the character speak, use bubbles or both? | Text bubbles/captions first; no voice | Unresolved |
-| Is voice included? | Exclude from initial phases | Unresolved |
-| Which human-context fields ship? | Start with explanation/tone/character preferences; research personal fields | Unresolved |
-| Which fields are optional? | All human-context fields | Recommendation awaiting approval |
-| When are fields collected? | Progressively after minimum onboarding | Recommendation awaiting approval |
+| Is the avatar only Sarah in demo mode? | Yes | Locked for Phase B1 |
+| Is there a generic everyday companion? | No everyday avatar | Deferred |
+| Is animation enabled by default? | Only after the user explicitly starts story mode | Locked for Phase B1 |
+| Can users choose/customise a character? | No | Deferred |
+| Does the character speak, use bubbles or both? | Visible text/bubbles/panels and captions only | Locked for Phase B1 |
+| Is voice included? | No | Deferred |
+| Which human-context fields ship? | No real-user human-context persistence in Phase B1 | Deferred to separate technical design |
+| Which fields are optional? | Future human-context fields must be optional | Concept locked; implementation deferred |
+| When are fields collected? | Not in Phase B1 | Deferred |
 | Does human context affect AI tone? | Only through approved enum rules | Unresolved |
 | Which details may reach a provider? | Tone/depth enums and topic keys only by default | Unresolved |
 | How does the user disable personalisation? | One global control plus per-fact removal | Unresolved UI design |
 | How is profile information deleted? | Hard-remove values, retain value-free audit event | Unresolved retention/legal review |
-| Is “financial twin” user-facing language? | Avoid until research proves it is clear and not misleading | Unresolved |
-| Does story mode live inside the product or a separate route? | Separate evaluator/demo route | Unresolved |
+| Is “financial twin” user-facing language? | No | Locked |
+| Does story mode live inside the product or a separate route? | Explicit route or mode, never automatic normal-app behaviour | Locked; exact route awaits technical design |
 | How long is human context retained/reconfirmed? | Define per field after privacy review | Unresolved |
 | Are Sarah's non-financial details a fixture or script? | Versioned demo human-context fixture linked to script | Unresolved technical choice |
 
-## 25. Approval gate
+## 25. Phase B1 design gate
 
-Before implementation, approval must confirm:
+Before Phase B1 implementation, `sarah-guided-story-mode-technical-design.md` must define and receive approval for the story route/mode, deterministic steps, state mapping, trusted templates, controls, responsive geometry, reduced motion, screen-reader behaviour, obstruction proof, no-AI operation and visual/test evidence.
 
-- Sarah's demo-only identity;
-- separate demo route versus in-product mode;
-- default everyday no-avatar position;
-- initial field set and progressive collection timing;
-- provider allowlist;
-- retention/deletion rules;
-- motion defaults and control placement;
-- the scripted/data-driven state mapping; and
-- the recommended phase order.
-
-Until then, no avatar, animation or deeper human-profile implementation is authorised.
+Human-context persistence, everyday avatars, voice and character customisation remain outside Phase B1 regardless of that future approval.
