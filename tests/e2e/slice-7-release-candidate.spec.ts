@@ -486,11 +486,12 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
     const brand = panel.querySelector<HTMLElement>(".auth-brand");
     const actions = panel.querySelector<HTMLElement>(".auth-choice-actions");
     const buttons = actions ? [...actions.children].filter((child): child is HTMLElement => child instanceof HTMLElement) : [];
-    if (!brand || !actions || buttons.length !== 2) throw new Error("Welcome composition is incomplete.");
+    const [firstButton, secondButton] = buttons;
+    if (!brand || !actions || !firstButton || !secondButton || buttons.length !== 2) throw new Error("Welcome composition is incomplete.");
     const brandBox = brand.getBoundingClientRect();
     const actionsBox = actions.getBoundingClientRect();
-    const firstButtonBox = buttons[0].getBoundingClientRect();
-    const secondButtonBox = buttons[1].getBoundingClientRect();
+    const firstButtonBox = firstButton.getBoundingClientRect();
+    const secondButtonBox = secondButton.getBoundingClientRect();
     return {
       identityToActions: actionsBox.top - brandBox.bottom,
       actionGap: secondButtonBox.top - firstButtonBox.bottom
