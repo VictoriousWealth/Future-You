@@ -10,6 +10,7 @@ import { SupabasePrincipalProvider } from "../infrastructure/auth/supabase-princ
 import { requireActiveFutureYouAccount } from "../infrastructure/auth/supabase-account-activation";
 import { SupabaseFinancialContextSource } from "../infrastructure/context/supabase-financial-context-source";
 import { SupabaseWorkplaceAssociationSource } from "../infrastructure/context/supabase-workplace-association-source";
+import { SupabaseEmployerBenefitSource } from "../infrastructure/context/supabase-employer-benefit-source";
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
 import { createSimulatorApplication } from "./simulator-application";
@@ -52,6 +53,7 @@ export const resolveAuthenticatedProductSurfaceApplication: AuthenticatedProduct
         && profile.current_financial_context_version_id === SARAH_STORY_MANIFEST.requiredContextVersion,
       contextSource,
       workplaceSource: new SupabaseWorkplaceAssociationSource(client, principal),
+      employerBenefitSource: new SupabaseEmployerBenefitSource(client, principal),
       simulator
     })
   };
