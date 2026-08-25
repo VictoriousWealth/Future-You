@@ -27,12 +27,19 @@ describe("Welcome page", () => {
   });
 
   it("layers the supplied white SVG behind the compact auth logo only", () => {
-    const markup = renderToStaticMarkup(createElement(AuthFrame, { title: "Login", children: "Form content" }));
+    const markup = renderToStaticMarkup(createElement(AuthFrame, {
+      title: "Login",
+      description: "Responsive auth description",
+      children: "Form content"
+    }));
     const backdrop = readFileSync(resolve("public/images/future-you-auth-backdrop.svg"), "utf8");
 
     expect(markup).toContain("/images/future-you-auth-backdrop.svg");
     expect(markup).toContain('class="fy-angular-backdrop"');
     expect(markup).toContain('class="fy-angular-artwork"');
+    expect(markup).toContain('class="auth-copy"');
+    expect(markup).toContain('class="auth-description"');
+    expect(markup).toContain("Responsive auth description");
     expect(backdrop).toContain('fill="#ffffff"');
     expect(backdrop).not.toContain('fill="#000000"');
     expect(backdrop).not.toContain("<!DOCTYPE");
