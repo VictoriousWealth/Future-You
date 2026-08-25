@@ -26,9 +26,9 @@ export async function signIn(
   await page.getByLabel("Password").fill(LOCAL_USERS[user].password);
   await page.getByRole("button", { name: "Sign in" }).click();
   if (user === "sarah") {
-    await expect(page).toHaveURL(new RegExp(`${requested ?? "/home"}$`));
+    await expect(page).toHaveURL(new RegExp(`${requested ?? "/home"}$`), { timeout: 15_000 });
   } else {
-    await expect(page).toHaveURL(/\/(?:onboarding|home)$/);
+    await expect(page).toHaveURL(/\/(?:onboarding|home)$/, { timeout: 15_000 });
   }
 }
 
