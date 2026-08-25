@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { BenefitsSurfaceDTO } from "../../../application/product-surfaces/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
-import { ContextPill } from "../../product-shell/context-pill";
 import { ProductIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
@@ -38,7 +37,6 @@ export function BenefitsSurface() {
       {error ? <SurfaceError message={error} retry={retry}/> : null}
       {data ? (
         <>
-          <ContextPill label={`${data.context.label} active`}/>
           <header className="fy-surface-heading">
             <p>What your plan confirms</p><h1>Your benefits</h1>
             <span>Facts and opportunities stay separate until a source confirms them.</span>
