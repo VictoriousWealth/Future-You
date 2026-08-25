@@ -599,3 +599,16 @@
     - The repeated default-state banner added visual noise without helping users distinguish an exceptional financial context.
   - Effect on Future You:
     - Each primary screen starts directly with its useful content while immutable context authority and all warnings for non-current state remain intact. No financial, conversational, persistence or post-MVP capability changed.
+
+- **Verification refinement — Banner removal protected across primary surfaces**
+  - What changed:
+    - A named Playwright regression was added specifically for the removed default current-plan banner.
+  - Previous approach:
+    - Updated visual baselines and existing route tests showed the banner was gone, but there was no single executable gate covering its absence from every primary destination.
+  - New approach:
+    - The regression opens Home, Goals, Ask and Benefits at both `414 × 896` and `1440 × 900`, and rejects both the retired banner test hook/class and the exact “Current plan active” banner text. Existing historical-plan and stale-context tests remain unchanged so material exception warnings cannot disappear with the default badge.
+    - The focused regression passes 1/1. After a clean local reset, the expanded full Chromium suite passes 21/21 in 1.4 minutes without updating visual snapshots.
+  - Why it changed:
+    - The small visual request should remain protected against accidental reintroduction during later shell or route styling changes.
+  - Effect on Future You:
+    - Normal product screens remain free of the repeated banner at phone and desktop widths, while exceptional context states retain their explicit safety messaging.
