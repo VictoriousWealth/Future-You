@@ -684,10 +684,10 @@ If Sarah confirms the payment timing, pattern and source, the selected scenario 
 
 ## 13. Existing mockup mapping
 
-> **Slice 6 supersession:** `shared-product-surfaces-slice-6.md` is authoritative for Home,
-> Goals and Benefits. In particular, the persisted Sarah contract contains no pension-match ceiling or
-> season-ticket-loan record. Those opportunities must not be inferred from the unverified workplace
-> name, shown on Home/Benefits or offered as an Ask branch.
+> **Post-B1 correction:** `sarah-employer-and-benefits-correction-contract.md` supersedes the historical
+> sparse Slice 6 Sarah state. Explicit OniBank records now support informational additional-match and
+> season-ticket-loan cards on Home/Benefits, with unknown eligibility, inactive uptake and no numerical
+> effect. The no-inference and no-Ask-branch rules remain unchanged.
 
 | Supplied screen | Classification | Mapping and required change |
 |---|---|---|
