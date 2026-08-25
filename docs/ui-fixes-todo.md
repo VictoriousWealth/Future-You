@@ -477,6 +477,7 @@ These items were already reviewed and should not be reopened incidentally while 
 - Visible text and meaningful icons follow the Apple-aligned size floors and scaling checks.
 - The shared angular brand symbol uses the supplied SVG artwork rather than reconstructed CSS bars.
 - Welcome now presents only the core identity and Login/Register actions; its three promotional copy blocks were deliberately removed.
+- Welcome uses responsive vertical separation within the identity and between the identity and entry actions so the composition does not collapse into one central cluster.
 
 ## Working method
 
