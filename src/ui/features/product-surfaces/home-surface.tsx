@@ -50,8 +50,8 @@ export function HomeSurface() {
             <p className="fy-home-question">What are you thinking about?</p>
             <Link className="fy-home-hero" href={`/ask?prompt=${encodeURIComponent(DECISIONS[0].prompt)}`}>
               <span className="fy-home-spark" aria-hidden="true">✦</span>
-              <strong>Ask Future You</strong>
-              <small>{DECISIONS[0].label}</small>
+              <small>Ask Future You</small>
+              <strong>{DECISIONS[0].label}</strong>
               <i aria-hidden="true">→</i>
             </Link>
             <div className="fy-home-decisions" aria-label="Supported questions">
