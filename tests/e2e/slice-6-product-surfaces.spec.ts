@@ -262,7 +262,7 @@ test("keeps an actual stored run paired with its original plan after a revision"
 
   await page.goto(`/goals?runId=${runId}`);
   await expect(page.getByTestId("historical-preview-warning")).toContainText("original baseline and result");
-  await expect(page.getByTestId("context-pill")).toContainText("Earlier financial plan");
+  await expect(page.getByTestId("context-pill")).toHaveCount(0);
   const preview = await page.evaluate(async (id) => await (await fetch(`/api/v1/goals/preview?runId=${id}`)).json(), runId);
   expect(preview.context.version).toBe(originalVersion);
   expect(preview.context.isCurrent).toBe(false);
