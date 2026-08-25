@@ -967,3 +967,31 @@
     - The previous wider rhythm still did not provide the requested amount of vertical breathing space.
   - Effect on Future You:
     - The identity and authentication actions now occupy more distinct vertical zones while remaining responsive on shorter devices.
+
+- **Major access-model correction — Registration becomes employer provisioned**
+  - What changed:
+    - Future You is no longer specified as an open self-registration product.
+    - `Register` now means first-time activation of access that an employer has already provisioned.
+    - The former rule removing Company ID and collecting an optional unverified workplace after account creation is superseded.
+  - Canonical registration sequence:
+    - The employee enters Company ID and their provisioned work email.
+    - Future You sends a verification code to that work email.
+    - A valid code proves control of the work address and anchors the activation to the exact provisioned access record.
+    - Future You then asks for the employee's personal email, chosen password and password confirmation.
+    - Personal-email confirmation may happen alongside onboarding and must be complete before full-app access.
+    - The employee completes financial onboarding and then receives full-app access.
+  - Returning-login rule:
+    - Future logins require only the employee's personal email and password.
+    - Company ID, work email and work-email verification are not routine login inputs.
+  - Identity and privacy rule:
+    - Company ID is an employer identifier, not a secret or sufficient authentication factor.
+    - A provisioned access record can be claimed only once, and retries must not create duplicate accounts or workplace associations.
+    - The employer establishes access and workplace identity but cannot select the personal login email or access financial context, goals, conversations or simulation results.
+    - Financial onboarding does not ask the employee to enter an employer already verified during registration.
+  - Benefits boundary preserved:
+    - Verified workplace membership may expose authoritative employer opportunities.
+    - Registration never proves benefit uptake and never adds a benefit's value to financial context or a simulation.
+  - Contract and implementation status:
+    - `employer-provisioned-registration-contract.md` is now the authoritative product contract for registration and Login.
+    - Older slice contracts and evidence remain historical records of the existing implementation.
+    - The replacement technical architecture and implementation have not started and require separate approval.
