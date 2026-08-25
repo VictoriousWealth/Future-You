@@ -98,16 +98,20 @@ function sentinelTurn() {
 
 test("renders server-produced conversational scenarios and changes viewing state only", async ({ page }) => {
   await ask(page, "Can I afford a £650 trip next month?");
+  await expect(page.getByTestId("interpreting-state")).toBeHidden({ timeout: 15_000 });
   await expect(page.getByTestId("buffer-after")).toHaveText("£250");
   await expect(page.getByTestId("required-payments")).toHaveText("Bills covered");
   await expect(page.getByTestId("overdraft-usage")).toHaveText("£0 overdraft");
   await expect(page.getByTestId("buffer-recovery")).toHaveText("Restored in November 2026");
 
   await ask(page, "What about £500?");
+  await expect(page.getByTestId("interpreting-state")).toBeHidden({ timeout: 15_000 });
   await expect(page.getByTestId("buffer-after").last()).toHaveText("£400");
   await ask(page, "What about £400?");
+  await expect(page.getByTestId("interpreting-state")).toBeHidden({ timeout: 15_000 });
   await expect(page.getByTestId("buffer-after").last()).toHaveText("£500");
   await ask(page, "What if I wait until October?");
+  await expect(page.getByTestId("interpreting-state")).toBeHidden({ timeout: 15_000 });
   await expect(page.getByTestId("buffer-after").last()).toHaveText("£250");
 
   await page.getByRole("button", { name: "5 paths" }).click();
