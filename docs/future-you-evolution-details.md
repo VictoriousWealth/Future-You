@@ -943,3 +943,27 @@
     - Routes remain `/login` and `/signup`; Supabase `signInWithPassword` and `signUp` calls and internal component names remain unchanged.
   - Effect on Future You:
     - Entry and form terminology now remain consistent from Welcome through authentication without changing account or session behaviour.
+
+- **Responsive authentication refinement — Supporting descriptions move below forms under 1024px**
+  - What changed:
+    - Login's private-plan description and Register's optional-workplace description no longer sit under the heading on phone and tablet layouts.
+  - Breakpoint rule:
+    - Below `1024px`, the single semantic description node renders after the complete form and reciprocal auth link.
+    - At `1024px` and above, it renders beneath the heading in the left column of the two-column auth layout.
+    - The Register sentence retains the requested `separately from account creation` wording.
+  - Resilience rule:
+    - Auth pages permit vertical scrolling when the footer description makes the content taller than the viewport.
+    - Browser checks cover canonical mobile, `1023px`, `1024px` and the scrolled Register footer.
+  - Effect on Future You:
+    - Smaller screens prioritise the task fields and actions while retaining the explanatory copy at the bottom; larger screens keep the copy paired with its heading.
+
+- **Superseding Welcome layout refinement — Identity/action gap increases again**
+  - What changed:
+    - The responsive gap between the Welcome identity and Login/Register actions increased from `clamp(6.5rem, 16vh, 11rem)` to `clamp(8rem, 22vh, 14rem)`.
+  - Geometry rule:
+    - At `414 × 896`, the rendered gap must be at least 190px and is expected to be roughly 197px.
+    - The short-screen floor is bounded at 128px, and the existing `360 × 640` full-containment assertion remains mandatory.
+  - Why it changed:
+    - The previous wider rhythm still did not provide the requested amount of vertical breathing space.
+  - Effect on Future You:
+    - The identity and authentication actions now occupy more distinct vertical zones while remaining responsive on shorter devices.
