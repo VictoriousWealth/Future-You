@@ -6,7 +6,10 @@ export function FutureYouBrand() {
   return (
     <div className="auth-brand" aria-label="Future You">
       <FutureYouAngularSymbol fullSize/>
-      <span className="auth-brand-copy"><strong>Future<br/>You</strong><small>You can do better</small></span>
+      <span className="auth-brand-copy">
+        <strong><span>Future</span><br className="auth-brand-break"/><span>You</span></strong>
+        <small>You can do better</small>
+      </span>
     </div>
   );
 }
