@@ -20,6 +20,10 @@ import {
   initialSarahStoryState,
   reduceSarahStory
 } from "../src/ui/features/story/sarah-story-machine";
+import {
+  EMPTY_EMPLOYER_BENEFIT_SOURCE,
+  SARAH_EMPLOYER_BENEFIT_SOURCE
+} from "./fixtures/employer-benefits";
 
 async function runMap() {
   const simulator = createSimulatorApplication({
@@ -40,6 +44,7 @@ async function readyStory(manifest: SarahStoryManifest = SARAH_STORY_MANIFEST) {
   const runs = await runMap();
   const application = new SarahStoryApplication({
     manifest,
+    opportunityReader: SARAH_EMPLOYER_BENEFIT_SOURCE,
     runReader: {
       async execute(runId) {
         const run = runs.get(runId);
@@ -58,9 +63,9 @@ describe("Track B1 Sarah guided story contract", () => {
   it("loads the ordered versioned story from the four frozen immutable runs", async () => {
     const story = await readyStory();
     expect(story).toMatchObject({
-      schemaVersion: "sarah-guided-story/1.0.0",
+      schemaVersion: "sarah-guided-story/1.1.0",
       storyId: "sarah-trip-story",
-      storyVersion: "1.0.0",
+      storyVersion: "1.1.0",
       contextVersion: "sarah-v1@2026-09-01",
       providerCallsRequired: false,
       progressPersistence: "session_only"
@@ -103,12 +108,25 @@ describe("Track B1 Sarah guided story contract", () => {
     );
     expect(JSON.stringify(story)).not.toContain("minorUnits");
     expect(JSON.stringify(story)).not.toContain("projectionPayload");
+    expect(story.opportunityBoundary).toMatchObject({
+      benefitKey: "SEASON_TICKET_LOAN",
+      title: "Season-ticket loan",
+      employerName: "OniBank",
+      statusLabel: "Eligibility unknown",
+      eligibility: "unknown",
+      uptake: "inactive",
+      includedInCalculation: false,
+      includedInCurrentPlan: false,
+      numericalSimulationSupported: false,
+      referenceDate: "2026-08-31"
+    });
   });
 
   it("fails closed for a missing, altered, incompatible or unknown-template fact", async () => {
     const runs = await runMap();
     const missing = new SarahStoryApplication({
       manifest: SARAH_STORY_MANIFEST,
+      opportunityReader: SARAH_EMPLOYER_BENEFIT_SOURCE,
       runReader: { async execute() { return { ok: false as const, error: { code: "RUN_NOT_FOUND", message: "Not found" } }; } }
     });
     await expect(missing.load()).resolves.toMatchObject({ kind: "unavailable" });
@@ -118,6 +136,7 @@ describe("Track B1 Sarah guided story contract", () => {
     runs.set(alteredRun.calculation.runId, alteredRun);
     const altered = new SarahStoryApplication({
       manifest: SARAH_STORY_MANIFEST,
+      opportunityReader: SARAH_EMPLOYER_BENEFIT_SOURCE,
       runReader: { async execute(runId) {
         const run = runs.get(runId);
         return run ? { ok: true as const, value: run } : { ok: false as const, error: { code: "RUN_NOT_FOUND", message: "Not found" } };
@@ -130,12 +149,23 @@ describe("Track B1 Sarah guided story contract", () => {
     const cleanRuns = await runMap();
     const invalid = new SarahStoryApplication({
       manifest: invalidTemplate,
+      opportunityReader: SARAH_EMPLOYER_BENEFIT_SOURCE,
       runReader: { async execute(runId) {
         const run = cleanRuns.get(runId);
         return run ? { ok: true as const, value: run } : { ok: false as const, error: { code: "RUN_NOT_FOUND", message: "Not found" } };
       } }
     });
     await expect(invalid.load()).resolves.toMatchObject({ kind: "unavailable" });
+
+    const missingOpportunity = new SarahStoryApplication({
+      manifest: SARAH_STORY_MANIFEST,
+      opportunityReader: EMPTY_EMPLOYER_BENEFIT_SOURCE,
+      runReader: { async execute(runId) {
+        const run = cleanRuns.get(runId);
+        return run ? { ok: true as const, value: run } : { ok: false as const, error: { code: "RUN_NOT_FOUND", message: "Not found" } };
+      } }
+    });
+    await expect(missingOpportunity.load()).resolves.toMatchObject({ kind: "unavailable" });
   });
 
   it("keeps the dedicated Sarah identity as a server-enforced, fail-closed entitlement", () => {
