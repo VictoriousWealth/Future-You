@@ -17,6 +17,8 @@ export interface SurfaceContextDTO {
 export interface SurfaceProgressDTO extends RatioDTO {
   /** A bounded CSS percentage prepared on the server. The browser applies it verbatim. */
   readonly fill: string;
+  /** A bounded SVG dash pattern prepared on the server for the circular progress arc. */
+  readonly ringDasharray: string;
   readonly accessibleLabel: string;
 }
 
