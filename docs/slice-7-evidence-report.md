@@ -347,6 +347,20 @@ Browser geometry now requires at least a 3.1× artwork-width ratio and 2.9× art
 
 The final no-update Login/Register visual comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
 
+## Authentication terminology consistency
+
+The earlier Welcome-only label change now applies throughout authentication. `/login` uses `Login` for metadata, heading, submit action and cross-link terminology, with `Logging in…` as its pending state. `/signup` uses `Register` for metadata, heading, submit action and cross-link terminology, with `Registering…` as its pending state. Supporting failure, success and Suspense copy uses the same vocabulary.
+
+Routes, Supabase method calls, internal component names and authentication behaviour remain unchanged. Browser coverage verifies the new headings, buttons and reciprocal links and asserts that the former standalone labels are absent from both forms. Login and Register visual evidence is refreshed.
+
+The final no-update auth/returning-user run passes 2/2, including successful Sarah authentication through the renamed Login control. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Auth-logo optical offset
+
+Within the Login/Register splash only, the coloured angular artwork now uses the exact requested relative offsets: `top: -7px` and `right: 1px`. The white backdrop and all non-auth logo placements remain unchanged. Browser coverage asserts both computed values and retains the overlap, stacking, clearance and visual-baseline checks.
+
+The final no-update Login/Register visual comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
 ## Enlarged auth-logo splash
 
 The white Login/Register splash increased from approximately `3.15rem × 3rem` to `4.5rem × 4.25rem`. The auth-only gap between the symbol and `FutureYou` increased at the same time so the substantially larger backing shape remains visually separate from the white wordmark.
