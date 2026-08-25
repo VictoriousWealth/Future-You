@@ -36,10 +36,14 @@ export function AuthFrame({
           </Link>
         )}
         {eyebrow || title || description ? (
-          <div className="auth-heading">
-            {eyebrow ? <p>{eyebrow}</p> : null}
-            {title ? <h1 id="auth-title">{title}</h1> : null}
-            {description ? <span>{description}</span> : null}
+          <div className="auth-copy">
+            {eyebrow || title ? (
+              <div className="auth-heading">
+                {eyebrow ? <p>{eyebrow}</p> : null}
+                {title ? <h1 id="auth-title">{title}</h1> : null}
+              </div>
+            ) : null}
+            {description ? <p className="auth-description">{description}</p> : null}
           </div>
         ) : null}
         {children}
