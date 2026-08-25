@@ -4,7 +4,7 @@
 **Status:** Frozen for MVP specification  
 **Canonical profile:** Sarah v1  
 **Visual source of truth:** The seven supplied 414 × 896 mobile mockups and matching SVGs  
-**Depends on:** `simulation-rules-specification.md` and `golden-path-conversation-specification.md`  
+**Depends on:** `employer-provisioned-registration-contract.md`, `simulation-rules-specification.md` and `golden-path-conversation-specification.md`
 **Scope:** Screen hierarchy, states, transitions and content  
 **Out of scope:** Frontend, backend, database, LLM and deployment architecture
 
