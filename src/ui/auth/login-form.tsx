@@ -37,7 +37,7 @@ export function LoginForm({ configuration }: Readonly<{
     const client = createBrowserSupabaseClient(configuration);
     const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) {
-      setMessage("We couldn’t sign you in with those details.");
+      setMessage("We couldn’t log you in with those details.");
       setPending(false);
       return;
     }
@@ -72,8 +72,8 @@ export function LoginForm({ configuration }: Readonly<{
         </div>
       </div>
       {message ? <p id={messageId} className="auth-message error" role="alert">{message}</p> : null}
-      <button className="auth-primary" type="submit" disabled={pending || !ready}>{pending ? "Signing in…" : "Sign in"}</button>
-      <p className="auth-switch">New to Future You? <Link href="/signup">Create an account</Link></p>
+      <button className="auth-primary" type="submit" disabled={pending || !ready}>{pending ? "Logging in…" : "Login"}</button>
+      <p className="auth-switch">New to Future You? <Link href="/signup">Register</Link></p>
     </form>
   );
 }
