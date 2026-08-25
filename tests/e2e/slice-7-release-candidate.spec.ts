@@ -14,7 +14,7 @@ async function signInWithCredentials(page: Page, email: string, password: string
   await page.goto(`/login?next=${encodeURIComponent(destination)}`);
   await page.getByLabel("Email").fill(email);
   await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Login", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${destination.replace("/", "\\/")}$`));
 }
 
@@ -202,7 +202,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
   await page.getByRole("link", { name: "Login", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Login", exact: true })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
   await expectAppleMeaningfulIconScale(page);
   const loginWordmark = page.getByRole("link", { name: "Back to Future You welcome" });
@@ -226,8 +226,8 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
-  await page.getByRole("link", { name: "Create an account" }).click();
-  await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
+  await page.getByRole("link", { name: "Register", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Register", exact: true })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
   await expectAppleMeaningfulIconScale(page);
   await expect(page.getByRole("link", { name: "Back to Future You welcome" })).toContainText("FUTUREYOU");
@@ -243,7 +243,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await page.getByLabel("Personal email").fill("new-user@example.test");
   await page.locator("#signup-password").fill("Release-Local-Only-2026!");
   await page.getByLabel("Confirm password").fill("Different-Local-Password-2026!");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByRole("button", { name: "Register", exact: true }).click();
   await expect(page.locator(".auth-message[role='alert']")).toHaveText("The passwords do not match.");
 
   await signIn(page, "alex");
@@ -554,7 +554,11 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
 
 test("scales meaningful interface icons with the Apple-aligned body type", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Login", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Login", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
+  await expect(page.getByText("Sign in", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Create an account", { exact: true })).toHaveCount(0);
   await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   const authLogoStack = await page.locator(".auth-back-brand .fy-angular-symbol").evaluate((symbol) => {
@@ -571,6 +575,8 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     return {
       backdropZ: Number.parseInt(getComputedStyle(backdrop).zIndex, 10),
       artworkZ: Number.parseInt(getComputedStyle(artwork).zIndex, 10),
+      artworkTop: getComputedStyle(artwork).top,
+      artworkRight: getComputedStyle(artwork).right,
       widthRatio: backdropBox.width / artworkBox.width,
       heightRatio: backdropBox.height / artworkBox.height,
       copyClearance: copyBox.left - backdropBox.right,
@@ -584,6 +590,8 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     };
   });
   expect(authLogoStack.backdropZ).toBeLessThan(authLogoStack.artworkZ);
+  expect(authLogoStack.artworkTop).toBe("-7px");
+  expect(authLogoStack.artworkRight).toBe("1px");
   expect(authLogoStack.widthRatio).toBeGreaterThanOrEqual(3.1);
   expect(authLogoStack.heightRatio).toBeGreaterThanOrEqual(2.9);
   expect(authLogoStack.copyClearance).toBeGreaterThanOrEqual(0);
@@ -595,7 +603,11 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
   await page.goto("/signup");
-  await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Register", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Register", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
+  await expect(page.getByText("Create account", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Sign in", { exact: true })).toHaveCount(0);
   await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expectAppleMeaningfulIconScale(page);
