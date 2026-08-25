@@ -847,3 +847,15 @@
     - The Login form heading and Signup form heading are unchanged; this refinement applies to the two Welcome entry actions.
   - Effect on Future You:
     - Welcome uses the requested concise terminology without changing authentication behaviour or account creation semantics.
+
+- **Welcome layout refinement — Responsive vertical breathing space**
+  - What changed:
+    - The full identity and Login/Register actions remain centred but use substantially more vertical separation.
+  - Spacing rule:
+    - The gap inside the identity, between the identity and actions, and between the two actions scales with viewport height within bounded minimums and maximums.
+    - At the canonical mobile viewport, the identity-to-actions gap must be at least 72px and the button gap at least 16px.
+    - At `360 × 640`, both the identity and action group must remain fully inside the viewport.
+  - Why it changed:
+    - Removing the explanatory copy left the remaining elements visually compressed into the centre despite ample available height.
+  - Effect on Future You:
+    - Welcome feels calmer and more intentional without introducing empty fixed spacing that would clip on shorter phones.
