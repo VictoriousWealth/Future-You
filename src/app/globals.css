@@ -1300,7 +1300,8 @@ summary {
 .fy-workplace-card h2 { margin: 0; }
 .fy-workplace-card p { color: #7186a5; font-size: var(--fy-type-min); font-weight: 850; text-transform: uppercase; }
 .fy-workplace-card h2 { margin-top: .15rem; font-size: 1.35rem; }
-.fy-workplace-card strong { display: inline-flex; margin-top: .35rem; padding: .28rem .48rem; color: #78537a; background: var(--fy-pink-pale); border-radius: 999px; font-size: var(--fy-type-min); }
+.fy-workplace-statuses { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .35rem; }
+.fy-workplace-card strong { display: inline-flex; padding: .28rem .48rem; color: #78537a; background: var(--fy-pink-pale); border-radius: 999px; font-size: var(--fy-type-min); }
 .fy-workplace-card > small { grid-column: 1 / -1; color: #627a9b; font-size: var(--fy-type-min); line-height: 1.45; }
 .fy-active-benefits { margin-top: 1.5rem; }
 .fy-active-benefit { padding: 1.2rem; color: #fff; background: radial-gradient(circle at 92% 14%, rgba(56,182,255,.78), transparent 34%), linear-gradient(145deg, #003e9e, #075dce 64%, #5146bd); border-radius: 1.4rem; box-shadow: var(--fy-shadow); }
@@ -1311,6 +1312,23 @@ summary {
 .fy-contribution-pair span { font-size: var(--fy-type-min); opacity: .78; text-transform: uppercase; }
 .fy-contribution-pair strong { font-size: .75rem; line-height: 1.25; }
 .fy-active-benefit > p { margin: .75rem 0 0; font-size: var(--fy-type-min); line-height: 1.45; opacity: .88; }
+.fy-benefit-opportunities { display: grid; gap: .8rem; margin-top: 1.5rem; }
+.fy-benefit-opportunity-list { display: grid; gap: .8rem; }
+.fy-benefit-opportunity { scroll-margin-top: 1rem; padding: 1.15rem; color: var(--fy-blue); background: linear-gradient(145deg, #fff, #f4f0ff); border: 1px solid rgba(140,91,234,.28); border-radius: 1.25rem; box-shadow: 0 .6rem 1.4rem rgba(17,73,152,.08); }
+.fy-benefit-opportunity--season-ticket-loan { background: linear-gradient(145deg, #effaff, #fff1f8); border-color: rgba(56,182,255,.38); }
+.fy-opportunity-label { display: inline-flex; padding: .3rem .52rem; color: #704c88; background: #f4e9ff; border-radius: 999px; font-size: var(--fy-type-min); font-weight: 900; }
+.fy-benefit-opportunity h3 { margin: .75rem 0 .45rem; font-size: 1.35rem; letter-spacing: -.035em; }
+.fy-benefit-opportunity > p,
+.fy-benefit-opportunity > strong { font-size: .75rem; line-height: 1.5; }
+.fy-benefit-opportunity > p { margin: .35rem 0; color: #627a9b; }
+.fy-benefit-opportunity > strong { display: block; margin-top: .35rem; color: var(--fy-blue); }
+.fy-benefit-opportunity ul { display: grid; gap: .35rem; margin: .75rem 0 0; padding: 0; list-style: none; }
+.fy-benefit-opportunity li { position: relative; padding-left: 1rem; color: #6d7591; font-size: var(--fy-type-min); line-height: 1.45; }
+.fy-benefit-opportunity li::before { position: absolute; top: .56em; left: 0; width: .38rem; height: .38rem; background: var(--fy-purple); border-radius: 50%; content: ""; }
+.fy-benefit-opportunity .fy-opportunity-caveat { margin-top: .8rem; padding: .65rem; color: #765479; background: var(--fy-pink-pale); border-radius: .75rem; font-weight: 750; }
+.fy-opportunity-source { margin-top: .8rem; padding-top: .55rem; border-top: 1px solid rgba(0,74,173,.12); }
+.fy-opportunity-source summary { min-height: var(--fy-touch); padding: .6rem 0; color: var(--fy-blue); cursor: pointer; font-size: .72rem; font-weight: 850; }
+.fy-opportunity-source p { margin: .15rem 0; color: #7186a5; font-size: var(--fy-type-min); line-height: 1.4; }
 .fy-no-opportunities,
 .fy-benefits-empty { margin-top: .8rem; padding: 1.1rem; color: var(--fy-blue); background: linear-gradient(145deg, #fff0f8, #f5f0ff); border: 1px solid rgba(222,83,173,.25); border-radius: 1.25rem; }
 .fy-no-opportunities > span { color: var(--fy-pink); font-size: var(--fy-type-min); font-weight: 900; text-transform: uppercase; }
@@ -1920,6 +1938,7 @@ summary {
 .fy-story-profile dd { margin: 0; color: var(--fy-blue); font-size: 0.84rem; font-weight: 850; text-align: right; }
 .fy-story-profile > small { display: block; color: var(--fy-muted); font-size: 0.74rem; line-height: 1.45; }
 .fy-story-opportunity > span { color: var(--fy-pink); font-size: 0.74rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.fy-story-opportunity > small { display: block; margin: .65rem 0; color: var(--fy-muted); font-size: var(--fy-type-min); line-height: 1.45; }
 .fy-story-opportunity > strong { color: var(--fy-warning); font-size: 0.78rem; }
 .fy-story-question { color: var(--fy-blue); font-size: clamp(1.4rem, 6.5vw, 2.5rem); font-weight: 900; line-height: 1.15; }
 .fy-story-calculating { display: flex; min-height: 8rem; gap: 0.9rem; align-items: center; justify-content: center; color: var(--fy-blue); text-align: center; }
@@ -2105,6 +2124,7 @@ summary {
   .fy-benefits-shell .fy-surface-heading { grid-column: 1 / -1; }
   .fy-workplace-card { grid-column: 1; }
   .fy-active-benefits { grid-column: 2; grid-row: 3 / span 2; }
+  .fy-benefit-opportunities { grid-column: 1; }
   .fy-no-opportunities,
   .fy-benefits-empty { grid-column: 1; }
   .fy-context-settings { grid-column: 1; }
