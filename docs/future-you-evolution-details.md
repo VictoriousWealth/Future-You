@@ -1293,3 +1293,48 @@
     - `sarah-employer-and-benefits-correction-contract.md` is proposed for review before any correction implementation.
     - Track C remains paused until Sarah's canonical employer and Benefits context is coherent.
     - Track B Phase B2 remains paused.
+
+- **Sarah employer/Benefits correction approval — Narrow Option B is canonical**
+  - Approval:
+    - `sarah-employer-and-benefits-correction-contract.md` was approved as the canonical correction contract.
+    - The approved implementation is the narrow Option B: reuse the employer/provision/membership system, add explicit employer offerings and separate owner-scoped status, and make no simulator or financial-context change.
+    - Track C and Track B Phase B2 remained paused during implementation.
+  - Canonical membership:
+    - Sarah's existing Auth user remains `11111111-1111-4111-8111-111111111111` with personal Login `sarah@example.test`.
+    - Sarah now has one active verified employer-provisioned OniBank membership using technical work email `sarah.wonk@onibank.test`.
+    - The existing OniBank Company ID remains `FY7K3M9Q2D`.
+    - A claimed canonical provision records the controlled legacy-fixture backfill without creating another Auth identity or inventing an OTP history.
+  - Benefit-source separation:
+    - OniBank's additional pension match up to 5% and season-ticket loan are explicit, versioned employer reference offerings dated 31 August 2026.
+    - Separate Sarah-owned records retain unknown eligibility, inactive uptake, incomplete information and exclusion from the financial baseline.
+    - The active 3% employee and 3% employer pension percentages remain solely in Sarah's immutable financial context.
+    - Neither opportunity carries a monetary value, eligibility claim, payroll effect, cash-flow effect, recommendation or automatic baseline effect.
+
+- **Sarah employer/Benefits correction implementation — Membership, offerings and presentation are coherent**
+  - Persistence:
+    - Migration `20260825180000_sarah_employer_benefits_correction.sql` adds append-only `employer_benefit_offerings` and `user_benefit_states` records with composite integrity constraints, narrow indexes, forced RLS and read-only ordinary grants.
+    - A clean local reset recreates Sarah's claimed provision, verified membership, both OniBank offerings and both Sarah states entirely from committed migrations and generated seed.
+    - Alex and the other fixtures remain independent; no benefit is inferred from employer name, Company ID or email domain.
+  - Product presentation:
+    - Benefits now shows OniBank as a Verified workplace with Active membership, then separates the active 3%/3% workplace pension from the two inactive opportunities.
+    - The employer pension contribution is labelled retirement value rather than spendable cash.
+    - Home shows the explicitly sourced season-ticket-loan preview with unknown eligibility and a deterministic Benefits link. Its fixed ordering is presentation, not financial advice.
+    - Sarah's story now sources its opportunity step from the same authoritative read model and fails closed if the record/state is absent or incompatible.
+    - Ask continues to reject benefit use, pension changes and numerical benefit simulation without creating a run or scenario.
+  - Financial stability:
+    - Sarah remains on context `sarah-v1@2026-09-01`, baseline `baseline-ec13101a3fe66f17`, rules `fy-sim/1.0.0` and calendar `govuk-england-and-wales-2026-2028@2026-08-23`.
+    - Actual cash £2,750, reserve £1,850, preferred buffer £900, take-home £2,450, £600 goal capacity, every goal fact and every frozen scenario/run identity are unchanged.
+    - The £650 result remains £900 to £250, bills covered, £0 overdraft, restored November 2026, Emergency fund February 2027 and significant trade-off; the £500, £400 and October outcomes are unchanged.
+    - Opening Home or Benefits creates no run and invokes no conversation provider.
+  - Security and evidence:
+    - Offerings are visible only to active members of the same employer; Sarah status is owner-only; anonymous access and ordinary writes are denied.
+    - Alex cannot read Sarah's membership or benefit state, and members of different employers cannot read each other's offering catalogues.
+    - Normal Home, Benefits and story processing continues to use the request-scoped authenticated client and contains no service/secret credential.
+    - The reviewed Benefits visual baseline was the only Playwright baseline updated; unrelated mechanical capture changes were restored.
+    - Final verification passes 263/263 Vitest tests across 29 files, 20/20 Supabase integration tests across 6 files, 273/273 pgTAP assertions across 6 files, 34/34 evaluation cases, 8/8 fake-provider tests and 31/31 Playwright tests with zero skipped.
+    - TypeScript, ESLint, production build, coverage, generated-artifact drift, client-bundle boundary, clean local reset and `git diff --check` pass.
+    - Live OpenAI evaluation remains `BLOCKED — authorised credential/model configuration unavailable`.
+  - Recovery and phase boundary:
+    - The pre-correction B1 state is recoverable through annotated tag `mvp-rc-sarah-story-b1-2026-08-25`, which dereferences to commit `a554000`.
+    - The Track A recovery point remains commit `ba5a83c` and tag `mvp-rc-employer-registration-2026-08-25`.
+    - The correction is complete, but Track C has not started and requires separate approval. Track B Phase B2 remains paused.
