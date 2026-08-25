@@ -771,3 +771,16 @@
     - Apple's guidance recommends matching symbol emphasis to adjacent type, increasing meaningful icon size with larger text and providing sufficiently sized controls rather than treating a tiny text minimum as the icon target.
   - Effect on Future You:
     - Icons are more legible and adapt alongside text without changing their semantics, accessible names, control destinations or financial behaviour.
+
+- **Visual refinement — Shared wordmark replaces the one-off auth symbol**
+  - What changed:
+    - Login and Signup now use the same `FUTURE YOU AI` text wordmark as the signed-in product shell, and every wordmark segment renders at the 17px body scale.
+  - Previous approach:
+    - The signed-in wordmark rendered at 13.44px with an even smaller `AI` suffix. Auth forms used a separate compact angular symbol plus stacked `Future You` copy that did not recur in the product header.
+  - New approach:
+    - One shared wordmark renderer supplies the brand text to auth forms and the product shell. The full angular emblem remains only on Welcome, where it functions as the primary identity mark.
+    - The auth wordmark uses a high-contrast white/lavender treatment over the blue header. Existing back-to-Welcome and product-home links retain their accessible names and destinations.
+  - Why it changed:
+    - Brand recognition should not depend on an undersized or screen-specific lockup. Reusing the text wordmark creates a consistent identity across entry and authenticated states.
+  - Effect on Future You:
+    - The brand is easier to read and more coherent without changing authentication, navigation, account state or any financial behaviour.
