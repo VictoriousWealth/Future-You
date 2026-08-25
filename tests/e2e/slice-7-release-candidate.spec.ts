@@ -482,8 +482,38 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
   await expect(page.getByText("Your decisions. Your future.", { exact: true })).toHaveCount(0);
   await expect(page.getByText("See how a money choice today could change the goals that matter tomorrow.", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Private financial context. Deterministic what-if results. You stay in control.", { exact: true })).toHaveCount(0);
+  const welcomeSpacing = await page.locator(".auth-panel").evaluate((panel) => {
+    const brand = panel.querySelector<HTMLElement>(".auth-brand");
+    const actions = panel.querySelector<HTMLElement>(".auth-choice-actions");
+    const buttons = actions ? [...actions.children].filter((child): child is HTMLElement => child instanceof HTMLElement) : [];
+    if (!brand || !actions || buttons.length !== 2) throw new Error("Welcome composition is incomplete.");
+    const brandBox = brand.getBoundingClientRect();
+    const actionsBox = actions.getBoundingClientRect();
+    const firstButtonBox = buttons[0].getBoundingClientRect();
+    const secondButtonBox = buttons[1].getBoundingClientRect();
+    return {
+      identityToActions: actionsBox.top - brandBox.bottom,
+      actionGap: secondButtonBox.top - firstButtonBox.bottom
+    };
+  });
+  expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(72);
+  expect(welcomeSpacing.actionGap).toBeGreaterThanOrEqual(16);
   await expect(page).toHaveScreenshot("welcome.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
+
+  await page.setViewportSize({ width: 360, height: 640 });
+  const compactGeometry = await page.locator(".auth-panel").evaluate((panel) => {
+    const brand = panel.querySelector<HTMLElement>(".auth-brand");
+    const actions = panel.querySelector<HTMLElement>(".auth-choice-actions");
+    if (!brand || !actions) throw new Error("Welcome composition is incomplete.");
+    return {
+      brandTop: brand.getBoundingClientRect().top,
+      actionsBottom: actions.getBoundingClientRect().bottom,
+      viewportHeight: document.documentElement.clientHeight
+    };
+  });
+  expect(compactGeometry.brandTop).toBeGreaterThanOrEqual(0);
+  expect(compactGeometry.actionsBottom).toBeLessThanOrEqual(compactGeometry.viewportHeight);
 });
 
 test("scales meaningful interface icons with the Apple-aligned body type", async ({ page }) => {
