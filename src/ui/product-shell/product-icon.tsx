@@ -1,5 +1,13 @@
 export type ProductIconName = "home" | "goals" | "ask" | "benefits" | "profile" | "history" | "buffer";
 
+export function ActionTriangleIcon({ direction = "right" }: Readonly<{ direction?: "right" | "up" }>) {
+  return (
+    <svg className={`fy-action-triangle is-${direction}`} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4 21 20H3Z"/>
+    </svg>
+  );
+}
+
 export function ProductIcon({ name }: Readonly<{ name: ProductIconName }>) {
   if (name === "home") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7v9h-6v-6h-5v6h-5z"/></svg>;
