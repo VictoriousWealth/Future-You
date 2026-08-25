@@ -4,7 +4,7 @@
 **Status:** Proposed scope contract  
 **Market assumption:** UK, GBP, monthly employed-income use case  
 **Canonical acceptance profile:** Sarah v1  
-**Behavioural dependencies:** `simulation-rules-specification.md`, `golden-path-conversation-specification.md`, `golden-path-ui-mapping.md`  
+**Behavioural dependencies:** `employer-provisioned-registration-contract.md`, `simulation-rules-specification.md`, `golden-path-conversation-specification.md`, `golden-path-ui-mapping.md`
 **Out of scope for this document:** Frontend, backend, database, model/provider and deployment architecture
 
 **Employer-provisioned registration amendment:** `employer-provisioned-registration-contract.md` is
