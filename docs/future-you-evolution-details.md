@@ -910,3 +910,15 @@
     - The enlargement applies only to the Welcome entry action; Login and Register form submit buttons remain unchanged.
   - Effect on Future You:
     - The primary entry action now has the confident size and visual priority shown in the approved mockup without changing its `/login` destination.
+
+- **Superseding authentication brand refinement — Splash grows to roughly 100×94px**
+  - What changed:
+    - The white auth backing increased again from `4.5rem × 4.25rem` to `6.25rem × 5.9rem`.
+  - Placement rule:
+    - The Login/Register lockup moves `1.125rem` inward and `0.5rem` downward, with a `2.25rem` symbol-to-copy gap.
+    - The backing must remain fully inside the auth card, stop before the wordmark, overlap the angular artwork and remain below it in stacking order.
+    - Geometry requires at least a 3.1× artwork-width ratio and 2.9× artwork-height ratio.
+  - Why it changed:
+    - The prior 72×68px treatment was still smaller than the intended decorative emphasis.
+  - Effect on Future You:
+    - The white splash is now unmistakable while the coloured logo and `FutureYou` remain legible and unclipped.
