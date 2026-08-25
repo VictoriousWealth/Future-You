@@ -105,6 +105,48 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(layout.document, JSON.stringify(layout.offenders)).toBeLessThanOrEqual(layout.viewport + 1);
 }
 
+async function expectAppleHandheldTypeFloor(page: Page) {
+  const audit = await page.evaluate(() => {
+    const minimum = 11;
+    const violations: Array<{ selector: string; size: number; text: string }> = [];
+    for (const element of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      if (style.display === "none" || style.visibility === "hidden" || box.width === 0 || box.height === 0) continue;
+      const hasOwnText = Array.from(element.childNodes).some(
+        (node) => node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim())
+      );
+      const hasControlText = element instanceof HTMLInputElement
+        || element instanceof HTMLTextAreaElement
+        || element instanceof HTMLSelectElement;
+      const candidates = hasOwnText || hasControlText
+        ? [{ pseudo: "", computed: style }]
+        : [];
+      for (const pseudo of ["::before", "::after"] as const) {
+        const computed = getComputedStyle(element, pseudo);
+        if (computed.content !== "none" && computed.content !== "normal" && computed.content !== '""') {
+          candidates.push({ pseudo, computed });
+        }
+      }
+      for (const { pseudo, computed } of candidates) {
+        const size = Number.parseFloat(computed.fontSize);
+        if (size + 0.01 >= minimum) continue;
+        violations.push({
+          selector: `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ""}${pseudo}`,
+          size,
+          text: (element.textContent ?? element.getAttribute("placeholder") ?? "").trim().slice(0, 60)
+        });
+      }
+    }
+    return {
+      bodySize: Number.parseFloat(getComputedStyle(document.body).fontSize),
+      violations: violations.slice(0, 12)
+    };
+  });
+  expect(audit.bodySize).toBeGreaterThanOrEqual(17);
+  expect(audit.violations).toEqual([]);
+}
+
 async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/benefits") {
   await page.goto(path);
   if (path === "/home") await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
@@ -120,6 +162,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
 
   await page.getByRole("link", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expectAppleHandheldTypeFloor(page);
   const loginPassword = page.locator("#password");
   await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
   await page.getByRole("button", { name: "Show password" }).click();
@@ -131,6 +174,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
 
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
+  await expectAppleHandheldTypeFloor(page);
   await expect(page.getByText(/Company ID/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Show passwords" })).toBeVisible();
   await page.getByRole("button", { name: "Show passwords" }).click();
@@ -150,6 +194,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
 
   await fillCanonicalOnboarding(page);
+  await expectAppleHandheldTypeFloor(page);
   await page.getByRole("button", { name: "Preview my current path" }).click();
   await expect(page.getByTestId("onboarding-preview")).toBeVisible();
   await expect(page.getByText("£2750.00")).toBeVisible();
@@ -213,6 +258,11 @@ test("captures the returning Sarah journey and every canonical visual state", as
   expect(ringGeometry.arcStroke).toBeGreaterThan(ringGeometry.trackStroke);
   expect(ringGeometry.ringWidth).toBeGreaterThan(56);
   expect(ringGeometry.innerRatio).toBeLessThanOrEqual(0.61);
+  const progressFillBackground = await emergencyGoal.locator(".fy-progress-track > span").evaluate(
+    (fill) => getComputedStyle(fill).backgroundImage
+  );
+  expect(progressFillBackground).toContain("repeating-linear-gradient");
+  expect(progressFillBackground).toContain("linear-gradient");
   await expect(page).toHaveScreenshot("goals-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("08-goals-current-414x896.png") });
 
@@ -348,6 +398,7 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(200);
       await expectNoHorizontalOverflow(page);
+      await expectAppleHandheldTypeFloor(page);
       const h1Count = await page.getByRole("heading", { level: 1 }).count();
       expect(h1Count).toBe(1);
       if (viewport.width >= 768) {
