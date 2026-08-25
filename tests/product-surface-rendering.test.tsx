@@ -34,10 +34,22 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain("£SERVER-TARGET");
     expect(markup).toContain("43% SERVER");
     expect(markup).toContain("width:12.345%");
+    expect(markup).toContain('class="is-partial"');
     expect(markup).toContain('stroke-dasharray="1234.5 8765.5"');
     expect(markup).toContain("December 2099 SERVER");
     expect(markup).toContain("SERVER ACCESSIBLE RATIO");
     expect(markup).not.toContain("9999%");
+  });
+
+  it("rounds the progress fill end only when the server supplies a complete width", () => {
+    const completedGoal = {
+      ...sentinelGoal,
+      progress: { ...sentinelGoal.progress, fill: "100%" }
+    };
+    const markup = renderToStaticMarkup(createElement(GoalCard, { goal: completedGoal }));
+    expect(markup).toContain('class="is-complete"');
+    expect(markup).not.toContain('class="is-partial"');
+    expect(markup).toContain("width:100%");
   });
 
   it("renders the generated profile portrait without replacing the settings link semantics", () => {
