@@ -150,3 +150,11 @@ The first full rerun exposed two new E2E-harness defects: a strict locator obser
 - Live OpenAI acceptance remains blocked until an authorised credential and model configuration are separately supplied.
 
 Recommendation: approve Slice 6 on this evidence, then define and freeze the Slice 7 contract before implementation. Do not infer benefit availability or add new simulator behaviour as visual polish. Slice 7 has not been started.
+
+## Post-B1 correction note
+
+This report remains the historical evidence for the sparse Slice 6 Sarah fixture. The later approved
+`sarah-employer-and-benefits-correction-contract.md` added explicit OniBank membership, offering and
+owner-state records and intentionally replaced Sarah's no-workplace Benefits visual. Current evidence
+is in `sarah-employer-and-benefits-correction-evidence-report.md`; no original Slice 6 test count or
+claim above has been rewritten.
