@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthenticationBoundaryError } from "../../infrastructure/auth/authentication-error";
+import { AccountActivationRequiredError } from "../../infrastructure/auth/account-activation-error";
 import { resolveAuthenticatedConversationApplication } from "../../server/authenticated-conversation-application";
 import { publicSupabaseConfiguration } from "../../infrastructure/supabase/config";
 import { AskConversationShell } from "../../ui/features/ask/ask-conversation-shell";
@@ -22,6 +23,7 @@ export default async function AskPage({ searchParams }: Readonly<{
   try {
     context = await resolveAuthenticatedConversationApplication();
   } catch (error) {
+    if (error instanceof AccountActivationRequiredError) redirect("/onboarding");
     if (error instanceof AuthenticationBoundaryError) redirect("/login");
     throw error;
   }
