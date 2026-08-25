@@ -69,10 +69,13 @@ export function ProductShell({
   }, [active]);
 
   return (
-    <main className={`fy-product-shell ${className}`.trim()} data-testid={testId}>
+    <div className={`fy-product-shell ${className}`.trim()}>
+      <a className="fy-skip-link" href="#fy-main-content">Skip to page content</a>
       <ProductHeader action={headerAction}/>
-      {children}
+      <main id="fy-main-content" className="fy-product-content" data-testid={testId} tabIndex={-1}>
+        {children}
+      </main>
       <ProductNavigation active={active}/>
-    </main>
+    </div>
   );
 }
