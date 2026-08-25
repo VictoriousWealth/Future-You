@@ -292,7 +292,7 @@ test("renders server sentinel goal fields verbatim without browser recalculation
           label: "SERVER GOAL",
           currentBalance: { currency: "GBP", minorUnits: "999999", display: "£SERVER-CURRENT" },
           targetBalance: { currency: "GBP", minorUnits: "1", display: "£SERVER-TARGET" },
-          progress: { ...serverGoal.progress, display: "43% SERVER", fill: "12.345%", accessibleLabel: "SERVER RATIO" },
+          progress: { ...serverGoal.progress, display: "43% SERVER", fill: "12.345%", ringDasharray: "1234.5 8765.5", accessibleLabel: "SERVER RATIO" },
           completion: { status: "on_track", month: "2099-12", display: "December 2099 SERVER", statusLabel: "SERVER STATUS" }
         }]
       })
@@ -304,5 +304,5 @@ test("renders server sentinel goal fields verbatim without browser recalculation
   await expect(page.getByText("43% SERVER")).toBeVisible();
   await expect(page.getByText("December 2099 SERVER")).toBeVisible();
   await expect(page.locator(".fy-progress-track > span")).toHaveAttribute("style", "width: 12.345%;");
-  await expect(page.locator(".fy-goal-ratio")).toHaveAttribute("style", "--fy-goal-progress: 12.345%;");
+  await expect(page.locator(".fy-goal-ratio-arc")).toHaveAttribute("stroke-dasharray", "1234.5 8765.5");
 });
