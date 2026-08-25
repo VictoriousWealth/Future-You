@@ -478,6 +478,7 @@ These items were already reviewed and should not be reopened incidentally while 
 - The shared angular brand symbol uses the supplied SVG artwork rather than reconstructed CSS bars.
 - Welcome now presents only the core identity and Login/Register actions; its three promotional copy blocks were deliberately removed.
 - Welcome uses responsive vertical separation within the identity and between the identity and entry actions so the composition does not collapse into one central cluster.
+- Login and Register layer the supplied white splash SVG behind the angular logo so it remains distinct from their blue header artwork; other brand surfaces do not use the backing layer.
 
 ## Working method
 
