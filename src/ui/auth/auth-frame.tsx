@@ -29,7 +29,7 @@ export function AuthFrame({
       <section className="auth-panel" aria-labelledby={title ? "auth-title" : undefined}>
         {variant === "welcome" ? <FutureYouBrand/> : (
           <Link className="auth-back-brand fy-wordmark" href="/welcome" aria-label="Back to Future You welcome">
-            <FutureYouWordmark/>
+            <FutureYouWordmark symbolBackdrop/>
           </Link>
         )}
         {eyebrow || title || description ? (
