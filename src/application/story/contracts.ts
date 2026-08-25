@@ -1,10 +1,11 @@
 import type { Result } from "../../domain/shared/result";
 import type { OneOffPurchaseResponseDTO } from "../dto/contracts";
+import type { EmployerBenefitSource } from "../ports/employer-benefit-source";
 
-export const SARAH_STORY_SCHEMA_VERSION = "sarah-guided-story/1.0.0" as const;
+export const SARAH_STORY_SCHEMA_VERSION = "sarah-guided-story/1.1.0" as const;
 export const SARAH_STORY_ID = "sarah-trip-story" as const;
-export const SARAH_STORY_VERSION = "1.0.0" as const;
-export const SARAH_STORY_NARRATIVE_VERSION = "sarah-trip-narrative/1.0.0" as const;
+export const SARAH_STORY_VERSION = "1.1.0" as const;
+export const SARAH_STORY_NARRATIVE_VERSION = "sarah-trip-narrative/1.1.0" as const;
 
 export type SarahStoryStepState =
   | "INTRODUCTION"
@@ -135,9 +136,19 @@ export interface SarahStoryBundleDTO {
   readonly scenarios: Readonly<Record<SarahStoryScenarioKey, SarahStoryScenarioDTO>>;
   readonly steps: readonly SarahStoryStepDTO[];
   readonly opportunityBoundary: {
+    readonly offeringId: string;
+    readonly benefitKey: "SEASON_TICKET_LOAN";
     readonly title: string;
+    readonly employerName: string;
+    readonly statusLabel: "Eligibility unknown";
     readonly explanation: string;
+    readonly sourceReference: string;
+    readonly referenceDate: string;
+    readonly eligibility: "unknown";
+    readonly uptake: "inactive";
     readonly includedInCalculation: false;
+    readonly includedInCurrentPlan: false;
+    readonly numericalSimulationSupported: false;
   };
   readonly asset: {
     readonly id: "sarah-prototype-vector";
@@ -199,7 +210,11 @@ export interface SarahStoryManifest {
   }>;
   readonly profile: SarahStoryManifestProfile;
   readonly steps: readonly SarahStoryManifestStep[];
-  readonly opportunityBoundary: SarahStoryBundleDTO["opportunityBoundary"];
+  readonly requiredOpportunity: Readonly<{
+    readonly benefitKey: "SEASON_TICKET_LOAN";
+    readonly employerName: "OniBank";
+    readonly referenceDate: "2026-08-31";
+  }>;
 }
 
 export interface SarahStoryRunReader {
@@ -208,6 +223,8 @@ export interface SarahStoryRunReader {
     readonly message: string;
   }>>>;
 }
+
+export type SarahStoryOpportunityReader = EmployerBenefitSource;
 
 export type SarahStoryLoadResult =
   | Readonly<{ readonly kind: "ready"; readonly story: SarahStoryBundleDTO }>
