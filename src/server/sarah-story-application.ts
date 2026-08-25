@@ -9,6 +9,7 @@ import {
 import { SupabasePrincipalProvider } from "../infrastructure/auth/supabase-principal-provider";
 import { requireActiveFutureYouAccount } from "../infrastructure/auth/supabase-account-activation";
 import { SupabaseFinancialContextSource } from "../infrastructure/context/supabase-financial-context-source";
+import { SupabaseEmployerBenefitSource } from "../infrastructure/context/supabase-employer-benefit-source";
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
 import { createSimulatorApplication } from "./simulator-application";
@@ -66,6 +67,7 @@ export const resolveSarahStory: SarahStoryResolver = async () => {
   });
   const application = new SarahStoryApplication({
     runReader: simulator.getSimulationRun,
+    opportunityReader: new SupabaseEmployerBenefitSource(client, principal),
     manifest: SARAH_STORY_MANIFEST
   });
   return { result: await application.load() };
