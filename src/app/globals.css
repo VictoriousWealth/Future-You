@@ -796,32 +796,6 @@ summary {
   border-radius: 999px;
 }
 
-.fy-context-pill {
-  display: flex;
-  width: max-content;
-  align-items: center;
-  gap: 0.42rem;
-  margin-top: 0.65rem;
-  padding: 0.42rem 0.68rem;
-  color: #2e4f80;
-  background: var(--fy-blue-pale);
-  border: 1px solid rgba(56, 182, 255, 0.22);
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 780;
-}
-
-.fy-context-pill > span {
-  width: 0.46rem;
-  height: 0.46rem;
-  background: #2ebc81;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0.18rem rgba(46, 188, 129, 0.14);
-}
-
-.fy-context-pill.earlier { color: #7a4969; background: var(--fy-pink-pale); border-color: rgba(222, 83, 173, 0.24); }
-.fy-context-pill.earlier > span { background: var(--fy-pink); box-shadow: 0 0 0 .18rem rgba(222,83,173,.13); }
-
 .fy-profile-link {
   display: grid;
   width: 2.8rem;
@@ -1590,7 +1564,6 @@ summary {
 .fy-bottom-sheet :is(a, button) { min-height: var(--fy-touch); }
 .fy-history-list button:disabled { cursor: wait; opacity: 0.58; }
 .fy-prompt-rail { position: relative; }
-.fy-context-pill,
 .fy-scenario-pill,
 .fy-classification-pill { max-width: 100%; white-space: normal; }
 .fy-progress-track > span { transition: width var(--fy-motion-slow) var(--fy-ease); }
@@ -1694,9 +1667,8 @@ summary {
     gap: 1.25rem 1.5rem;
     align-items: start;
   }
-  .fy-home-shell .fy-context-pill { grid-column: 1 / -1; }
-  .fy-home-intro { grid-column: 1; grid-row: 2 / span 2; }
-  .fy-overview-section { grid-column: 2; grid-row: 2; margin-top: 1.35rem; }
+  .fy-home-intro { grid-column: 1; grid-row: 1 / span 2; }
+  .fy-overview-section { grid-column: 2; grid-row: 1; margin-top: 1.35rem; }
   .fy-opportunity-preview,
   .fy-benefits-handoff { grid-column: 2; margin-top: 0; }
   .fy-home-goals { grid-template-columns: 1fr; }
@@ -1707,7 +1679,7 @@ summary {
     gap: 1rem 1.5rem;
     align-items: start;
   }
-  .fy-benefits-shell :is(.fy-context-pill, .fy-surface-heading) { grid-column: 1 / -1; }
+  .fy-benefits-shell .fy-surface-heading { grid-column: 1 / -1; }
   .fy-workplace-card { grid-column: 1; }
   .fy-active-benefits { grid-column: 2; grid-row: 3 / span 2; }
   .fy-no-opportunities,
