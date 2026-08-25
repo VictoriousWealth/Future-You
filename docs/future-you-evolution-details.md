@@ -652,3 +652,16 @@
     - The supplied UI reference uses a partially drawn ring to communicate progress, making the percentage immediately legible as incomplete unless it reaches 100%.
   - Effect on Future You:
     - Goal progress is now visually consistent with both the displayed percentage and reference design without changing goal maths, DTOs, financial context or browser authority.
+
+- **Visual refinement — Goal progress ring gains its reference two-layer construction**
+  - What changed:
+    - The proportional goal ring was refined into two distinct circles: a solid purple centre with white percentage text and a separate, thicker outer progress arc with rounded ends.
+  - Previous approach:
+    - The first proportional implementation correctly limited the coloured circumference to the funded percentage, but it still used one hollow conic ring with square arc ends and purple text on white.
+  - New approach:
+    - The shared progress renderer now uses a solid inner disc plus an SVG track and arc. The server supplies the bounded dash pattern, the browser applies it verbatim, and `stroke-linecap: round` creates the reference end treatment without moving progress calculation into React.
+    - Home, current Goals and stored hypothetical Goals use the same renderer. The two affected stable baselines and four evidence captures were regenerated and visually reviewed; server-sentinel, no-update visual, TypeScript, lint, build and client-boundary gates pass.
+  - Why it changed:
+    - The supplied mockup communicates the number inside a filled centre while the outer ring alone represents completion, with heavier, friendlier rounded geometry.
+  - Effect on Future You:
+    - Goal progress now matches the visual construction of the reference more closely while Sarah's percentages, goal dates, balances and every deterministic financial rule remain unchanged.
