@@ -31,6 +31,7 @@ export default async function OnboardingPage() {
       configuration={publicSupabaseConfiguration()}
       snapshotDate={londonDate()}
       draftKey={randomUUID()}
+      provisionedEmployerName={resolved.provisionedEmployerName ?? null}
     />
   );
 }
