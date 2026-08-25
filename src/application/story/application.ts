@@ -8,6 +8,7 @@ import {
   type SarahStoryGoalDateDTO,
   type SarahStoryLoadResult,
   type SarahStoryManifest,
+  type SarahStoryOpportunityReader,
   type SarahStoryRunReader,
   type SarahStoryScenarioDTO,
   type SarahStoryScenarioKey,
@@ -130,19 +131,24 @@ function currentPathFrom(run: OneOffPurchaseResponseDTO) {
 export class SarahStoryApplication {
   constructor(private readonly dependencies: Readonly<{
     readonly runReader: SarahStoryRunReader;
+    readonly opportunityReader: SarahStoryOpportunityReader;
     readonly manifest: SarahStoryManifest;
   }>) {}
 
   async load(): Promise<SarahStoryLoadResult> {
     const { manifest } = this.dependencies;
     let entries: readonly Readonly<[SarahStoryScenarioKey, Awaited<ReturnType<SarahStoryRunReader["execute"]>>]>[];
+    let benefitOpportunities: Awaited<ReturnType<SarahStoryOpportunityReader["getOpportunities"]>>;
     try {
-      entries = await Promise.all(
-        (Object.keys(manifest.requiredRuns) as SarahStoryScenarioKey[]).map(async (key) => {
-          const loaded = await this.dependencies.runReader.execute(manifest.requiredRuns[key].runId);
-          return [key, loaded] as const;
-        })
-      );
+      [entries, benefitOpportunities] = await Promise.all([
+        Promise.all(
+          (Object.keys(manifest.requiredRuns) as SarahStoryScenarioKey[]).map(async (key) => {
+            const loaded = await this.dependencies.runReader.execute(manifest.requiredRuns[key].runId);
+            return [key, loaded] as const;
+          })
+        ),
+        this.dependencies.opportunityReader.getOpportunities()
+      ]);
     } catch {
       return UNAVAILABLE;
     }
@@ -159,6 +165,19 @@ export class SarahStoryApplication {
     const trip650 = runs.TRIP_650_SEPTEMBER;
     const october = runs.TRIP_650_OCTOBER;
     if (!trip650 || !october) return UNAVAILABLE;
+    const opportunity = benefitOpportunities.find((candidate) =>
+      candidate.benefitKey === manifest.requiredOpportunity.benefitKey
+      && candidate.employerName === manifest.requiredOpportunity.employerName
+      && candidate.referenceDate === manifest.requiredOpportunity.referenceDate
+      && candidate.offeringStatus === "AVAILABLE"
+      && !candidate.numericalSimulationSupported
+      && candidate.furtherInformationRequired
+      && candidate.userState?.eligibilityStatus === "UNKNOWN"
+      && candidate.userState.uptakeStatus === "INACTIVE"
+      && !candidate.userState.includedInFinancialBaseline
+      && candidate.userState.informationCompleteness === "INCOMPLETE"
+    );
+    if (!opportunity) return UNAVAILABLE;
     const baselineGoalDates = currentPathFrom(trip650);
     const expectedCurrent = manifest.expectedFacts.currentGoalDates;
     if (
@@ -181,7 +200,9 @@ export class SarahStoryApplication {
       TRIP_650_EMERGENCY: goalDate(trip650, "Emergency fund")?.scenarioCompletion ?? "",
       TRIP_500_BUFFER: scenarios.TRIP_500_SEPTEMBER.safetyBufferAfter,
       TRIP_400_BUFFER: scenarios.TRIP_400_SEPTEMBER.safetyBufferAfter,
-      OCTOBER_MONTH: scenarios.TRIP_650_OCTOBER.paymentMonth
+      OCTOBER_MONTH: scenarios.TRIP_650_OCTOBER.paymentMonth,
+      OPPORTUNITY_EMPLOYER: opportunity.employerName,
+      OPPORTUNITY_NAME: opportunity.displayName
     });
     const total = manifest.steps.length;
     const steps: SarahStoryStepDTO[] = [];
@@ -222,7 +243,21 @@ export class SarahStoryApplication {
       },
       scenarios,
       steps,
-      opportunityBoundary: manifest.opportunityBoundary,
+      opportunityBoundary: {
+        offeringId: opportunity.offeringId,
+        benefitKey: "SEASON_TICKET_LOAN",
+        title: opportunity.displayName,
+        employerName: opportunity.employerName,
+        statusLabel: "Eligibility unknown",
+        explanation: `${opportunity.employerName} lists this opportunity. It is not included in Sarah’s current financial plan.`,
+        sourceReference: opportunity.sourceReference,
+        referenceDate: opportunity.referenceDate,
+        eligibility: "unknown",
+        uptake: "inactive",
+        includedInCalculation: false,
+        includedInCurrentPlan: false,
+        numericalSimulationSupported: false
+      },
       asset: {
         id: "sarah-prototype-vector",
         source: "user_supplied_html_prototype",
