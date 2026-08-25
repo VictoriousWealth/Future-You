@@ -23,7 +23,7 @@ export async function signIn(
   const requested = destination ?? (user === "sarah" ? "/ask" : undefined);
   await page.goto(requested ? `/login?next=${encodeURIComponent(requested)}` : "/login");
   await page.getByLabel("Email").fill(LOCAL_USERS[user].email);
-  await page.getByLabel("Password").fill(LOCAL_USERS[user].password);
+  await page.locator("#password").fill(LOCAL_USERS[user].password);
   await page.getByRole("button", { name: "Sign in" }).click();
   if (user === "sarah") {
     await expect(page).toHaveURL(new RegExp(`${requested ?? "/home"}$`), { timeout: 15_000 });
