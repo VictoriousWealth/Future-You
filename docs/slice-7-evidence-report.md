@@ -355,6 +355,22 @@ Routes, Supabase method calls, internal component names and authentication behav
 
 The final no-update auth/returning-user run passes 2/2, including successful Sarah authentication through the renamed Login control. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
 
+## Responsive auth-description placement
+
+Login's `Open your private financial plan…` copy and Register's workplace-information copy now sit after the complete form on every viewport below `1024px`. At `1024px` and wider, the descriptions return beneath their headings in the left side of the two-column auth layout. Register retains the approved `account creation` wording.
+
+The shared auth frame exposes one semantic description node and CSS repositions it; the text is not duplicated for breakpoints. The form page can scroll vertically when its content exceeds a short viewport. Browser geometry checks canonical mobile placement, the exact `1023px` lower-bound side and the exact `1024px` desktop side. A dedicated scrolled Register-footer baseline proves the longer description remains reachable.
+
+The final no-update responsive auth comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Further increased Welcome height separation
+
+The responsive distance between the completed Welcome identity and the Login/Register group increased from `clamp(6.5rem, 16vh, 11rem)` to `clamp(8rem, 22vh, 14rem)`. This produces roughly 197px of separation at `414 × 896` while retaining a bounded 128px minimum for shorter screens.
+
+The canonical browser gate now requires at least 190px of rendered clear space. The existing `360 × 640` containment assertion remains active so the increased rhythm cannot push the brand or actions outside the viewport.
+
+The refreshed mobile and desktop Welcome baselines were inspected and the final no-update visual comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
 ## Auth-logo optical offset
 
 Within the Login/Register splash only, the coloured angular artwork now uses the exact requested relative offsets: `top: -7px` and `right: 1px`. The white backdrop and all non-auth logo placements remain unchanged. Browser coverage asserts both computed values and retains the overlap, stacking, clearance and visual-baseline checks.
