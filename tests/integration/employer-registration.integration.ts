@@ -223,8 +223,18 @@ describe("employer-provisioned registration with local Supabase Auth", () => {
     expect(foreignLoginError).toBeNull();
     const { count: foreignMemberships } = await foreign
       .from("employer_memberships")
-      .select("user_id", { count: "exact", head: true });
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", userId);
     expect(foreignMemberships).toBe(0);
+    const { data: canonicalSarahMembership } = await foreign
+      .from("employer_memberships")
+      .select("user_id, work_email_normalized, status")
+      .single();
+    expect(canonicalSarahMembership).toEqual({
+      user_id: "11111111-1111-4111-8111-111111111111",
+      work_email_normalized: "sarah.wonk@onibank.test",
+      status: "ACTIVE"
+    });
   });
 
   it("serialises concurrent exact account reservations before any Auth identity is created", async () => {
@@ -318,10 +328,14 @@ describe("employer-provisioned registration with local Supabase Auth", () => {
       passwordConfirmation: "Different-Password-2026!",
       requestId: "track-a-collision-account"
     })).rejects.toMatchObject({ code: "ACCOUNT_EXISTS", message: expect.stringContaining("Login") });
-    const { count: sarahMemberships } = await admin
+    const { data: sarahMemberships } = await admin
       .from("employer_memberships")
-      .select("user_id", { count: "exact", head: true })
+      .select("employer_display_name, work_email_normalized, status")
       .eq("user_id", "11111111-1111-4111-8111-111111111111");
-    expect(sarahMemberships).toBe(0);
+    expect(sarahMemberships).toEqual([{
+      employer_display_name: "OniBank",
+      work_email_normalized: "sarah.wonk@onibank.test",
+      status: "ACTIVE"
+    }]);
   });
 });
