@@ -18,14 +18,20 @@ export type ConfirmContextVersionResult =
   | Readonly<{ status: "created" | "existing"; contextVersionId: string }>
   | Readonly<{ status: "idempotency_conflict" | "context_conflict"; contextVersionId: string | null }>;
 
-export interface WorkplaceAssociation {
-  readonly name: string;
-  readonly associationSource: "user_provided";
-  readonly verificationStatus: "unverified";
-}
+export type WorkplaceAssociation =
+  | Readonly<{
+      name: string;
+      associationSource: "user_provided";
+      verificationStatus: "unverified";
+    }>
+  | Readonly<{
+      name: string;
+      associationSource: "employer_provisioned";
+      verificationStatus: "verified";
+    }>;
 
 export interface FinancialContextVersionRepository {
   confirm(command: ConfirmContextVersionCommand): Promise<ConfirmContextVersionResult>;
-  saveWorkplace(association: WorkplaceAssociation): Promise<void>;
+  saveWorkplace(association: Extract<WorkplaceAssociation, { associationSource: "user_provided" }>): Promise<void>;
   getWorkplace(): Promise<WorkplaceAssociation | null>;
 }
