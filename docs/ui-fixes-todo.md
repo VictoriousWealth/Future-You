@@ -48,8 +48,8 @@ The SVG canvases are exactly `414 × 896`. Their recurring palette confirms that
 
 ### UI-01 — Fix the clipped Benefits header
 
-Status: `OPEN`  
-Priority: P0 defect  
+Status: `OPEN`
+Priority: P0 defect
 Screens: Benefits
 
 Current inconsistency:
@@ -69,8 +69,8 @@ Completion check:
 
 ### UI-02 — Make the Benefits visual state deterministic before capture
 
-Status: `OPEN`  
-Priority: P0 defect  
+Status: `OPEN`
+Priority: P0 defect
 Screens: Benefits
 
 Current inconsistency:
@@ -90,8 +90,8 @@ Completion check:
 
 ### UI-03 — Establish one reference-aligned border and radius hierarchy
 
-Status: `OPEN`  
-Priority: P1 system  
+Status: `OPEN`
+Priority: P1 system
 Screens: All
 
 Current inconsistency:
@@ -112,8 +112,8 @@ Completion check:
 
 ### UI-04 — Align the global typography character with the mockups
 
-Status: `DECISION`  
-Priority: P1 system  
+Status: `DECISION`
+Priority: P1 system
 Screens: All
 
 Current inconsistency:
@@ -139,8 +139,8 @@ Completion check:
 
 ### UI-05 — Bring the Welcome screen closer to the full-bleed reference
 
-Status: `OPEN`  
-Priority: P1 screen  
+Status: `OPEN`
+Priority: P1 screen
 Screens: Welcome
 
 Current inconsistency:
@@ -161,8 +161,8 @@ Completion check:
 
 ### UI-06 — Reproduce the Login/Signup curved-header geometry
 
-Status: `OPEN`  
-Priority: P1 screen  
+Status: `OPEN`
+Priority: P1 screen
 Screens: Login, Signup
 
 Current inconsistency:
@@ -183,8 +183,8 @@ Completion check:
 
 ### UI-07 — Match the outlined-field label treatment
 
-Status: `OPEN`  
-Priority: P1 component  
+Status: `OPEN`
+Priority: P1 component
 Screens: Login, Signup, onboarding/settings where appropriate
 
 Current inconsistency:
@@ -204,8 +204,8 @@ Completion check:
 
 ### UI-08 — Correct the Home hero hierarchy and decorative treatment
 
-Status: `OPEN`  
-Priority: P1 screen  
+Status: `OPEN`
+Priority: P1 screen
 Screens: Home
 
 Current inconsistency:
@@ -226,8 +226,8 @@ Completion check:
 
 ### UI-09 — Rework Home secondary actions into the reference rail language
 
-Status: `OPEN`  
-Priority: P1 screen  
+Status: `OPEN`
+Priority: P1 screen
 Screens: Home
 
 Current inconsistency:
@@ -248,8 +248,8 @@ Completion check:
 
 ### UI-10 — Add the missing grouped overview frame
 
-Status: `DECISION`  
-Priority: P1 screen  
+Status: `DECISION`
+Priority: P1 screen
 Screens: Home lower section
 
 Current inconsistency:
@@ -269,8 +269,8 @@ Completion check:
 
 ### UI-11 — Simplify the goal-card information hierarchy
 
-Status: `OPEN`  
-Priority: P1 component  
+Status: `OPEN`
+Priority: P1 component
 Screens: Home, Goals, stored hypothetical Goals
 
 Current inconsistency:
@@ -292,8 +292,8 @@ Completion check:
 
 ### UI-12 — Resolve the Goals-screen relationship to the supplied goal-management mockup
 
-Status: `DECISION`  
-Priority: P1 product/UI boundary  
+Status: `DECISION`
+Priority: P1 product/UI boundary
 Screens: Goals, financial-context settings
 
 Current inconsistency:
@@ -313,8 +313,8 @@ Completion check:
 
 ### UI-13 — Match Ask prompt-card typography and proportions
 
-Status: `OPEN`  
-Priority: P1 screen  
+Status: `OPEN`
+Priority: P1 screen
 Screens: Ask initial state
 
 Current inconsistency:
@@ -333,29 +333,37 @@ Completion check:
 - Test the longest supported prompt at 360px width and 200% text scaling.
 - Preserve the existing click target, submit behaviour, and deterministic conversation flow.
 
-### UI-14 — Align the Ask header chrome with the reference
+### UI-14 — Standardise the shared wordmark and Ask header chrome
 
-Status: `OPEN`  
-Priority: P2 screen  
-Screens: Ask
+Status: `IN PROGRESS`
+Priority: P2 screen
+Screens: Login, Signup, Home, Goals, Ask, Benefits
 
 Current inconsistency:
 
 - Reference uses a larger `FUTUREYOUAI` wordmark and a quiet grey three-line history/menu glyph without a surrounding circle.
-- Current wordmark is smaller and the history control is a bordered circular button with strong blue lines.
+- The current signed-in wordmark is smaller, and Login/Signup introduce a compact angular symbol-and-copy lockup that is not used elsewhere in the app.
+- The current Ask history control is a bordered circular button with strong blue lines.
 
 Desired result:
 
-- Increase brand presence and reduce the history control's visual weight while retaining a 44px hit region, focus state, dialog semantics, and accessible name.
+- Use one larger text wordmark across auth forms and the signed-in shell. Reserve the full angular symbol for the Welcome identity screen rather than introducing a unique compact version on Login/Signup.
+- Reduce the Ask history control's visual weight while retaining a 44px hit region, focus state, dialog semantics, and accessible name.
 
 Completion check:
 
 - The visual glyph may be smaller than the hit region, but it must remain legible and scale with the established icon system.
 
+Implementation under review:
+
+- The shared `FUTURE YOU AI` wordmark now renders at 17px in the signed-in shell and on Login/Signup.
+- The compact angular symbol was removed from Login/Signup; the full symbol remains on Welcome only.
+- The Ask history-control styling remains open within this item.
+
 ### UI-15 — Reconcile the bottom-navigation geometry
 
-Status: `OPEN`  
-Priority: P2 system  
+Status: `OPEN`
+Priority: P2 system
 Screens: Home, Goals, Ask, Benefits
 
 Current inconsistency:
@@ -376,8 +384,8 @@ Completion check:
 
 ### UI-16 — Give the Home opportunity/Benefits handoff the reference structure
 
-Status: `DECISION`  
-Priority: P2 screen  
+Status: `DECISION`
+Priority: P2 screen
 Screens: Home lower section
 
 Current inconsistency:
@@ -397,8 +405,8 @@ Completion check:
 
 ### UI-17 — Review Benefits content density and section spacing
 
-Status: `OPEN`  
-Priority: P2 screen  
+Status: `OPEN`
+Priority: P2 screen
 Screens: Benefits
 
 Current inconsistency:
@@ -419,8 +427,8 @@ Completion check:
 
 ### UI-18 — Standardise small labels and casing
 
-Status: `OPEN`  
-Priority: P2 polish  
+Status: `OPEN`
+Priority: P2 polish
 Screens: All
 
 Current inconsistency:
