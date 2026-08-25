@@ -183,7 +183,7 @@ All discovered automated tests passed; none were skipped.
 | Stable visual-regression comparisons | 7 baselines | 7 | 0 | 0 | PASS |
 | Required Slice 7 evidence captures | 26 captures | 26 | 0 | 0 | PASS |
 
-The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The latest Playwright pass used one Chromium worker and completed in 2.0 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
+The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The latest Playwright pass used one Chromium worker and completed in 1.4 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
 
 Additional gates:
 
@@ -244,3 +244,9 @@ The unused `ContextPill` component and its CSS were deleted, desktop grid placem
 The generic profile SVG in the product header was replaced with an AI-generated fictional Sarah portrait. The built-in image-generation tool produced a natural, racially ambiguous young-adult portrait with a pale blue/lavender background and circular-crop-safe framing. The selected image is stored as `public/images/sarah-profile.png`, resized to `512 × 512` (361 KB), and served through Next.js image optimisation.
 
 The financial-context settings link retains its existing accessible name; the nested portrait uses empty alternative text to prevent duplicate announcement. Unit coverage verifies the optimised image URL, link label, empty `alt` and absence of the former profile SVG. A browser regression verifies the visible image, URL, 40px-or-larger rendered dimensions and SVG absence. Home, Goals and Benefits baselines were regenerated. The rebuilt Slice 7 suite passes 7/7 and the clean no-update full Chromium suite passes 22/22; all 231 Vitest tests, TypeScript, ESLint, production build and whitespace checks pass.
+
+## Approved password-icon refinement
+
+The Login and Signup Show/Hide text controls now use the `FiEye` and `FiEyeOff` React components from the `react-icons` package. Each remains a 44px button with dynamic “Show password(s)”/“Hide password(s)” accessible naming, `aria-controls` and `aria-pressed`; the icon itself is hidden from the accessibility tree.
+
+The browser journey toggles Login and both Signup password fields and verifies their `type` attributes. The Login baseline and Signup evidence were regenerated and visually reviewed. The clean full Chromium suite remains 22/22, while 231/231 Vitest tests, TypeScript, ESLint, production build and whitespace checks pass.
