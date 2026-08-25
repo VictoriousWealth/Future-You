@@ -20,11 +20,11 @@ const DESTINATIONS: readonly Readonly<{
   { id: "benefits", label: "Benefits", href: "/benefits", icon: "benefits" }
 ];
 
-export function ProductHeader({ action }: Readonly<{ action?: ReactNode }>) {
+export function ProductHeader({ action, showAI = false }: Readonly<{ action?: ReactNode; showAI?: boolean }>) {
   return (
     <header className="fy-app-header">
       <Link className="fy-wordmark" href="/home" aria-label="Future You home">
-        <FutureYouWordmark/>
+        <FutureYouWordmark showAI={showAI}/>
       </Link>
       {action ?? (
         <Link className="fy-profile-link" href="/settings/financial-context" aria-label="Open financial context settings">
@@ -73,7 +73,7 @@ export function ProductShell({
   return (
     <div className={`fy-product-shell ${className}`.trim()}>
       <a className="fy-skip-link" href="#fy-main-content">Skip to page content</a>
-      <ProductHeader action={headerAction}/>
+      <ProductHeader action={headerAction} showAI={active === "ask"}/>
       <main id="fy-main-content" className="fy-product-content" data-testid={testId} tabIndex={-1}>
         {children}
       </main>
