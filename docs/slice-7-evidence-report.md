@@ -5,6 +5,10 @@ Verification date: 2026-08-25
 Approval date: 2026-08-25
 Post-MVP work: not started
 
+> **Historical registration evidence:** The registration statements below accurately describe the
+> approved Slice 7 implementation as tested on 2026-08-25. They are not evidence of the subsequently
+> approved employer-provisioned registration contract. That replacement flow remains unimplemented.
+
 ## Outcome
 
 Slice 7 passes its product-wide visual, responsive, accessibility and regression completion gate. Authentication, onboarding, Home, Goals, Ask, Benefits and immutable financial-context correction now use one coherent visual language. The same product is intentionally composed for `360 × 800`, `414 × 896`, `768 × 1024` and `1440 × 900` rather than stretching a framed mobile screen.
