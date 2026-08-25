@@ -70,7 +70,7 @@ The supplied SVGs informed geometry, proportion, navigation and gradient constru
 
 | Surface | Release-candidate result |
 |---|---|
-| Welcome | A centred brand introduction and clear Sign in/Create account choice derived from Screen 1. |
+| Welcome | A centred brand introduction and clear Login/Register choice derived from Screen 1. |
 | Login | Screen 2 blue-corner composition, visible labels, autofill-ready fields, password control, pending state and sanitised errors. |
 | Signup | Screen 3 structure without Company ID; exact password confirmation and accessible client/provider failure treatment. |
 | Onboarding | Shared tokens, readable grouping, stable controls and a clearer deterministic preview/confirmation hierarchy. |
@@ -303,6 +303,12 @@ The shared renderer owns the symbol geometry and optional suffix. The product sh
 
 ## Supplied logo-artwork refinement
 
-The temporary CSS reconstruction of the angular mark was replaced by the user-supplied transparent PNG, stored locally as `public/images/future-you-logo.png`. One shared renderer uses the same artwork for the full Welcome identity and every compact wordmark without stretching its original `109 × 135` proportions. The image remains decorative because the surrounding brand container or link already supplies the accessible name.
+The temporary CSS reconstruction of the angular mark was replaced by the user-supplied SVG, stored locally as `public/images/future-you-logo.svg`. One shared renderer uses the same vector artwork for the full Welcome identity and every compact wordmark without stretching its original `109 × 135` proportions. The image remains decorative because the surrounding brand container or link already supplies the accessible name.
 
-Renderer coverage asserts the local optimised image URL. Browser coverage verifies the supplied asset on Welcome, Login, onboarding and the authenticated product shell, while existing wordmark geometry and visual baselines protect its placement across the remaining surfaces. No remote asset dependency, financial logic or navigation behaviour was introduced.
+Renderer coverage asserts the local SVG URL. Browser coverage verifies the supplied asset on Welcome, Login, onboarding and the authenticated product shell, while existing wordmark geometry and visual baselines protect its placement across the remaining surfaces. The focused update run and subsequent no-update comparison both pass 4/4; Vitest passes 233/233; TypeScript, ESLint, production build and `git diff --check` pass. No remote asset dependency, financial logic or navigation behaviour was introduced.
+
+## Welcome copy reduction
+
+Welcome now retains only the full Future You identity and the Login/Register actions. The former headline, explanatory sentence and trust-note paragraph were removed together rather than left as empty heading chrome. `AuthFrame` now omits its heading container and `aria-labelledby` when no heading content is supplied, while Login and Signup continue to provide their existing labelled headings.
+
+Unit and browser regressions assert that all three removed strings are absent while the Login and Register actions retain the existing `/login` and `/signup` destinations and the supplied SVG remains present. A dedicated Welcome visual baseline records the simplified composition. Authentication, routing and financial behaviour are unchanged.
