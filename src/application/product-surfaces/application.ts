@@ -8,6 +8,10 @@ import type { BaselineRequestDTO, BaselineResponseDTO, GoalCompletionDTO, MoneyD
 import type { ApplicationError } from "../errors/application-error";
 import type { FinancialContextSource } from "../ports/financial-context-source";
 import type { WorkplaceAssociationSource } from "../ports/workplace-association-source";
+import type {
+  EmployerBenefitOpportunity,
+  EmployerBenefitSource
+} from "../ports/employer-benefit-source";
 import {
   BENEFITS_SURFACE_SCHEMA,
   GOALS_PREVIEW_SURFACE_SCHEMA,
@@ -38,6 +42,7 @@ export interface ProductSurfaceDependencies {
   readonly sarahStoryAvailable?: boolean;
   readonly contextSource: FinancialContextSource;
   readonly workplaceSource: WorkplaceAssociationSource;
+  readonly employerBenefitSource: EmployerBenefitSource;
   readonly simulator: SurfaceSimulator;
 }
 
@@ -157,6 +162,74 @@ function currentBuffer(context: FinancialContextSnapshot): Result<bigint, Applic
   return ok(cash.minor - reserve.minor);
 }
 
+function trustedOpportunities(
+  workplace: Awaited<ReturnType<WorkplaceAssociationSource["getWorkplace"]>>,
+  opportunities: readonly EmployerBenefitOpportunity[]
+): readonly EmployerBenefitOpportunity[] {
+  if (!workplace || workplace.verificationStatus !== "verified") return [];
+  return opportunities.filter((opportunity) =>
+    opportunity.employerName === workplace.name
+    && opportunity.offeringStatus === "AVAILABLE"
+    && !opportunity.numericalSimulationSupported
+    && opportunity.furtherInformationRequired
+  );
+}
+
+function opportunityDTO(
+  opportunity: EmployerBenefitOpportunity,
+  pension: InformationalPensionContext | undefined
+): BenefitsSurfaceDTO["opportunities"][number] | null {
+  const userState = opportunity.userState;
+  if (
+    !userState
+    || userState.eligibilityStatus !== "UNKNOWN"
+    || userState.uptakeStatus !== "INACTIVE"
+    || userState.includedInFinancialBaseline
+    || userState.informationCompleteness !== "INCOMPLETE"
+  ) return null;
+  const common = {
+    id: opportunity.offeringId,
+    benefitKey: opportunity.benefitKey,
+    status: "available" as const,
+    employerName: opportunity.employerName,
+    eligibility: "unknown" as const,
+    uptake: "inactive" as const,
+    uptakeLabel: "Not active." as const,
+    includedInCurrentPlan: false as const,
+    planInclusionLabel: "Not included in your current financial plan." as const,
+    numericalSimulationSupported: false as const,
+    numericalEffectLabel: "No numerical effect has been calculated." as const,
+    furtherInformationRequired: true as const,
+    provenance: {
+      sourceType: "canonical_employer_reference" as const,
+      sourceReference: opportunity.sourceReference,
+      referenceDate: opportunity.referenceDate,
+      lastConfirmedDate: opportunity.lastConfirmedDate,
+      recordVersion: opportunity.recordVersion,
+      schemaVersion: opportunity.schemaVersion,
+      userStateId: userState.stateId
+    }
+  };
+  if (opportunity.benefitKey === "ADDITIONAL_PENSION_MATCH") {
+    return {
+      ...common,
+      title: "Additional pension match",
+      statusLabel: "Available opportunity",
+      description: `${opportunity.employerName} appears to match contributions up to 5%.`,
+      currentContribution: pension ? `You currently contribute ${pension.employeeContributionPercent}%.` : null,
+      eligibilityLabel: "Eligibility has not been confirmed."
+    };
+  }
+  return {
+    ...common,
+    title: "Season-ticket loan",
+    statusLabel: "Eligibility unknown",
+    description: `${opportunity.employerName} lists this opportunity.`,
+    currentContribution: null,
+    eligibilityLabel: "Eligibility unknown"
+  };
+}
+
 function previewGoals(
   context: FinancialContextSnapshot,
   run: OneOffPurchaseResponseDTO
@@ -224,6 +297,17 @@ export class ProductSurfaceApplication {
     const preferred = moneyValue(current.value.context.desiredSafetyBuffer);
     if (!preferred) return surfaceError("MATERIAL_INFORMATION_MISSING", "A preferred safety buffer is required.");
     const atPreferred = buffer.value >= preferred.minor;
+    const [workplace, employerOpportunities] = await Promise.all([
+      this.dependencies.workplaceSource.getWorkplace(),
+      this.dependencies.employerBenefitSource.getOpportunities()
+    ]);
+    const opportunities = trustedOpportunities(workplace, employerOpportunities);
+    const seasonTicket = opportunities.find((opportunity) =>
+      opportunity.benefitKey === "SEASON_TICKET_LOAN"
+      && opportunity.userState?.eligibilityStatus === "UNKNOWN"
+      && opportunity.userState.uptakeStatus === "INACTIVE"
+      && !opportunity.userState.includedInFinancialBaseline
+    );
     return ok({
       apiVersion: PRODUCT_SURFACE_API_VERSION,
       schemaVersion: HOME_SURFACE_SCHEMA,
@@ -237,7 +321,17 @@ export class ProductSurfaceApplication {
         statusLabel: atPreferred ? "At your preferred level" : "Below your preferred level"
       },
       goals: goals.value,
-      opportunityPreview: { kind: "none" },
+      opportunityPreview: seasonTicket
+        ? {
+            kind: "authoritative",
+            title: "Season-ticket loan",
+            description: `${seasonTicket.employerName} lists a season-ticket loan. Your eligibility has not been confirmed.`,
+            statusLabel: "Eligibility unknown",
+            href: "/benefits#opportunity-season-ticket-loan",
+            actionLabel: "See details",
+            sourceReferenceDate: seasonTicket.referenceDate
+          }
+        : { kind: "none" },
       guidedStory: this.dependencies.sarahStoryAvailable
         ? {
             available: true,
@@ -306,29 +400,39 @@ export class ProductSurfaceApplication {
     if (!version) return surfaceError("FINANCIAL_CONTEXT_NOT_FOUND", "A current financial context is required.");
     const context = await this.dependencies.contextSource.getContextVersion(version);
     if (!context) return surfaceError("CONTEXT_VERSION_NOT_FOUND", "The current financial context could not be read.");
-    const workplace = await this.dependencies.workplaceSource.getWorkplace();
+    const [workplace, employerOpportunities] = await Promise.all([
+      this.dependencies.workplaceSource.getWorkplace(),
+      this.dependencies.employerBenefitSource.getOpportunities()
+    ]);
     const pensions = context.informationalContext.filter(
       (fact): fact is InformationalPensionContext => fact.kind === "PENSION_INFORMATION"
     );
     const activeFacts = pensions.map((fact, index) => ({
       id: `active-pension-${index + 1}`,
       title: "Workplace pension",
-      statusLabel: "Active · Confirmed in your plan" as const,
-      employeeContribution: `${fact.employeeContributionPercent}% employee contribution`,
-      employerContribution: `${fact.employerContributionPercent}% employer contribution`,
+      statusLabel: "Active" as const,
+      employerName: workplace?.verificationStatus === "verified" ? workplace.name : "Your employer",
+      employeeContribution: `${fact.employeeContributionPercent}%`,
+      employerContribution: `${fact.employerContributionPercent}%`,
       treatment: fact.includedInNetIncomeAlready
         ? "Your confirmed take-home pay already reflects your contribution."
         : "This contribution is informational only.",
       spendability: fact.employerContributionSpendable
         ? "Employer contribution treatment is recorded in your plan."
-        : "Employer contributions are not spendable cash."
+        : "Retirement value — not spendable cash.",
+      provenance: {
+        sourceType: "immutable_financial_context" as const,
+        contextVersion: context.version,
+        factKey: "PENSION_INFORMATION" as const
+      }
     }));
     const workplaceDTO: BenefitsSurfaceDTO["workplace"] = workplace
       ? workplace.verificationStatus === "verified"
         ? {
             status: "verified",
             name: workplace.name,
-            statusLabel: "Employer-provisioned · Verified",
+            statusLabel: "Verified workplace",
+            membershipStatusLabel: "Active membership",
             explanation: "This membership confirms your employer, but no benefit is treated as active cash automatically."
           }
         : {
@@ -342,14 +446,23 @@ export class ProductSurfaceApplication {
           name: null,
           statusLabel: "No workplace added"
         };
-    const emptyState: BenefitsSurfaceDTO["emptyState"] = activeFacts.length > 0
+    const opportunities = trustedOpportunities(workplace, employerOpportunities)
+      .map((opportunity) => opportunityDTO(opportunity, pensions[0]))
+      .filter((opportunity): opportunity is NonNullable<typeof opportunity> => opportunity !== null);
+    const emptyState: BenefitsSurfaceDTO["emptyState"] = opportunities.length > 0
       ? null
       : workplace
-        ? {
-            kind: "no_verified_catalogue",
-            title: "No verified benefit information yet",
-            description: "We will not infer benefits from your workplace name."
-          }
+        ? workplace.verificationStatus === "verified"
+          ? {
+              kind: "no_known_information",
+              title: "No confirmed benefit information yet",
+              description: "We do not have confirmed benefit information for this workplace yet."
+            }
+          : {
+              kind: "no_verified_catalogue",
+              title: "No verified benefit information yet",
+              description: "We will not infer benefits from your workplace name."
+            }
         : {
             kind: "no_workplace",
             title: "No workplace information yet",
@@ -362,7 +475,7 @@ export class ProductSurfaceApplication {
       context: contextDTO(context, true),
       workplace: workplaceDTO,
       activeFacts,
-      opportunities: [],
+      opportunities,
       emptyState
     });
   }
