@@ -10,7 +10,7 @@ import type {
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
-import { GoalCard, GoalProgressRing } from "./goal-card";
+import { GoalCard, GoalProgressBar, GoalProgressRing } from "./goal-card";
 
 function apiMessage(value: unknown): string {
   return (value as Partial<ApiErrorResponseDTO> | null)?.error?.message ?? "Your goals are temporarily unavailable.";
@@ -72,7 +72,7 @@ export function GoalsSurface() {
                   <article className="fy-goal-card fy-preview-goal" key={goal.id} data-testid={`preview-goal-${goal.id}`}>
                     <header><div><p>Confirmed balance</p><h3>{goal.label}</h3></div><GoalProgressRing progress={goal.progress}/></header>
                     <div className="fy-goal-money"><strong>{goal.currentBalance.display}</strong><span>of {goal.targetBalance.display}</span></div>
-                    <div className="fy-progress-track" role="img" aria-label={goal.progress.accessibleLabel}><span style={{ width: goal.progress.fill }}/></div>
+                    <GoalProgressBar progress={goal.progress}/>
                     <div className="fy-date-shift"><div><span>Original path</span><strong>{goal.baselineCompletion.display}</strong></div><i aria-hidden="true">→</i><div><span>With this what-if</span><strong>{goal.scenarioCompletion.display}</strong></div></div>
                     <footer><span>Impact</span><strong>{goal.changeLabel}</strong></footer>
                   </article>
