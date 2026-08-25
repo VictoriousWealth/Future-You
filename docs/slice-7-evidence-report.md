@@ -270,3 +270,15 @@ A computed-style Playwright audit checks direct text, form text and generated ps
 The horizontal goal bars now use the reference design's staccato structure while retaining Future You's existing cyan-to-blue gradient. A repeating light separator divides the funded span into short blocks; the unfunded portion remains the outlined empty track. The immutable server-authored `fill` width continues to control the exact funded extent, so this presentation change introduces no browser calculation or financial behavior.
 
 Home, current Goals and stored-hypothetical Goals share the same segmented fill rule. The browser regression requires both a repeating segmentation layer and the underlying colour-gradient layer, while the existing impossible `12.345%` sentinel continues to protect verbatim width rendering. Home and Goals baselines and their evidence captures were regenerated and visually reviewed; production build, TypeScript, ESLint and the focused browser journey pass.
+
+## Approved action-triangle refinement
+
+Interactive arrow glyphs now use a reusable filled SVG triangle aligned with the supplied reference. Right-facing variants appear in the Home hero, Home decision cards, Ask suggested prompts, conversation-history rows and the inactive Benefits handoff. The Ask submit control uses the same triangle rotated upward. Informational arrows inside deterministic before/after results, goal-date comparisons and explanatory link text were deliberately preserved.
+
+The icon remains hidden from the accessibility tree while every parent button/link retains its existing accessible name, destination and touch target. The returning-Sarah browser regression asserts that the right-facing Home and Ask triangles and upward send triangle render, and that the replaced `→`/`↑` text characters are absent from those controls. The Home, Ask initial and Ask £650-result baselines were explicitly regenerated, visually inspected and then passed in a no-update comparison (1/1). Vitest passes 231/231; TypeScript, ESLint, production build, client-bundle boundary and `git diff --check` pass. No financial, provider, persistence or security contract changed.
+
+## Approved taller progress-bar and end-cap refinement
+
+Horizontal goal-progress tracks are now `0.78rem` high, exactly 1.5 times the previous `0.52rem`. Partial funded spans retain a rounded left edge and use a flat right edge; only an exact server-supplied `100%` fill receives the fully rounded end cap. The staccato separators, cyan-to-blue gradient, outlined remainder and verbatim server width remain unchanged.
+
+A shared `GoalProgressBar` prevents current Home, current Goals and stored hypothetical Goals from diverging. Renderer tests cover partial and complete states, and the mobile browser regression verifies at least 12px computed track height plus a zero-radius partial right edge. Home and Goals baselines were regenerated, visually inspected and then passed in a no-update comparison (1/1). Vitest passes 232/232; TypeScript, ESLint, production build and `git diff --check` pass. No DTO, simulator or financial-authority rule changed.
