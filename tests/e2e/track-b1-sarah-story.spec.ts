@@ -114,8 +114,13 @@ test("plays the complete deterministic Sarah story with explicit accessible cont
   await page.screenshot({ path: evidence("07-october-alternative-414x896.png"), fullPage: true });
 
   await nextStep(page, "OPPORTUNITY_INFORMATION");
-  await expect(page.getByTestId("story-opportunity-boundary")).toContainText("Not included in calculation");
-  await expect(page.getByTestId("story-opportunity-boundary")).not.toContainText(/eligible|saves £|season.ticket loan/i);
+  const opportunity = page.getByTestId("story-opportunity-boundary");
+  await expect(opportunity).toContainText("OniBank");
+  await expect(opportunity).toContainText("Season-ticket loan");
+  await expect(opportunity).toContainText("Eligibility unknown");
+  await expect(opportunity).toContainText("not included in Sarah’s current financial plan");
+  await expect(opportunity).toContainText("Not included in calculation");
+  await expect(opportunity).not.toContainText(/saves £|you are eligible|makes the trip/i);
   await page.screenshot({ path: evidence("08-opportunity-information-414x896.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Skip to summary" }).click();
