@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { SurfaceGoalDTO } from "../src/application/product-surfaces/contracts";
 import { GoalCard } from "../src/ui/features/product-surfaces/goal-card";
+import { ProductHeader } from "../src/ui/product-shell/product-shell";
 
 const sentinelGoal: SurfaceGoalDTO = {
   id: "goal-sentinel",
@@ -35,5 +36,13 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain("December 2099 SERVER");
     expect(markup).toContain("SERVER ACCESSIBLE RATIO");
     expect(markup).not.toContain("9999%");
+  });
+
+  it("renders the generated profile portrait without replacing the settings link semantics", () => {
+    const markup = renderToStaticMarkup(createElement(ProductHeader, {}));
+    expect(markup).toContain("%2Fimages%2Fsarah-profile.png");
+    expect(markup).toContain('aria-label="Open financial context settings"');
+    expect(markup).toContain('alt=""');
+    expect(markup).not.toContain('<svg viewBox="0 0 24 24"><circle cx="12" cy="8"');
   });
 });
