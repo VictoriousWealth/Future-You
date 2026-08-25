@@ -479,6 +479,7 @@ These items were already reviewed and should not be reopened incidentally while 
 - Welcome now presents only the core identity and Login/Register actions; its three promotional copy blocks were deliberately removed.
 - Welcome uses responsive vertical separation within the identity and between the identity and entry actions so the composition does not collapse into one central cluster.
 - Welcome's identity-to-actions separation was increased again; its brand name remains stacked through 768px and becomes the single-line `FutureYou` above 768px.
+- Welcome's primary Login action now follows the reference hierarchy with a near-full-width 68px pill; Register remains a narrower secondary action.
 - Login and Register layer the supplied white splash SVG behind the angular logo so it remains distinct from their blue header artwork; other brand surfaces do not use the backing layer.
 - The auth-only splash is deliberately more than twice the logo artwork's rendered width and height, with added wordmark clearance so it does not obscure `FutureYou`.
 
