@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, type ReactNode } from "react";
+import { FutureYouWordmark } from "../brand/future-you-wordmark";
 import { ProductIcon, type ProductIconName } from "./product-icon";
 
 export type ProductDestination = "home" | "goals" | "ask" | "benefits";
@@ -23,7 +24,7 @@ export function ProductHeader({ action }: Readonly<{ action?: ReactNode }>) {
   return (
     <header className="fy-app-header">
       <Link className="fy-wordmark" href="/home" aria-label="Future You home">
-        <span>FUTURE</span><strong>YOU</strong><i>AI</i>
+        <FutureYouWordmark/>
       </Link>
       {action ?? (
         <Link className="fy-profile-link" href="/settings/financial-context" aria-label="Open financial context settings">
