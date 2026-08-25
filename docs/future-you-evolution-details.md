@@ -1048,3 +1048,147 @@
     - Registration must not absorb avatar/profile scope.
     - Character/profile work must not alter authentication, financial context or deterministic simulation authority.
     - Neither track introduces code until its own proposal is reviewed and approved.
+
+- **Post-MVP approval — Both registration and character directions approved with separate gates**
+  - Track A approval:
+    - `employer-provisioned-registration-technical-design.md` is approved as the implementation basis for replacing the legacy Register flow.
+    - Track A implementation is authorised only as its own registration slice with complete security, migration, browser and Slice 1–7 regression evidence.
+  - Track B approval:
+    - `character-led-story-and-human-context-contract.md` is approved as the canonical character/product direction.
+    - Only a focused Phase B1 Sarah guided-story technical design is authorised next; avatar and human-profile application code remain unauthorised until that design is approved.
+
+- **Registration lock — Personal and work identities remain distinct**
+  - Personal-email rule:
+    - The first employer-provisioned implementation requires personal email to differ from verified work email.
+    - Work email proves employer eligibility; personal email remains the private Login and recovery identity.
+  - Existing-account rule:
+    - A personal email already attached to Future You cannot create a duplicate user or automatically claim another employer membership.
+    - The user receives neutral Login/recovery guidance; authenticated account linking is deferred to another contract.
+  - Email-change boundary:
+    - Personal-email change, work-email change and employer transition are not part of registration and require future authenticated flows.
+
+- **Registration lock — Provision, verification and activation defaults**
+  - Provision lifecycle:
+    - A provision is valid for 30 days from issuance.
+    - Only one claimable provision may exist for an employer + normalised work email.
+    - Records are retained after expiry, revocation or claim and are never overwritten; re-provisioning creates a new record.
+  - Work-email code policy:
+    - Codes contain six cryptographically generated numeric digits.
+    - Only a keyed digest is stored.
+    - Codes expire after 10 minutes and allow at most 5 failed attempts.
+    - Resends have a 60-second cooldown, at most 3 requests per hour and at most 10 code sends per 24 hours.
+    - A resend invalidates older codes, and successful verification consumes the code immediately.
+  - Activation state:
+    - Verified activation is opaque, HttpOnly, same-site protected, stage-bound and unable to replace the verified employer/work email.
+    - It expires after 30 minutes of inactivity, rotates across important stages and becomes invalid after account activation or changing workplace details.
+
+- **Registration lock — Confirmation, membership and revocation boundaries**
+  - Completion gates:
+    - Financial onboarding may begin before personal-email confirmation.
+    - Personal-email confirmation and onboarding may complete in either order, but both are required for full-app access.
+    - Returning Login uses confirmed personal email and password only.
+  - Membership cardinality:
+    - The first implementation supports one verified active employer membership per user.
+    - Multiple memberships, self-service employer changes and second-provision linking are deferred.
+  - Revocation:
+    - Pre-activation revocation immediately blocks code issue, verification, Auth creation and claim, including already issued activation state.
+    - Post-activation deactivation may remove employer-specific informational opportunities but cannot delete the personal account or any financial context, goals, conversations, scenarios or runs.
+    - Employer sponsorship ending does not automatically remove personal Login access until a separate offboarding/access contract exists.
+  - Provisioning operations:
+    - Initial provisions come only from controlled seed data, restricted server import or a narrowly scoped operational script.
+    - No employer portal is included, and employer operators receive no financial-data access.
+
+- **Character lock — Phase B1 is Sarah's explicit deterministic story only**
+  - Sarah identity:
+    - Sarah remains the canonical demonstration character and never becomes the real user's inferred or default avatar.
+  - Entry and everyday behaviour:
+    - `Play Sarah's story` is explicit and user selected.
+    - Opening Home, Goals, Ask or Benefits does not start character motion.
+    - The everyday product has no animated avatar by default.
+  - Phase B1 exclusions:
+    - No character selection, customisation, user likeness, uploaded portrait or AI-generated avatar.
+    - No voice, text-to-speech, voice cloning, automatic audio or speaking avatar.
+    - No real-user human-context persistence; that requires a later technical design with provenance, RLS, retention, deletion, export and opt-out.
+    - “Financial twin” remains internal terminology rather than user-facing copy.
+  - Deterministic and accessibility rules:
+    - Story dialogue uses visible text, accessible panels/bubbles, canonical Sarah context, immutable runs and approved server templates.
+    - The story works with no live AI provider and with all animation disabled.
+    - Pause, resume, step/all-animation skip, restart, exit, disable-animation and reduced-motion equivalents are required.
+    - Financial results remain identical with animation enabled, disabled, reduced or skipped.
+
+- **Implementation sequence lock — Registration precedes guided-story implementation**
+  - Order:
+    - Incorporate the approved decisions into both documents.
+    - Preserve the controlled-demo release candidate before post-MVP application changes.
+    - Implement and verify Track A registration independently.
+    - Produce `sarah-guided-story-mode-technical-design.md` after Track A.
+    - Stop for approval before any Track B application code.
+  - Reviewability:
+    - Registration and story work must not share one migration, feature branch or acceptance gate.
+
+- **Track A implementation — Employer-provisioned registration replaces legacy public Register**
+  - Preserved release:
+    - The pre-Track-A controlled-demo release was preserved as annotated tag `mvp-rc-controlled-demo-2026-08-25` at commit `7909393` before registration application changes.
+  - Implemented journey:
+    - Register now begins with Company ID and provisioned work email, continues through a six-digit work-email code, then collects a distinct personal email and chosen password.
+    - Personal-email confirmation and financial onboarding may proceed alongside each other.
+    - Full-app pages and APIs remain unavailable until both gates complete.
+    - Future Login uses the confirmed personal email and password; work email is not a login credential.
+    - `/signup` no longer provides an alternative public-signup path and redirects to `/register`.
+  - Authority boundary:
+    - Public Supabase `signUp()` is rejected unless an Auth insertion carries a valid one-time employer-registration claim or is an explicitly gated committed local fixture.
+    - Registration administration uses one isolated server-only credential and narrowly scoped RPC/Auth operations.
+    - Ordinary application and financial operations continue to use request-scoped user identity and RLS without an administrative client.
+    - The browser cannot choose an employer, provision owner or foreign financial context after work-email verification.
+  - Persistence and privacy:
+    - Employers, provisions, attempts, idempotency keys, delivery metadata and audit events live in the private database schema.
+    - Verified memberships use forced RLS and are owner-readable but not owner-writable.
+    - Employer association remains numerically inert and does not prove benefit uptake.
+    - Existing personal-account collisions do not create a duplicate or attach a membership and use neutral public Login/recovery wording.
+  - Resilience:
+    - Work codes are cryptographically generated, HMAC-digested, valid for 10 minutes, capped at five failed attempts and consumed on successful verification.
+    - Work and personal resends observe a 60-second cooldown, three-per-hour limit and ten-send daily cap; a new work code invalidates the old code.
+    - A concurrent exact personal-account request cannot call Auth twice and receives a retryable in-progress result.
+    - A transient failure before Auth identity creation releases the reservation and permits the exact request to resume without manual database edits.
+    - Pre-activation revocation invalidates attempts immediately; post-activation revocation deactivates membership only and preserves personal account/data.
+  - Operational boundary:
+    - A committed single-record provision/revoke script validates inputs, refuses unacknowledged remote targets and records sanitised audit outcomes.
+    - The test mailbox requires loopback Supabase, explicit test mode, memory mail and a dedicated token; it is not a production API.
+    - Bulk import, employer portal, account linking, employer transfer, multiple memberships and email changes remain deferred.
+
+- **Track A verification — Clean-state registration gate passes without changing financial authority**
+  - Clean database evidence:
+    - The loopback-only Supabase database was recreated entirely from committed migrations and generated seed data.
+    - The Track A migration applied successfully and Sarah, Alex, onboarding, visual and independent registration fixtures were recreated without dashboard steps.
+  - Test evidence:
+    - 253 of 253 Vitest unit/regression tests pass across 28 files.
+    - 13 of 13 Supabase integration tests pass across 4 files.
+    - 213 of 213 PostgreSQL/pgTAP assertions pass across 5 files.
+    - 34 of 34 conversation evaluation cases and 8 of 8 fake-provider tests pass.
+    - 27 of 27 mobile Chromium browser tests pass, including every existing Slice 2–7 journey and the new registration path.
+    - TypeScript, ESLint, production build, generated-artifact drift, client-bundle boundary and `git diff --check` pass with no skipped tests.
+  - Frozen-results evidence:
+    - The manually entered Sarah context still recreates Sarah v1.
+    - The £650 outcome remains `£900 -> £250`, bills covered, no overdraft and significant trade-off.
+    - No exact-money, RLS, ownership, immutability or renderer-sentinel expectation was weakened.
+  - Provider status:
+    - Registration has no OpenAI dependency.
+    - Live OpenAI evaluation remains `BLOCKED — authorised credential/model configuration unavailable`.
+
+- **Track B Phase B1 design — Sarah guided story specified but not implemented**
+  - Document:
+    - `sarah-guided-story-mode-technical-design.md` now defines the proposed Phase B1 route, story sequence, state machine, stored-run mapping, server dialogue templates, motion controls, reduced-motion equivalent, accessibility behaviour, placement constraints and evidence plan.
+  - Recommended first boundary:
+    - `/story/sarah` is proposed as an explicit route in the controlled Sarah demonstration environment/account.
+    - This avoids cross-owner run access, RLS bypass and a duplicated public financial projection.
+    - Broader public/all-user story access requires a separately approved sanitised demo-run projection or non-user demo store.
+  - Proposed story behaviour:
+    - The story is a fixed eight-step uncertainty-to-understanding sequence covering the current path, £650, explanation, £500, £400, October timing, summary and completion.
+    - It reads pre-created immutable Sarah runs and fails closed if a run is missing or invalid.
+    - The avatar sequencer never calculates money, dates, delays or classifications and makes zero provider calls.
+    - Pause, resume, skip animation, skip to summary, restart, exit and disable-animation controls are specified.
+    - Reduced motion uses static poses and retains identical financial content.
+  - Approval gate:
+    - These Phase B1 choices are proposed, not implemented or approved by their documentation alone.
+    - No Track B component, route, asset, schema, test or migration has been added.
+    - Work stops for approval before any Track B application code begins.
