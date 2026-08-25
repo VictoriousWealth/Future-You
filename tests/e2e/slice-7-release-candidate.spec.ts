@@ -234,6 +234,10 @@ test("completes the new-user auth and canonical onboarding release journey", asy
 test("captures the returning Sarah journey and every canonical visual state", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
+  const homeHero = page.locator(".fy-home-hero");
+  await expect(homeHero.locator(".fy-home-hero-action .fy-action-triangle.is-right")).toBeVisible();
+  await expect(homeHero).not.toContainText("→");
+  await expect(page.locator(".fy-home-decision > .fy-action-triangle.is-right")).toHaveCount(3);
   await expect(page).toHaveScreenshot("home-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("06-home-upper-414x896.png") });
   await page.getByText("Your future right now").evaluate((element) => element.scrollIntoView({ block: "start" }));
@@ -263,11 +267,31 @@ test("captures the returning Sarah journey and every canonical visual state", as
   );
   expect(progressFillBackground).toContain("repeating-linear-gradient");
   expect(progressFillBackground.match(/linear-gradient/g)?.length).toBeGreaterThanOrEqual(2);
+  const progressBarGeometry = await emergencyGoal.locator(".fy-progress-track").evaluate((track) => {
+    const fill = track.querySelector<HTMLElement>(":scope > span");
+    if (!fill) throw new Error("Goal progress fill is missing.");
+    const trackStyle = getComputedStyle(track);
+    const fillStyle = getComputedStyle(fill);
+    return {
+      trackHeight: Number.parseFloat(trackStyle.height),
+      isPartial: fill.classList.contains("is-partial"),
+      leftRadius: Number.parseFloat(fillStyle.borderTopLeftRadius),
+      rightRadius: Number.parseFloat(fillStyle.borderTopRightRadius)
+    };
+  });
+  expect(progressBarGeometry.trackHeight).toBeGreaterThanOrEqual(12);
+  expect(progressBarGeometry.isPartial).toBe(true);
+  expect(progressBarGeometry.leftRadius).toBeGreaterThan(0);
+  expect(progressBarGeometry.rightRadius).toBe(0);
   await expect(page).toHaveScreenshot("goals-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("08-goals-current-414x896.png") });
 
   await settleRoute(page, "/ask");
   await freshConversation(page);
+  await expect(page.locator(".fy-prompt-card > .fy-action-triangle.is-right")).toHaveCount(4);
+  const sendButton = page.getByRole("button", { name: "Send message" });
+  await expect(sendButton.locator(".fy-action-triangle.is-up")).toBeVisible();
+  await expect(sendButton).not.toContainText("↑");
   await expect(page).toHaveScreenshot("ask-initial.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("09-ask-initial-414x896.png") });
 
