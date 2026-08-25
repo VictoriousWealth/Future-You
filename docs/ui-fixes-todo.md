@@ -6,6 +6,10 @@ Audit date: 2026-08-25
 
 Primary review viewport: `414 × 896`
 
+Registration amendment: `employer-provisioned-registration-contract.md` supersedes the former rule
+that excluded Company ID. The registration journey is a product/security change, not a visual-only
+fix, and must be implemented through its own approved technical slice.
+
 ## Purpose
 
 This is the canonical visual-fidelity backlog for comparing the current Future You MVP with the supplied PNG and SVG mockups. We will take these items one at a time, agree the intended treatment, implement it, and add proportionate regression coverage before marking it complete.
@@ -458,7 +462,7 @@ The following mockup differences are intentional scope or authority differences.
 - Do not add microphone, voice, file-upload, attachment, web-search, or provider tools to Ask.
 - Do not add a notification bell unless a real notification model and accessible destination are separately specified.
 - Do not add direct mutable `Add another goal` behaviour to Goals; context changes remain immutable and versioned.
-- Do not restore Company ID as a required signup field; workplace information remains optional and separate from account creation.
+- Do not add Company ID as a decorative field without the provisioned-record and work-email verification flow. It is now required by the registration contract and belongs in a dedicated product/security implementation slice.
 - Do not copy the mockup's goal amounts, percentages, dates, employer benefit value, or persona name. Sarah's canonical data remains authoritative.
 - Do not fabricate pension-match savings or another benefit amount to populate `Future You Spotted`.
 - Do not replace the requested eye/eye-off password control with the reference lock icon.
