@@ -501,7 +501,7 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
       actionGap: secondButtonBox.top - firstButtonBox.bottom
     };
   });
-  expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(128);
+  expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(190);
   expect(welcomeSpacing.actionGap).toBeGreaterThanOrEqual(16);
   const actionGeometry = await page.locator(".auth-choice-actions").evaluate((actions) => {
     const login = actions.querySelector<HTMLElement>(".auth-primary");
@@ -559,6 +559,15 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
   await expect(page.getByText("Sign in", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Create an account", { exact: true })).toHaveCount(0);
+  const loginDescription = page.getByText("Open your private financial plan, goals and saved what-if conversations.", { exact: true });
+  await expect(loginDescription).toBeVisible();
+  const mobileLoginDescriptionGap = await page.locator(".auth-panel").evaluate((panel) => {
+    const form = panel.querySelector<HTMLElement>(".auth-form");
+    const description = panel.querySelector<HTMLElement>(".auth-description");
+    if (!form || !description) throw new Error("Login description placement is incomplete.");
+    return description.getBoundingClientRect().top - form.getBoundingClientRect().bottom;
+  });
+  expect(mobileLoginDescriptionGap).toBeGreaterThanOrEqual(20);
   await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   const authLogoStack = await page.locator(".auth-back-brand .fy-angular-symbol").evaluate((symbol) => {
@@ -602,16 +611,58 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
+  await page.setViewportSize({ width: 1023, height: 900 });
+  const tabletLoginDescriptionGap = await page.locator(".auth-panel").evaluate((panel) => {
+    const form = panel.querySelector<HTMLElement>(".auth-form");
+    const description = panel.querySelector<HTMLElement>(".auth-description");
+    if (!form || !description) throw new Error("Login description placement is incomplete.");
+    return description.getBoundingClientRect().top - form.getBoundingClientRect().bottom;
+  });
+  expect(tabletLoginDescriptionGap).toBeGreaterThanOrEqual(20);
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await expect(page.locator(".auth-copy")).toHaveCSS("display", "grid");
+  const desktopLoginDescription = await page.locator(".auth-panel").evaluate((panel) => {
+    const heading = panel.querySelector<HTMLElement>(".auth-heading");
+    const form = panel.querySelector<HTMLElement>(".auth-form");
+    const description = panel.querySelector<HTMLElement>(".auth-description");
+    if (!heading || !form || !description) throw new Error("Login desktop description placement is incomplete.");
+    const headingBox = heading.getBoundingClientRect();
+    const formBox = form.getBoundingClientRect();
+    const descriptionBox = description.getBoundingClientRect();
+    return {
+      belowHeading: descriptionBox.top - headingBox.bottom,
+      leftOfForm: formBox.left - descriptionBox.right
+    };
+  });
+  expect(desktopLoginDescription.belowHeading).toBeGreaterThanOrEqual(8);
+  expect(desktopLoginDescription.leftOfForm).toBeGreaterThanOrEqual(0);
+
+  await page.setViewportSize({ width: 414, height: 896 });
   await page.goto("/signup");
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByRole("heading", { name: "Register", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Register", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
   await expect(page.getByText("Create account", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Sign in", { exact: true })).toHaveCount(0);
+  const registerDescription = page.getByText("Workplace information is optional and comes later, separately from account creation.", { exact: true });
+  const mobileRegisterDescriptionGap = await page.locator(".auth-panel").evaluate((panel) => {
+    const form = panel.querySelector<HTMLElement>(".auth-form");
+    const description = panel.querySelector<HTMLElement>(".auth-description");
+    if (!form || !description) throw new Error("Register description placement is incomplete.");
+    return description.getBoundingClientRect().top - form.getBoundingClientRect().bottom;
+  });
+  expect(mobileRegisterDescriptionGap).toBeGreaterThanOrEqual(20);
   await expect(page.locator(".auth-back-brand .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
   await expect(page.locator(".auth-back-brand .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expectAppleMeaningfulIconScale(page);
+  await expect(page).toHaveScreenshot("register.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("03-signup-414x896.png") });
+  await registerDescription.scrollIntoViewIfNeeded();
+  await expect(registerDescription).toBeVisible();
+  await expect(page).toHaveScreenshot("register-footer.png", { animations: "disabled" });
+  await page.screenshot({ path: evidence("03-register-footer-414x896.png") });
 
   await signIn(page, "sarah", "/home");
   await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
