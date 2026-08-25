@@ -271,6 +271,22 @@ test("captures the returning Sarah journey and every canonical visual state", as
   await page.screenshot({ path: evidence("17-benefits-no-data-414x896.png") });
 });
 
+test("keeps the default current-plan banner absent from every primary surface", async ({ page }) => {
+  await signIn(page, "sarah", "/home");
+  const routes = ["/home", "/goals", "/ask", "/benefits"] as const;
+
+  for (const viewport of [{ width: 414, height: 896 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    for (const route of routes) {
+      await settleRoute(page, route);
+      await expect(page.getByTestId("context-pill")).toHaveCount(0);
+      await expect(page.locator(".fy-context-pill")).toHaveCount(0);
+      await expect(page.getByText("Current plan active", { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Current plan", { exact: true })).toHaveCount(0);
+    }
+  }
+});
+
 test("uses intentional phone, tablet and desktop layouts without changing route authority", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   const viewports = [
