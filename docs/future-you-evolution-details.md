@@ -873,3 +873,16 @@
     - Parts of the blue angular artwork had insufficient visual separation from the blue authentication header.
   - Effect on Future You:
     - The original logo remains recognisable against the coloured auth surface without introducing a different product-wide brand treatment.
+
+- **Superseding Welcome layout refinement — Wider vertical rhythm and responsive name**
+  - What changed:
+    - The vertical separation between the Welcome identity and Login/Register actions increased again.
+    - The full brand name now changes layout at the tablet/desktop boundary.
+  - Responsive rule:
+    - Through `768px`, the identity remains stacked as `Future` over `You`.
+    - Above `768px`, the same two text segments share one line and read `FutureYou` without an inserted space.
+    - The identity-to-actions gap scales between `6.5rem` and `11rem` using viewport height, with a canonical mobile minimum assertion of 128px.
+  - Why it changed:
+    - The first spacing increase remained too visually concentrated, and the stacked name did not make good use of wider screens.
+  - Effect on Future You:
+    - Welcome has a calmer vertical composition on phones and a more natural horizontal identity on larger displays while retaining compact-height containment.
