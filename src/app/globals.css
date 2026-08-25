@@ -1373,6 +1373,12 @@ summary {
     #fff;
 }
 
+.auth-page--form {
+  place-items: start center;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .auth-panel {
   position: relative;
   z-index: 0;
@@ -1387,6 +1393,8 @@ summary {
   border-radius: var(--fy-radius-xl);
   box-shadow: var(--fy-shadow);
 }
+
+.auth-page--form .auth-panel { margin-block: auto; }
 
 .auth-page--form .auth-panel::before {
   position: absolute;
@@ -1440,12 +1448,16 @@ summary {
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > strong { color: #fff; }
 .auth-back-brand.fy-wordmark .fy-wordmark-copy > i { color: #d8d0ff; }
 
+.auth-copy { display: contents; }
+
 .auth-heading {
   position: relative;
   z-index: 1;
   margin-top: 2.7rem;
   color: #fff;
 }
+
+.auth-page--form .auth-heading { grid-row: 2; }
 
 .auth-heading p {
   margin: 0 0 0.4rem;
@@ -1464,16 +1476,21 @@ summary {
   letter-spacing: -0.065em;
 }
 
-.auth-heading > span {
-  display: block;
+.auth-description {
+  position: relative;
+  z-index: 1;
+  grid-row: 4;
   max-width: 28ch;
-  margin-top: 0.8rem;
+  margin: 1.5rem auto 0.25rem;
+  color: var(--fy-muted);
   font-size: 0.78rem;
   line-height: 1.45;
+  text-align: center;
 }
 
 .auth-form {
   display: grid;
+  grid-row: 3;
   gap: 1rem;
   margin-top: 6rem;
 }
@@ -1538,12 +1555,11 @@ summary {
 .auth-page--welcome .auth-brand { gap: clamp(1.5rem, 4vh, 2.25rem); }
 .auth-page--welcome .auth-heading { margin-top: 2rem; color: var(--fy-blue); }
 .auth-page--welcome .auth-heading h1 { max-width: 12ch; font-size: clamp(2.1rem, 10vw, 3.25rem); }
-.auth-page--welcome .auth-heading > span { max-width: 31ch; color: var(--fy-muted); }
 .auth-choice-actions {
   display: grid;
   width: min(20.75rem, calc(100vw - 5rem));
   gap: clamp(1rem, 2vh, 1.35rem);
-  margin-top: clamp(6.5rem, 16vh, 11rem);
+  margin-top: clamp(8rem, 22vh, 14rem);
 }
 .auth-page--welcome .auth-primary {
   width: 100%;
@@ -1756,7 +1772,7 @@ summary {
   .fy-context-settings { grid-column: 1; }
 }
 
-@media (min-width: 62rem) {
+@media (min-width: 1024px) {
   .auth-page--form .auth-panel {
     width: min(100%, 68rem);
     min-height: 39rem;
@@ -1768,8 +1784,23 @@ summary {
   }
   .auth-page--form .auth-panel::before { top: 0; bottom: 0; left: 0; width: 46%; height: auto; border-radius: 0 48% 48% 0; }
   .auth-back-brand { grid-column: 1; }
-  .auth-heading { grid-column: 1; margin-top: 5rem; }
+  .auth-copy {
+    display: grid;
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    gap: 0.8rem;
+    margin-top: 5rem;
+  }
+  .auth-page--form .auth-copy .auth-heading { grid-row: auto; margin-top: 0; }
   .auth-heading h1 { font-size: 4rem; }
+  .auth-page--form .auth-copy .auth-description {
+    grid-row: auto;
+    max-width: 28ch;
+    margin: 0;
+    color: #fff;
+    text-align: left;
+  }
   .auth-form { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin-top: 0; }
   .auth-page--welcome .auth-panel { width: min(100%, 42rem); }
 }
