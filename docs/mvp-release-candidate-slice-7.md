@@ -1,8 +1,8 @@
 # Slice 7 — MVP release-candidate contract
 
-Status: complete; approved MVP release candidate  
-Contract approved: 2026-08-24  
-Release candidate approved: 2026-08-25  
+Status: complete; approved MVP release candidate
+Contract approved: 2026-08-24
+Release candidate approved: 2026-08-25
 Scope: product-wide visual, responsive and accessibility hardening only
 
 ## Purpose and non-negotiable boundary
