@@ -62,7 +62,13 @@ export function GoalsSurface() {
             </div>
           ) : null}
           <section className="fy-goals-list" aria-label="Financial goals">
-            {data.mode === "current_path"
+            {data.goals.length === 0 ? (
+              <div className="fy-inline-empty" data-testid="goals-empty-state">
+                <strong>No goals are confirmed in this financial plan.</strong>
+                <span>Create a new immutable financial-context version to add goals.</span>
+                <Link href="/settings/financial-context">Review financial context →</Link>
+              </div>
+            ) : data.mode === "current_path"
               ? data.goals.map((goal) => <GoalCard goal={goal} key={goal.id}/>)
               : data.goals.map((goal) => (
                   <article className="fy-goal-card fy-preview-goal" key={goal.id} data-testid={`preview-goal-${goal.id}`}>
