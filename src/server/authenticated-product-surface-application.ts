@@ -13,6 +13,7 @@ import { SupabaseWorkplaceAssociationSource } from "../infrastructure/context/su
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
 import { createSimulatorApplication } from "./simulator-application";
+import { SARAH_DEMO_USER_ID, SARAH_STORY_MANIFEST } from "./sarah-story-contract";
 
 export interface AuthenticatedProductSurfaceContext {
   readonly principal: AuthenticatedPrincipal;
@@ -28,7 +29,7 @@ export const resolveAuthenticatedProductSurfaceApplication: AuthenticatedProduct
   await requireActiveFutureYouAccount(client, principal);
   const { data: profile, error: profileError } = await client
     .from("profiles")
-    .select("display_name")
+    .select("display_name, is_demo, current_financial_context_version_id")
     .eq("user_id", principal.userId)
     .maybeSingle();
   if (profileError || !profile) throw new Error("The authenticated profile could not be loaded.");
@@ -46,6 +47,9 @@ export const resolveAuthenticatedProductSurfaceApplication: AuthenticatedProduct
     currentContextVersionId: await contextSource.getCurrentContextVersionId(),
     application: new ProductSurfaceApplication({
       displayName: profile.display_name,
+      sarahStoryAvailable: principal.userId === SARAH_DEMO_USER_ID
+        && profile.is_demo
+        && profile.current_financial_context_version_id === SARAH_STORY_MANIFEST.requiredContextVersion,
       contextSource,
       workplaceSource: new SupabaseWorkplaceAssociationSource(client, principal),
       simulator
