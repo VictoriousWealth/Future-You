@@ -1506,3 +1506,17 @@ This is a development seam, not a new production form or fallback.
 **Exit:** every MVP acceptance criterion is demonstrable and failures do not fabricate or silently mutate financial state.
 
 No implementation should begin until this specification is approved. When implementation starts, the first non-document milestone is Slice 1, not infrastructure or LLM integration.
+
+## Post-B1 Sarah employer/Benefits correction addendum
+
+The later approved `sarah-employer-and-benefits-correction-contract.md` is authoritative over the
+older proposed benefit-exploration routes and branches in this architecture. The implemented narrow
+Option B model consists of append-only `employer_benefit_offerings` reference rows and separate
+owner-scoped `user_benefit_states`, both read under forced RLS through the request-scoped authenticated
+client. Sarah's verified membership controls OniBank catalogue visibility; explicit state controls her
+presentation. Employer name, Company ID and email domain alone create no opportunity.
+
+The Home, Benefits and Sarah story read models compose those records with the pension fact already in
+Sarah's immutable context. They add no financial calculation, provider call, numerical benefit result,
+benefit activation or Ask branch. The proposed `benefit-explorations` operation remains unimplemented
+and is not part of the current product boundary.
