@@ -45,7 +45,7 @@ export function SignupForm({ configuration }: Readonly<{
     const client = createBrowserSupabaseClient(configuration);
     const { data, error } = await client.auth.signUp({ email, password });
     if (error) {
-      setMessage("We couldn’t create that account. Check the details or try again later.");
+      setMessage("We couldn’t register you. Check the details or try again later.");
       setPending(false);
       return;
     }
@@ -55,7 +55,7 @@ export function SignupForm({ configuration }: Readonly<{
       return;
     }
     setSuccess(true);
-    setMessage("Check your email to finish creating your account, then return to sign in.");
+    setMessage("Check your email to finish registering, then return to Login.");
     setPending(false);
   }
 
@@ -87,8 +87,8 @@ export function SignupForm({ configuration }: Readonly<{
         <input id="password-confirmation" name="password-confirmation" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} required/>
       </div>
       {message ? <p id={messageId} className={`auth-message ${success ? "success" : "error"}`} role={success ? "status" : "alert"}>{message}</p> : null}
-      <button className="auth-primary" type="submit" disabled={pending}>{pending ? "Creating account…" : "Create account"}</button>
-      <p className="auth-switch">Already registered? <Link href="/login">Sign in</Link></p>
+      <button className="auth-primary" type="submit" disabled={pending}>{pending ? "Registering…" : "Register"}</button>
+      <p className="auth-switch">Already registered? <Link href="/login">Login</Link></p>
     </form>
   );
 }
