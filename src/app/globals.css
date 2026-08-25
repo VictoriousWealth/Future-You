@@ -1185,16 +1185,16 @@ summary {
 .fy-goal-ratio {
   position: relative;
   display: grid;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 3.75rem;
+  height: 3.75rem;
   flex: 0 0 auto;
   place-items: center;
   color: #fff;
   border-radius: 50%;
-  font-size: .57rem;
+  font-size: .7rem;
   font-weight: 900;
 }
-.fy-goal-ratio::before { position: absolute; inset: 22%; content: ""; background: var(--fy-purple); border-radius: inherit; }
+.fy-goal-ratio::before { position: absolute; inset: 20%; content: ""; background: var(--fy-purple); border-radius: inherit; }
 .fy-goal-ratio svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
 .fy-goal-ratio circle { fill: none; }
 .fy-goal-ratio-track { stroke: #d9c2ff; stroke-width: 7; }
@@ -1210,7 +1210,7 @@ summary {
 .fy-goal-card.compact { min-width: 0; padding: .85rem; border-radius: 1.2rem; }
 .fy-goal-card.compact header { min-height: 3.5rem; }
 .fy-goal-card.compact h3 { font-size: .9rem; }
-.fy-goal-card.compact .fy-goal-ratio { width: 2.15rem; height: 2.15rem; font-size: .48rem; }
+.fy-goal-card.compact .fy-goal-ratio { width: 3rem; height: 3rem; font-size: .6rem; }
 .fy-goal-card.compact .fy-goal-money { margin: .65rem 0 .45rem; }
 .fy-goal-card.compact .fy-goal-money strong { font-size: .98rem; }
 
