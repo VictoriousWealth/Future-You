@@ -1192,3 +1192,67 @@
     - These Phase B1 choices are proposed, not implemented or approved by their documentation alone.
     - No Track B component, route, asset, schema, test or migration has been added.
     - Work stops for approval before any Track B application code begins.
+
+- **Track A final approval and recovery reference — Registration remains independently recoverable**
+  - Approval:
+    - Track A employer-provisioned registration is approved as complete.
+    - The canonical activation remains Company ID + provisioned work email, six-digit work-email verification, distinct personal email + chosen password, personal-email confirmation, financial onboarding and then full access.
+    - Returning Login remains personal email + password.
+  - Recovery boundary:
+    - The registration-compliant state was committed as `ba5a83c` (`feat(registration): complete employer-provisioned access`).
+    - The annotated release reference `mvp-rc-employer-registration-2026-08-25` was created before Track B application changes.
+    - The earlier `mvp-rc-controlled-demo-2026-08-25` reference remains available.
+  - Verified Track A evidence retained:
+    - 253 of 253 Vitest tests, 13 of 13 Supabase integration tests, 213 of 213 pgTAP assertions, 34 of 34 evaluation cases, 8 of 8 fake-provider tests and 27 of 27 browser tests passed at the Track A gate.
+    - Track A required no live provider; live OpenAI evaluation remained blocked rather than being misreported.
+
+- **Track B Phase B1 approval — Sarah's guided story is authorised within a controlled boundary**
+  - Approval:
+    - `sarah-guided-story-mode-technical-design.md` was approved as the implementation basis for an explicit deterministic `Play Sarah's story` experience.
+    - The authorised route is `/story/sarah`, restricted to the controlled Sarah demonstration identity.
+    - Unknown, anonymous and non-Sarah access must remain non-enumerating and must not expose Sarah context, runs or route data.
+  - Sarah profile provenance:
+    - Only Sarah Wonk, age 25, Manchester and Customer Insights Analyst at OniBank were accepted from existing canonical demographic/context sources for the B1 introduction.
+    - These introduction facts are explicitly non-simulation context.
+    - Prototype claims about education, living arrangements, career history, additional loans, habits, confidence, quotes, personality and aspirations remain unsupported and were not imported.
+  - Authority boundary:
+    - Financial facts must come from Sarah v1 and the existing immutable £650, £500, £400 and October runs.
+    - Story presentation cannot calculate money, dates, delays, classifications or benefits and cannot create a new scenario type.
+    - Dialogue is server-owned and versioned; B1 requires no OpenAI, fake conversation provider or natural-language interpretation.
+    - Unconfirmed workplace opportunities remain informational and numerically inert.
+
+- **Track B Phase B1 implementation — Sarah's deterministic story is complete**
+  - Experience:
+    - Sarah's Home exposes an explicit story action only when the server confirms the canonical Sarah demo identity, demo flag and Sarah v1 current context.
+    - `/story/sarah` uses a versioned eleven-step narrative plus explicit `NOT_STARTED`, `PAUSED` and `ERROR` controller states.
+    - Pause, resume, skip step, skip animation, skip to summary, restart, exit and local animation disable are available without changing any financial state.
+    - Refresh restarts the ephemeral story; no database table or migration was added for progress.
+    - Sarah remains absent from normal Home, Goals, Ask, Benefits and onboarding presentation.
+  - Deterministic data:
+    - The local canonical seed now creates the four immutable story scenario runs through the existing simulator application operations.
+    - Runtime validates exact run, scenario, context, baseline, rules and calendar identities plus the frozen result facts before rendering.
+    - Missing or altered evidence fails closed; the browser receives only a minimum display-ready story model and performs no financial arithmetic.
+    - The £650 outcome remains `£900 -> £250`, bills covered, £0 overdraft, restored November 2026, emergency fund February 2027 and significant trade-off.
+    - The £500, £400 and October siblings retain their frozen results, and the October option does not improve goal dates.
+  - Character and accessibility:
+    - The user-supplied HTML prototype's inline vector Sarah was rebuilt as a repo-native decorative SVG component with finite state-driven poses.
+    - Unsupported prototype biography and financial claims were excluded.
+    - Sarah stays inside a bounded, non-interactive layout stage; playback controls wrap in normal flow and do not obscure the character or evidence.
+    - Reduced motion, animation-disabled, skipped, keyboard, 200% text, 400%-zoom-equivalent reflow, long-caption and character-absent equivalents retain complete financial content.
+  - Security and provider boundary:
+    - The story uses the request-scoped authenticated Supabase client, existing run RLS and no administrative credential.
+    - Anonymous and Alex access return the same 404 boundary, and a known Sarah run ID remains unreadable cross-user.
+    - Responses are private/no-store and no-index.
+    - Story completion, restart and reload make zero conversation/provider requests.
+  - Final verification:
+    - 262 of 262 Vitest unit/regression tests pass across 29 files.
+    - 15 of 15 Supabase integration tests pass across 5 files.
+    - 213 of 213 PostgreSQL/pgTAP assertions pass across 5 files.
+    - 34 of 34 conversation evaluation cases and 8 of 8 fake-provider tests pass.
+    - 31 of 31 mobile Chromium browser tests pass, including the four B1 story journeys.
+    - TypeScript, ESLint, production build, coverage, generated-artifact drift, client-bundle boundary and `git diff --check` pass with no skipped tests.
+    - The approved Slice 7 Home baseline was updated only for the new Sarah-only story entry and then passed in the full suite.
+    - Live OpenAI evaluation remains `BLOCKED — authorised credential/model configuration unavailable`.
+  - Phase boundary:
+    - Track B Phase B2 has not started.
+    - Real-user human-context persistence, everyday companion behaviour, public Sarah projection, voice, customisation and generated dialogue remain deferred behind new design and approval gates.
