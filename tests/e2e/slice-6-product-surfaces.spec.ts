@@ -304,4 +304,5 @@ test("renders server sentinel goal fields verbatim without browser recalculation
   await expect(page.getByText("43% SERVER")).toBeVisible();
   await expect(page.getByText("December 2099 SERVER")).toBeVisible();
   await expect(page.locator(".fy-progress-track > span")).toHaveAttribute("style", "width: 12.345%;");
+  await expect(page.locator(".fy-goal-ratio")).toHaveAttribute("style", "--fy-goal-progress: 12.345%;");
 });
