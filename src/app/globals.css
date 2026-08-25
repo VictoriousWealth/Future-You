@@ -1182,7 +1182,21 @@ summary {
 .fy-goal-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: .7rem; }
 .fy-goal-card header p { margin: 0 0 .2rem; color: var(--fy-pink); font-size: .59rem; font-weight: 850; text-transform: uppercase; }
 .fy-goal-card h3 { margin: 0; font-size: 1.13rem; line-height: 1; letter-spacing: -.045em; }
-.fy-goal-ratio { display: grid; width: 2.8rem; height: 2.8rem; flex: 0 0 auto; place-items: center; color: var(--fy-purple); background: #fff; border: .3rem solid #bd94ff; border-radius: 50%; font-size: .57rem; font-weight: 900; }
+.fy-goal-ratio {
+  position: relative;
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--fy-purple);
+  background: conic-gradient(from -90deg, var(--fy-purple) 0 var(--fy-goal-progress), #d9c2ff var(--fy-goal-progress) 100%);
+  border-radius: 50%;
+  font-size: .57rem;
+  font-weight: 900;
+}
+.fy-goal-ratio::before { position: absolute; inset: .3rem; content: ""; background: #fff; border-radius: inherit; }
+.fy-goal-ratio > span { position: relative; z-index: 1; }
 .fy-goal-money { display: flex; align-items: baseline; gap: .3rem; margin: 1rem 0 .6rem; }
 .fy-goal-money strong { font-size: 1.25rem; }
 .fy-goal-money span { color: #7186a5; font-size: .65rem; }
@@ -1193,7 +1207,8 @@ summary {
 .fy-goal-card.compact { min-width: 0; padding: .85rem; border-radius: 1.2rem; }
 .fy-goal-card.compact header { min-height: 3.5rem; }
 .fy-goal-card.compact h3 { font-size: .9rem; }
-.fy-goal-card.compact .fy-goal-ratio { width: 2.15rem; height: 2.15rem; border-width: .22rem; font-size: .48rem; }
+.fy-goal-card.compact .fy-goal-ratio { width: 2.15rem; height: 2.15rem; font-size: .48rem; }
+.fy-goal-card.compact .fy-goal-ratio::before { inset: .22rem; }
 .fy-goal-card.compact .fy-goal-money { margin: .65rem 0 .45rem; }
 .fy-goal-card.compact .fy-goal-money strong { font-size: .98rem; }
 
