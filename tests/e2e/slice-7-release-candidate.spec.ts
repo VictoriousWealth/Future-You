@@ -147,6 +147,21 @@ async function expectAppleHandheldTypeFloor(page: Page) {
   expect(audit.violations).toEqual([]);
 }
 
+async function expectAppleMeaningfulIconScale(page: Page) {
+  const violations = await page.locator('svg[aria-hidden="true"]').evaluateAll((icons) => icons.flatMap((icon) => {
+    const style = getComputedStyle(icon);
+    const box = icon.getBoundingClientRect();
+    if (style.display === "none" || style.visibility === "hidden" || box.width === 0 || box.height === 0) return [];
+    if (box.width + 0.01 >= 17 && box.height + 0.01 >= 17) return [];
+    return [{
+      className: icon.getAttribute("class") ?? "",
+      width: box.width,
+      height: box.height
+    }];
+  }));
+  expect(violations).toEqual([]);
+}
+
 async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/benefits") {
   await page.goto(path);
   if (path === "/home") await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
@@ -163,6 +178,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await page.getByRole("link", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
+  await expectAppleMeaningfulIconScale(page);
   const loginPassword = page.locator("#password");
   await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
   await page.getByRole("button", { name: "Show password" }).click();
@@ -175,6 +191,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await page.getByRole("link", { name: "Create an account" }).click();
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
+  await expectAppleMeaningfulIconScale(page);
   await expect(page.getByText(/Company ID/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Show passwords" })).toBeVisible();
   await page.getByRole("button", { name: "Show passwords" }).click();
@@ -404,6 +421,30 @@ test("uses the generated profile portrait for the financial-context settings lin
   expect(size?.height).toBeGreaterThanOrEqual(40);
 });
 
+test("scales meaningful interface icons with the Apple-aligned body type", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expectAppleMeaningfulIconScale(page);
+
+  await page.goto("/signup");
+  await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
+  await expectAppleMeaningfulIconScale(page);
+
+  await signIn(page, "sarah", "/home");
+  await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
+  await expectAppleMeaningfulIconScale(page);
+  const triangle = page.locator(".fy-home-decision > .fy-action-triangle").first();
+  const standardSize = await triangle.boundingBox();
+  expect(standardSize?.width).toBeGreaterThanOrEqual(17);
+  expect(standardSize?.height).toBeGreaterThanOrEqual(17);
+
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  const enlargedSize = await triangle.boundingBox();
+  expect(enlargedSize?.width).toBeGreaterThanOrEqual(34);
+  expect(enlargedSize?.height).toBeGreaterThanOrEqual(34);
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+});
+
 test("uses intentional phone, tablet and desktop layouts without changing route authority", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   const viewports = [
@@ -423,6 +464,7 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
       await page.waitForTimeout(200);
       await expectNoHorizontalOverflow(page);
       await expectAppleHandheldTypeFloor(page);
+      await expectAppleMeaningfulIconScale(page);
       const h1Count = await page.getByRole("heading", { level: 1 }).count();
       expect(h1Count).toBe(1);
       if (viewport.width >= 768) {
