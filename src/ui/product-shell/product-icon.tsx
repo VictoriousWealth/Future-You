@@ -3,7 +3,7 @@ export type ProductIconName = "home" | "goals" | "ask" | "benefits" | "profile" 
 export function ActionTriangleIcon({ direction = "right" }: Readonly<{ direction?: "right" | "up" }>) {
   return (
     <svg className={`fy-action-triangle is-${direction}`} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 4 21 20H3Z"/>
+      <path d="M12 1 23 23H1Z"/>
     </svg>
   );
 }
