@@ -396,3 +396,12 @@ The Welcome action hierarchy now follows supplied Screen 1 more closely. The pri
 At `414 × 896`, browser geometry requires Login to be at least 320px wide and 68px tall and at least 15% wider than Register. Mobile and desktop Welcome baselines protect the revised primary/secondary hierarchy.
 
 The final no-update responsive Welcome comparison passes 1/1. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Post-B1 Sarah Benefits baseline correction
+
+The later approved Sarah employer and Benefits correction intentionally replaces only the canonical
+Benefits visual-regression baseline. The new baseline shows verified OniBank membership, the active
+context-owned 3%/3% pension fact, an available additional-match opportunity and an
+eligibility-unknown season-ticket loan. No amount, saving, eligibility claim, activation action or
+simulated effect appears. Current evidence and the manually reviewed full-page capture are recorded in
+`sarah-employer-and-benefits-correction-evidence-report.md`.
