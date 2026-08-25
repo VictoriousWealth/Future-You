@@ -586,3 +586,16 @@
     - The release state needed a precise product classification that recognised the complete deterministic and security-tested MVP without hiding the two remaining operational limitations or implying broader production capability.
   - Effect on Future You:
     - The repository is now the approved controlled-demonstration release candidate. No post-MVP code has been introduced, and demonstration messaging must continue to distinguish the passed readiness gates from disabled public registration and blocked live-model acceptance.
+
+- **Release refinement — Repeated current-plan banner removed**
+  - What changed:
+    - The top-of-screen “Current plan” or “Current plan active” badge was removed from Home, Goals, Ask and Benefits at the user's request.
+  - Previous approach:
+    - Every product destination repeated a small current-context badge even though current plan is the normal authenticated viewing state.
+  - New approach:
+    - Current plan is implicit during normal viewing, reducing repeated chrome and moving primary content upward. Hypothetical-view banners, historical-plan warnings and stale-conversation warnings remain visible because they communicate a material exception rather than the default state.
+    - The unused shared badge component and CSS were removed. Five affected visual baselines were explicitly regenerated, the rebuilt Slice 7 suite passed 5/5, and the clean no-update full Chromium regression passed 20/20.
+  - Why it changed:
+    - The repeated default-state banner added visual noise without helping users distinguish an exceptional financial context.
+  - Effect on Future You:
+    - Each primary screen starts directly with its useful content while immutable context authority and all warnings for non-current state remain intact. No financial, conversational, persistence or post-MVP capability changed.
