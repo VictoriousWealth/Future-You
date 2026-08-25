@@ -1,8 +1,8 @@
 # Slice 7 — MVP release-candidate evidence report
 
-Status: approved MVP release candidate  
-Verification date: 2026-08-25  
-Approval date: 2026-08-25  
+Status: approved MVP release candidate
+Verification date: 2026-08-25
+Approval date: 2026-08-25
 Post-MVP work: not started
 
 ## Outcome
