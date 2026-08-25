@@ -525,3 +525,64 @@
     - The working deterministic core and Ask journey needed to become a coherent demonstrable product while preserving every authority and isolation boundary established in Slices 1–5.
   - Effect on Future You:
     - A user can move from a decision-first Home into Ask, inspect how a stored decision affects their destinations in Goals, and distinguish active benefit facts from unknown opportunities without any screen becoming a second financial calculator.
+
+- **Verification refinement — Slice 6 clean local reset authorised and completed**
+  - What changed:
+    - The user explicitly authorised erasing and reseeding only the repository's local Supabase test database, subject to loopback, unlinked-project and committed-migration safeguards, so the complete Slice 6 verification could be repeated from canonical state.
+  - Previous approach:
+    - Stateful onboarding and RLS suites had previously encountered test-generated immutable rows left by earlier runs, so their dirty-state failures could not establish whether the implementation, migration/seed path or environment was responsible.
+  - New approach:
+    - The reset target was verified as `127.0.0.1` with local API/database ports, no linked project reference and an explicit `supabase db reset --local` command. Each stateful database gate began from the generated committed seed; the three Slice 3–5 migrations applied successfully and Sarah, Alex and the no-context onboarding user were recreated without dashboard or manual SQL changes.
+    - Clean-state evidence is now 230/230 Vitest regressions, 10/10 Supabase integration tests, 123/123 pgTAP tests, 34/34 evaluation tests, 8/8 fake-provider tests, 20/20 focused product-surface authority tests and 15/15 mobile Chromium tests, with zero skipped. TypeScript, ESLint, production build, generated database artifacts, client-bundle boundaries, coverage and whitespace gates pass.
+    - The first browser rerun revealed two test-harness defects only: transient duplicate loading locators and an unserialised helper inside `page.evaluate`. The harness was corrected without changing financial values, expected outputs, RLS, ownership, immutability or earlier-slice expectations; the full clean browser suite then passed.
+    - The live OpenAI evaluation remains `BLOCKED — authorised credential/model configuration unavailable` because no separately authorised credential/model configuration was provided.
+  - Why it changed:
+    - Slice 6 approval requires evidence from a reproducible database recreated entirely from committed sources, not from a process carrying immutable test history or undocumented manual corrections.
+  - Effect on Future You:
+    - Home, Goals, Ask and Benefits are now proven together from a clean local persistence state while preserving deterministic financial authority and all Slice 1–5 gates. Slice 7 remains unstarted pending a separately frozen contract.
+
+- **Future refinement — Slice 7 release-candidate visual and accessibility system implemented**
+  - What changed:
+    - The complete MVP was presented as one reference-aligned, responsive and accessibility-hardened product across Welcome, Login, Signup, onboarding, Home, Goals, Ask, Benefits and immutable financial-context settings.
+  - Previous approach:
+    - The core product and mobile surfaces worked, but authentication and onboarding used separate styling, tablet/desktop still resembled a floating phone, modal sheets lacked complete focus handling, and there was no stable product-wide visual-regression gate.
+  - New approach:
+    - One token system now governs the approved palette, spacing, radii, elevation, typography, targets, safe areas, content widths and motion. Mobile keeps the supplied bottom-navigation energy; tablet and desktop use the same four destinations in a persistent left rail with balanced route-specific compositions.
+    - Welcome, Login and Signup follow supplied Screens 1–3 without Company ID. The approved local Auth configuration still disables public registration, so Slice 7 proves the Signup UI and validation without weakening Slice 3 security, then uses a committed no-context identity for the authenticated onboarding journey.
+    - A shared modal-sheet primitive traps focus, closes on Escape and restores its opener. A skip link, one main landmark, consistent live/error semantics, visible focus, reduced motion, 44 px targets and resilient long/large text cover the baseline accessibility contract.
+    - The user explicitly approved generation and updating of seven Playwright visual-regression baselines. Twenty-six evidence captures cover 18 mobile states and Home, Goals, Ask and Benefits at tablet and desktop sizes; the reference artwork remains an audit input rather than a production asset.
+  - Why it changed:
+    - The proven financial and conversational behavior needed a coherent release-quality presentation without allowing visual polish, prototype copy or responsive layout to introduce new financial authority or capabilities.
+  - Effect on Future You:
+    - The same deterministic product now reads as one intentional application from 360 px phone to 1440 px desktop, while current, hypothetical, historical, unsupported, no-data and failure states remain explicit and server-controlled.
+
+- **Verification refinement — Slice 7 clean release-candidate gate completed**
+  - What changed:
+    - Slice 7 was verified from committed local migrations and fixtures, including the approved visual baselines, the complete new-user path, returning Sarah, context revision, failure states and product-wide regression.
+  - Previous approach:
+    - The earlier 15-test mobile suite proved Slices 2–6, but did not enforce the four release viewports, stable screenshots, complete keyboard/focus behavior, reduced motion, 200% text resilience or a full newly onboarded identity journey through all four product destinations.
+  - New approach:
+    - The local target was reverified as `127.0.0.1`, project `future-you`, using `supabase db reset --local`. All three committed migrations and canonical fixtures recreated without dashboard or manual SQL changes.
+    - Verification passes with 230/230 Vitest regressions, 10/10 Supabase integration tests, 123/123 pgTAP tests, 34/34 evaluation cases, 8/8 fake-provider modes, 20/20 product-authority/provider-zero tests and 20/20 Playwright tests, with no skipped tests. Seven visual baselines matched without an update flag and all 26 evidence captures were produced.
+    - TypeScript, ESLint, production build, generated database artifacts, client-bundle boundaries, coverage and whitespace gates pass. Coverage remains 77.41% statements, 62.28% branches, 82.53% functions and 79.88% lines.
+    - Strengthening the new-user journey corrected three test-only fixture assumptions: generated goal IDs are selected by visible content, goal dates are read from result cards rather than banners, and an unverified workplace correctly produces no benefit fact. No product code, Sarah output, RLS rule, immutable state, financial expectation or visual baseline was weakened.
+    - The live OpenAI result remains `BLOCKED — authorised credential/model configuration unavailable`; no credential, model configuration or live-provider claim was introduced.
+  - Why it changed:
+    - MVP release readiness needs reproducible evidence that final presentation work preserves every earlier authority and security boundary across realistic navigation, failure, history, responsive and accessibility conditions.
+  - Effect on Future You:
+    - Slice 7 is a complete MVP release candidate ready for product review, with live-provider acceptance and optional assistive-technology/cross-engine review reported separately. No post-MVP feature has been started.
+
+- **Product approval — Future You MVP release candidate approved for controlled demonstration**
+  - What changed:
+    - Slice 7 and the complete Future You MVP release candidate received final product approval under the classification `MVP RELEASE CANDIDATE — APPROVED FOR CONTROLLED DEMONSTRATION AND EVALUATOR REVIEW`.
+  - Previous approach:
+    - Implementation and clean-state evidence were complete, but the repository was still awaiting the explicit product decision that separated approved MVP readiness from external or intentionally disabled release gates.
+  - New approach:
+    - Deterministic product, persistence/security, UI/responsive, MVP accessibility and local/evaluator demonstration readiness are approved. Sarah remains the canonical returning-user journey; Alex remains the genuine no-context onboarding journey; the deterministic fake provider remains the approved conversational demonstration provider.
+    - Public self-service registration is explicitly `DISABLED` in the approved local Supabase configuration. Welcome, Login, Signup presentation and validation are complete, but a new public visitor cannot create an operational account; this limitation does not block controlled demonstration with committed identities.
+    - Live OpenAI model acceptance remains `BLOCKED — authorised credential/model configuration unavailable`. The OpenAI adapter and strict boundaries exist, but live-model interpretation quality is not approved and no unauthorised credential may be used.
+    - The approval does not classify Future You as publicly launched, production-scale, publicly self-registering, live-model-verified, bank/employer integrated or capable of numerical benefits or deferred decision types. All approved MVP behavior is frozen, and future implementation requires a separately approved post-MVP contract.
+  - Why it changed:
+    - The release state needed a precise product classification that recognised the complete deterministic and security-tested MVP without hiding the two remaining operational limitations or implying broader production capability.
+  - Effect on Future You:
+    - The repository is now the approved controlled-demonstration release candidate. No post-MVP code has been introduced, and demonstration messaging must continue to distinguish the passed readiness gates from disabled public registration and blocked live-model acceptance.
