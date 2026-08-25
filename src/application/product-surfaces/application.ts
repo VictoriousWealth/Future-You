@@ -315,12 +315,19 @@ export class ProductSurfaceApplication {
         : "Employer contributions are not spendable cash."
     }));
     const workplaceDTO: BenefitsSurfaceDTO["workplace"] = workplace
-      ? {
-          status: "unverified",
-          name: workplace.name,
-          statusLabel: "User-provided · Not verified",
-          explanation: "A workplace name does not confirm which benefits are offered or whether you are eligible."
-        }
+      ? workplace.verificationStatus === "verified"
+        ? {
+            status: "verified",
+            name: workplace.name,
+            statusLabel: "Employer-provisioned · Verified",
+            explanation: "This membership confirms your employer, but no benefit is treated as active cash automatically."
+          }
+        : {
+            status: "unverified",
+            name: workplace.name,
+            statusLabel: "User-provided · Not verified",
+            explanation: "A workplace name does not confirm which benefits are offered or whether you are eligible."
+          }
       : {
           status: "not_supplied",
           name: null,
