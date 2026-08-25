@@ -1,7 +1,7 @@
 import type { MoneyDTO, RatioDTO } from "../dto/contracts";
 
 export const PRODUCT_SURFACE_API_VERSION = "future-you.product-surfaces/v1" as const;
-export const HOME_SURFACE_SCHEMA = "home-surface/1.0.0" as const;
+export const HOME_SURFACE_SCHEMA = "home-surface/1.1.0" as const;
 export const GOALS_SURFACE_SCHEMA = "goals-surface/1.0.0" as const;
 export const GOALS_PREVIEW_SURFACE_SCHEMA = "goals-preview-surface/1.0.0" as const;
 export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.0.0" as const;
@@ -56,6 +56,14 @@ export interface HomeSurfaceDTO {
         readonly title: string;
         readonly description: string;
         readonly statusLabel: string;
+      }>;
+  readonly guidedStory:
+    | Readonly<{ readonly available: false }>
+    | Readonly<{
+        readonly available: true;
+        readonly label: "Play Sarah’s story";
+        readonly href: "/story/sarah";
+        readonly description: string;
       }>;
 }
 
