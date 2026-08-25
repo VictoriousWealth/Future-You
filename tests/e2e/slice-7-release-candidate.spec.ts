@@ -162,6 +162,26 @@ async function expectAppleMeaningfulIconScale(page: Page) {
   expect(violations).toEqual([]);
 }
 
+async function expectHeaderWordmarkInsideViewport(page: Page) {
+  const geometry = await page.getByRole("link", { name: "Future You home" }).evaluate((wordmark) => {
+    const symbol = wordmark.querySelector<HTMLElement>(".fy-angular-symbol");
+    if (!symbol) throw new Error("The shared angular symbol is missing.");
+    const wordmarkBox = wordmark.getBoundingClientRect();
+    const symbolBox = symbol.getBoundingClientRect();
+    return {
+      viewportWidth: document.documentElement.clientWidth,
+      wordmarkLeft: wordmarkBox.left,
+      wordmarkRight: wordmarkBox.right,
+      symbolLeft: symbolBox.left,
+      symbolRight: symbolBox.right
+    };
+  });
+  expect(geometry.wordmarkLeft, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+  expect(geometry.symbolLeft, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+  expect(geometry.wordmarkRight, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.symbolRight, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
+}
+
 async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/benefits") {
   await page.goto(path);
   if (path === "/home") await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
@@ -173,6 +193,7 @@ async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/ben
 test("completes the new-user auth and canonical onboarding release journey", async ({ page }) => {
   await page.goto("/welcome");
   await expect(page.getByRole("heading", { name: "Your decisions. Your future." })).toBeVisible();
+  await expect(page.locator(".auth-brand-symbol img")).toHaveAttribute("src", /future-you-logo\.png/);
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
   await page.getByRole("link", { name: "Sign in" }).click();
@@ -180,10 +201,13 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expectAppleHandheldTypeFloor(page);
   await expectAppleMeaningfulIconScale(page);
   const loginWordmark = page.getByRole("link", { name: "Back to Future You welcome" });
-  await expect(loginWordmark).toContainText("FUTUREYOUAI");
+  await expect(loginWordmark).toContainText("FUTUREYOU");
+  await expect(loginWordmark).not.toContainText("AI");
   await expect(loginWordmark.locator(".auth-brand-symbol")).toHaveCount(0);
+  await expect(loginWordmark.locator(".fy-angular-symbol")).toBeVisible();
+  await expect(loginWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.png/);
   expect(Number.parseFloat(await loginWordmark.evaluate((element) => getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(17);
-  const loginWordmarkSizes = await loginWordmark.locator(":scope > *").evaluateAll(
+  const loginWordmarkSizes = await loginWordmark.locator(".fy-wordmark-copy > *").evaluateAll(
     (segments) => segments.map((segment) => Number.parseFloat(getComputedStyle(segment).fontSize))
   );
   expect(loginWordmarkSizes.every((size) => size >= 17)).toBe(true);
@@ -200,6 +224,9 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
   await expectAppleMeaningfulIconScale(page);
+  await expect(page.getByRole("link", { name: "Back to Future You welcome" })).toContainText("FUTUREYOU");
+  await expect(page.getByRole("link", { name: "Back to Future You welcome" })).not.toContainText("AI");
+  await expect(page.locator(".auth-back-brand .fy-angular-symbol")).toBeVisible();
   await expect(page.getByText(/Company ID/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Show passwords" })).toBeVisible();
   await page.getByRole("button", { name: "Show passwords" }).click();
@@ -216,6 +243,10 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await signIn(page, "alex");
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
+  await expect(page.locator(".onboarding-header .fy-wordmark")).toContainText("FUTUREYOU");
+  await expect(page.locator(".onboarding-header .fy-wordmark")).not.toContainText("AI");
+  await expect(page.locator(".onboarding-header .fy-angular-symbol")).toBeVisible();
+  await expect(page.locator(".onboarding-header .fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.png/);
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
 
   await fillCanonicalOnboarding(page);
@@ -259,6 +290,12 @@ test("completes the new-user auth and canonical onboarding release journey", asy
 test("captures the returning Sarah journey and every canonical visual state", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
+  const homeWordmark = page.getByRole("link", { name: "Future You home" });
+  await expect(homeWordmark).toContainText("FUTUREYOU");
+  await expect(homeWordmark).not.toContainText("AI");
+  await expect(homeWordmark.locator(".fy-angular-symbol")).toBeVisible();
+  await expect(homeWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.png/);
+  await expectHeaderWordmarkInsideViewport(page);
   const homeHero = page.locator(".fy-home-hero");
   await expect(homeHero.locator(".fy-home-hero-action .fy-action-triangle.is-right")).toBeVisible();
   await expect(homeHero).not.toContainText("→");
@@ -313,6 +350,8 @@ test("captures the returning Sarah journey and every canonical visual state", as
 
   await settleRoute(page, "/ask");
   await freshConversation(page);
+  await expect(page.getByRole("link", { name: "Future You home" })).toContainText("FUTUREYOUAI");
+  await expectHeaderWordmarkInsideViewport(page);
   await expect(page.locator(".fy-prompt-card > .fy-action-triangle.is-right")).toHaveCount(4);
   const sendButton = page.getByRole("button", { name: "Send message" });
   await expect(sendButton.locator(".fy-action-triangle.is-up")).toBeVisible();
@@ -456,6 +495,28 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
 });
 
+test("captures the shared onboarding lockup without confirming financial context", async ({ page }) => {
+  await signIn(page, "onboarding");
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
+  const onboardingWordmark = page.locator(".onboarding-header .fy-wordmark");
+  await expect(onboardingWordmark.locator(".fy-angular-symbol")).toBeVisible();
+  await expect(onboardingWordmark.locator(".fy-angular-symbol img")).toHaveAttribute("src", /future-you-logo\.png/);
+  await expect(onboardingWordmark).toContainText("FUTUREYOU");
+  await expect(onboardingWordmark).not.toContainText("AI");
+  await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
+
+  await fillCanonicalOnboarding(page);
+  await page.getByRole("button", { name: "Preview my current path" }).click();
+  await expect(page.getByTestId("onboarding-preview")).toBeVisible();
+  await expect(page).toHaveScreenshot("onboarding-review.png", { animations: "disabled" });
+  await page.screenshot({ path: evidence("05-onboarding-review-414x896.png") });
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
+});
+
 test("uses intentional phone, tablet and desktop layouts without changing route authority", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   const viewports = [
@@ -476,6 +537,10 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
       await expectNoHorizontalOverflow(page);
       await expectAppleHandheldTypeFloor(page);
       await expectAppleMeaningfulIconScale(page);
+      const headerWordmark = page.getByRole("link", { name: "Future You home" });
+      await expect(headerWordmark).toContainText(route === "/ask" ? "FUTUREYOUAI" : "FUTUREYOU");
+      if (route !== "/ask") await expect(headerWordmark).not.toContainText("AI");
+      await expectHeaderWordmarkInsideViewport(page);
       const h1Count = await page.getByRole("heading", { level: 1 }).count();
       expect(h1Count).toBe(1);
       if (viewport.width >= 768) {
