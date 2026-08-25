@@ -117,6 +117,6 @@ export function financialContextToCorrectionDraft(
             takeHomeAlreadyNetOfStudentLoan: true
           }
     ),
-    workplace
+    workplace: workplace?.associationSource === "user_provided" ? workplace : null
   };
 }
