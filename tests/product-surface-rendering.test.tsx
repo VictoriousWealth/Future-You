@@ -27,12 +27,13 @@ const sentinelGoal: SurfaceGoalDTO = {
 };
 
 describe("Slice 6 renderer authority", () => {
-  it("renders server sentinel money, ratio, fill and date verbatim", () => {
+  it("renders server sentinel money, ratio, linear fill, circular fill and date verbatim", () => {
     const markup = renderToStaticMarkup(createElement(GoalCard, { goal: sentinelGoal }));
     expect(markup).toContain("£SERVER-CURRENT");
     expect(markup).toContain("£SERVER-TARGET");
     expect(markup).toContain("43% SERVER");
     expect(markup).toContain("width:12.345%");
+    expect(markup).toContain("--fy-goal-progress:12.345%");
     expect(markup).toContain("December 2099 SERVER");
     expect(markup).toContain("SERVER ACCESSIBLE RATIO");
     expect(markup).not.toContain("9999%");
