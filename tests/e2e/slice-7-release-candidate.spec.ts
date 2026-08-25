@@ -503,6 +503,21 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
   });
   expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(128);
   expect(welcomeSpacing.actionGap).toBeGreaterThanOrEqual(16);
+  const actionGeometry = await page.locator(".auth-choice-actions").evaluate((actions) => {
+    const login = actions.querySelector<HTMLElement>(".auth-primary");
+    const register = actions.querySelector<HTMLElement>(".auth-secondary");
+    if (!login || !register) throw new Error("Welcome actions are incomplete.");
+    const loginBox = login.getBoundingClientRect();
+    const registerBox = register.getBoundingClientRect();
+    return {
+      loginWidth: loginBox.width,
+      loginHeight: loginBox.height,
+      registerWidth: registerBox.width
+    };
+  });
+  expect(actionGeometry.loginWidth).toBeGreaterThanOrEqual(320);
+  expect(actionGeometry.loginHeight).toBeGreaterThanOrEqual(68);
+  expect(actionGeometry.loginWidth / actionGeometry.registerWidth).toBeGreaterThanOrEqual(1.15);
   await expect(page).toHaveScreenshot("welcome.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
