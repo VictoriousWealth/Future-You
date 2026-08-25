@@ -995,3 +995,56 @@
     - `employer-provisioned-registration-contract.md` is now the authoritative product contract for registration and Login.
     - Older slice contracts and evidence remain historical records of the existing implementation.
     - The replacement technical architecture and implementation have not started and require separate approval.
+
+- **Contract approval — Employer-provisioned registration is frozen as canonical**
+  - Approval:
+    - `employer-provisioned-registration-contract.md` is approved as the canonical registration contract.
+    - The existing email/password Register implementation is explicitly legacy and non-compliant with the new target.
+    - The controlled-demo release candidate remains valid only through its seeded identities while registration compliance is pending.
+  - Locked journey:
+    - Company ID and provisioned work email identify a candidate employer provision.
+    - A six-digit code proves control of the work email.
+    - Only then may the employee provide a personal email and chosen password.
+    - Personal-email confirmation occurs alongside onboarding and must finish before full-app access.
+    - Returning Login uses personal email and password only.
+  - Next design boundary:
+    - `employer-provisioned-registration-technical-design.md` is a separate proposed technical design.
+    - It does not authorise or claim application, database, authentication or UI implementation.
+
+- **New product direction — Character-led Sarah demonstration**
+  - Direction:
+    - Preserve the HTML prototype's warmth and moving Sarah character through an explicit guided demonstration rather than continuous movement throughout the everyday app.
+    - The canonical narrative arc is uncertainty to understanding, never bad choice to good choice.
+    - Sarah remains the canonical demonstration character only until another avatar identity is separately approved.
+  - Deterministic authority:
+    - The guided story uses the real Sarah baseline and stored £650, £500, £400 and timing results.
+    - Character dialogue may use approved scripts and server-rendered trusted facts but cannot invent numbers, dates, classifications or recommendations.
+    - Story mode must work with no live AI provider and remain understandable with animation disabled.
+  - Everyday boundary:
+    - A full walking character is not the default everyday experience.
+    - Any later companion must be optional, dismissible, permanently disableable, non-obstructive and compatible with reduced motion.
+
+- **Information-model refinement — Financial facts, human context and presentation state are separate**
+  - Simulation facts:
+    - Balances, income, bills, spending, goals, contributions, dates and safety buffer may affect the deterministic simulator only through approved financial-context rules.
+  - Human context:
+    - Life stage, aspirations, career stage, living situation, confidence, concerns, preferences and a user story may shape bounded presentation or supported prompts.
+    - Human context never silently changes simulator inputs, outputs, classifications or goals.
+  - Presentation state:
+    - Avatar pose, expression, position, speech bubble, story step and animation state affect presentation only.
+  - Provenance rule:
+    - Every stored profile detail must show its source, last confirmation, purpose, calculation effect and edit/remove controls.
+    - No hidden model-inferred profile facts are permitted.
+  - Employer privacy:
+    - Verified employer membership supplies access entitlement and workplace association only.
+    - It does not supply or expose salary, career stage, confidence, aspirations, living circumstances, financial context, conversations or results.
+
+- **Roadmap separation — Two independent post-MVP tracks**
+  - Track A:
+    - Employer-provisioned registration technical design, followed only after approval by a dedicated security-sensitive implementation slice.
+  - Track B:
+    - Character-led story and human-context contract, followed only after approval by separately phased story, accessibility and profile work.
+  - Separation rule:
+    - Registration must not absorb avatar/profile scope.
+    - Character/profile work must not alter authentication, financial context or deterministic simulation authority.
+    - Neither track introduces code until its own proposal is reviewed and approved.
