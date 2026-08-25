@@ -678,3 +678,29 @@
     - The additional separation and unequal stroke weights are visible construction details in the supplied UI reference and make the funded portion easier to distinguish.
   - Effect on Future You:
     - Goal progress has clearer depth and emphasis without changing the authoritative percentage, balance, date or simulator result.
+
+- **Visual refinement — Goal progress indicator enlarged for label breathing room**
+  - What changed:
+    - Both the inner percentage disc and the complete outer ring were enlarged so two-digit goal labels no longer feel cramped.
+  - Previous approach:
+    - The improved spacing and stroke hierarchy were accurate, but the standard 44.8px and compact 34.4px footprints left limited room inside the purple centre.
+  - New approach:
+    - Standard indicators are now 51.2px across and compact indicators are 40px. The inner disc occupies 58% of the full diameter and the text scales to `0.62rem` or `0.52rem`, retaining visible white separation and the 11-unit versus 7-unit stroke hierarchy.
+    - The browser geometry regression now requires the standard ring to exceed 48px as well as preserving the inner-disc and unequal-stroke constraints. Home and Goals visual baselines were regenerated and pass without an update flag.
+  - Why it changed:
+    - The percentage needs enough surrounding colour to read comfortably at a glance, especially on small mobile goal cards.
+  - Effect on Future You:
+    - Goal percentages are more legible and balanced while all server-supplied progress values and financial outcomes remain unchanged.
+
+- **Visual refinement — Goal progress indicator receives a stronger size increase**
+  - What changed:
+    - The progress indicator was enlarged again after the first increase remained too subtle in the live mobile layout.
+  - Previous approach:
+    - Standard rings measured 51.2px and compact rings 40px, improving legibility but still leaving the percentage treatment visually constrained.
+  - New approach:
+    - Standard Goals indicators now measure 60px and compact Home indicators 48px. The inner disc occupies 60% of the complete diameter, with `0.7rem` and `0.6rem` label sizes respectively.
+    - The white gap, rounded 11-unit funded arc and thinner 7-unit remainder track remain intact. The geometry gate now requires a standard width above 56px, and updated Home and Goals baselines pass without snapshot regeneration.
+  - Why it changed:
+    - The percentage needed a clearly noticeable increase rather than another marginal adjustment, particularly for comfortable reading inside the solid centre.
+  - Effect on Future You:
+    - Goal completion now has stronger visual presence and more comfortable label spacing without affecting any financial data or calculation.
