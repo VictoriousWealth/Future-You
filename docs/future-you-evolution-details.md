@@ -626,3 +626,16 @@
     - A real portrait makes the authenticated shell feel more personal and closer to a finished consumer product than a generic account glyph.
   - Effect on Future You:
     - Sarah's demonstration experience now has a consistent visual identity without changing the settings destination, authentication, financial authority, persistence or any post-MVP behavior.
+
+- **Release refinement — Password visibility uses React eye icons**
+  - What changed:
+    - The Login and Signup password visibility buttons were changed from the words Show/Hide to React eye/eye-off icons.
+  - Previous approach:
+    - Password controls used wide text pills, which added visual weight inside the outlined authentication fields.
+  - New approach:
+    - `FiEye` and `FiEyeOff` from the `react-icons` package render inside 44px circular controls. Dynamic accessible names still announce “Show password(s)” and “Hide password(s)”, while `aria-controls`, `aria-pressed` and the underlying input-type behavior remain intact.
+    - Browser coverage toggles the Login password plus both Signup password fields and verifies the actual `text`/`password` types. The Login visual baseline and Signup evidence were regenerated; the clean full Chromium suite passes 22/22.
+  - Why it changed:
+    - The icon treatment is more compact and visually familiar while retaining the complete accessible interaction contract.
+  - Effect on Future You:
+    - Authentication fields are cleaner and closer to expected consumer-app conventions without changing authentication logic, validation or security behavior.
