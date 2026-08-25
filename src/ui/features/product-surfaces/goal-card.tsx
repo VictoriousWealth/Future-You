@@ -1,22 +1,25 @@
-import type { CSSProperties } from "react";
 import type { SurfaceGoalDTO } from "../../../application/product-surfaces/contracts";
-
-type GoalProgressStyle = CSSProperties & {
-  readonly "--fy-goal-progress": string;
-};
 
 export function GoalProgressRing({ progress }: Readonly<{
   progress: SurfaceGoalDTO["progress"];
 }>) {
-  const style: GoalProgressStyle = { "--fy-goal-progress": progress.fill };
-
   return (
     <span
       className="fy-goal-ratio"
       role="img"
       aria-label={progress.accessibleLabel}
-      style={style}
     >
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle className="fy-goal-ratio-track" cx="50" cy="50" r="41" pathLength="10000"/>
+        <circle
+          className="fy-goal-ratio-arc"
+          cx="50"
+          cy="50"
+          r="41"
+          pathLength="10000"
+          strokeDasharray={progress.ringDasharray}
+        />
+      </svg>
       <span>{progress.display}</span>
     </span>
   );
