@@ -8,7 +8,6 @@ import type {
   GoalsSurfaceDTO
 } from "../../../application/product-surfaces/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
-import { ContextPill } from "../../product-shell/context-pill";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
 import { GoalCard } from "./goal-card";
@@ -46,7 +45,6 @@ export function GoalsSurface() {
       {error ? <SurfaceError message={error} retry={retry}/> : null}
       {data ? (
         <>
-          <ContextPill label={data.context.label} earlier={!data.context.isCurrent}/>
           <header className="fy-surface-heading">
             <p>{data.mode === "current_path" ? "Your current path" : data.run.hypotheticalLabel}</p>
             <h1>{data.mode === "current_path" ? "Your goals" : data.run.label}</h1>
