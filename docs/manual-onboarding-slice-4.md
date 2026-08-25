@@ -1,5 +1,9 @@
 # Slice 4 — manual financial onboarding and immutable context versioning
 
+> **Historical workplace step:** This completed slice records the former optional workplace-entry
+> contract. `employer-provisioned-registration-contract.md` now establishes workplace identity during
+> registration, so future onboarding must not ask the user to enter the employer again.
+
 Slice 4 lets an authenticated user with no financial context enter real values, review a deterministic
 current-path preview, and explicitly confirm one immutable context version. Ordinary runtime paths never
 assign Sarah or any other fixture when context is absent.
