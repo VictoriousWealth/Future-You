@@ -418,8 +418,14 @@ test("captures the returning Sarah journey and every canonical visual state", as
 
   await settleRoute(page, "/benefits");
   await expect(page.getByTestId("active-pension-fact")).toContainText("not spendable cash");
+  await expect(page.getByTestId("workplace-state")).toContainText("OniBank");
+  await expect(page.getByTestId("workplace-state")).toContainText("Verified workplace");
+  await expect(page.getByTestId("workplace-state")).toContainText("Active membership");
+  await expect(page.getByTestId("benefit-opportunity-additional_pension_match")).toContainText("up to 5%");
+  await expect(page.getByTestId("benefit-opportunity-season_ticket_loan")).toContainText("Eligibility unknown");
+  await expect(page.getByRole("button", { name: /simulate|activate|apply/i })).toHaveCount(0);
   await expect(page).toHaveScreenshot("benefits-canonical.png", { animations: "disabled" });
-  await page.screenshot({ path: evidence("16-benefits-canonical-414x896.png") });
+  await page.screenshot({ path: evidence("16-benefits-canonical-414x896.png"), fullPage: true });
 
   const actualBenefits = await page.evaluate(async () => await (await fetch("/api/v1/benefits")).json()) as BenefitsSurfaceDTO;
   await page.route("**/api/v1/benefits", async (route) => {
