@@ -75,6 +75,7 @@ export function SignupForm({ configuration }: Readonly<{
             aria-controls="signup-password password-confirmation"
             aria-pressed={showPassword}
             onClick={() => setShowPassword((value) => !value)}
+            style={{margin: "0"}}
           >
             {showPassword ? <FiEyeOff aria-hidden="true"/> : <FiEye aria-hidden="true"/>}
           </button>
