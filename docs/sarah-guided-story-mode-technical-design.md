@@ -448,3 +448,15 @@ The B1 approval resolved the design choices as follows:
 6. Review captures are stored under `artifacts/track-b1-visual/`; they are evidence captures, not Playwright visual-regression baselines.
 
 Implementation remains limited to Phase B1. It does not authorise an everyday avatar, public demo projection, real-user human-context schema, voice, customisation, AI-generated dialogue or Phase B2.
+
+## 19. Post-B1 employer-opportunity correction
+
+The later approved Sarah employer and Benefits correction advances the story schema, story version and
+narrative templates to `1.1.0`. The `OPPORTUNITY_INFORMATION` step now fails closed unless its
+season-ticket-loan label, OniBank employer, 31 August 2026 reference date and Sarah-owned
+unknown/inactive/not-in-plan state come from the request-scoped employer-benefit source.
+
+The story still reads the same four immutable runs and performs no benefit or financial calculation.
+Its opportunity wording may say that OniBank lists the loan, Sarah's eligibility is unknown and it is
+not in her current plan. It may not claim a saving, eligibility, recommendation or trip effect. Track B
+Phase B2 remains unstarted.
