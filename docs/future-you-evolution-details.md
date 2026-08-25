@@ -859,3 +859,17 @@
     - Removing the explanatory copy left the remaining elements visually compressed into the centre despite ample available height.
   - Effect on Future You:
     - Welcome feels calmer and more intentional without introducing empty fixed spacing that would clip on shorter phones.
+
+- **Authentication brand refinement — White supplied SVG backs the logo**
+  - What changed:
+    - Login and Register now layer the newly supplied paint-splash SVG behind the coloured angular logo.
+  - Asset treatment:
+    - The repository copy is stored as `public/images/future-you-auth-backdrop.svg`, stripped of its external DOCTYPE and metadata, and changed from black to white.
+    - The backdrop is decorative, sits below the original supplied logo through explicit stacking, and does not change the accessible brand name.
+  - Scope rule:
+    - The white backing appears only on the compact wordmark over the blue Login/Register header treatment.
+    - Welcome, onboarding, Home, Goals, Ask and Benefits continue to use the logo without this backdrop.
+  - Why it changed:
+    - Parts of the blue angular artwork had insufficient visual separation from the blue authentication header.
+  - Effect on Future You:
+    - The original logo remains recognisable against the coloured auth surface without introducing a different product-wide brand treatment.
