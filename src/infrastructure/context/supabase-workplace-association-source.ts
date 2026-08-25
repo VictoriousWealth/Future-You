@@ -12,6 +12,24 @@ export class SupabaseWorkplaceAssociationSource implements WorkplaceAssociationS
   ) {}
 
   async getWorkplace(): Promise<WorkplaceAssociation | null> {
+    const { data: membership, error: membershipError } = await this.client
+      .from("employer_memberships")
+      .select("employer_display_name, status")
+      .eq("user_id", this.principal.userId)
+      .maybeSingle();
+    if (membershipError) {
+      throw new PersistenceBoundaryError(
+        "PERSISTENCE_FAILURE",
+        "The verified employer membership could not be read."
+      );
+    }
+    if (membership?.status === "ACTIVE") {
+      return {
+        name: membership.employer_display_name,
+        associationSource: "employer_provisioned",
+        verificationStatus: "verified"
+      };
+    }
     const { data, error } = await this.client
       .from("workplace_associations")
       .select("workplace_name, association_source, verification_status")
