@@ -562,16 +562,20 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     const artwork = symbol.querySelector<HTMLElement>(".fy-angular-artwork");
     const wordmark = symbol.closest<HTMLElement>(".auth-back-brand");
     const copy = wordmark?.querySelector<HTMLElement>(".fy-wordmark-copy");
-    if (!backdrop || !artwork || !copy) throw new Error("Authentication logo layers are incomplete.");
+    const panel = symbol.closest<HTMLElement>(".auth-panel");
+    if (!backdrop || !artwork || !copy || !panel) throw new Error("Authentication logo layers are incomplete.");
     const backdropBox = backdrop.getBoundingClientRect();
     const artworkBox = artwork.getBoundingClientRect();
     const copyBox = copy.getBoundingClientRect();
+    const panelBox = panel.getBoundingClientRect();
     return {
       backdropZ: Number.parseInt(getComputedStyle(backdrop).zIndex, 10),
       artworkZ: Number.parseInt(getComputedStyle(artwork).zIndex, 10),
       widthRatio: backdropBox.width / artworkBox.width,
       heightRatio: backdropBox.height / artworkBox.height,
       copyClearance: copyBox.left - backdropBox.right,
+      leftPanelClearance: backdropBox.left - panelBox.left,
+      topPanelClearance: backdropBox.top - panelBox.top,
       overlaps:
         backdropBox.left < artworkBox.right &&
         backdropBox.right > artworkBox.left &&
@@ -580,9 +584,11 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     };
   });
   expect(authLogoStack.backdropZ).toBeLessThan(authLogoStack.artworkZ);
-  expect(authLogoStack.widthRatio).toBeGreaterThanOrEqual(2.2);
-  expect(authLogoStack.heightRatio).toBeGreaterThanOrEqual(2.1);
+  expect(authLogoStack.widthRatio).toBeGreaterThanOrEqual(3.1);
+  expect(authLogoStack.heightRatio).toBeGreaterThanOrEqual(2.9);
   expect(authLogoStack.copyClearance).toBeGreaterThanOrEqual(0);
+  expect(authLogoStack.leftPanelClearance).toBeGreaterThanOrEqual(0);
+  expect(authLogoStack.topPanelClearance).toBeGreaterThanOrEqual(0);
   expect(authLogoStack.overlaps).toBe(true);
   await expectAppleMeaningfulIconScale(page);
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
