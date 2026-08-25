@@ -179,6 +179,14 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await expectAppleHandheldTypeFloor(page);
   await expectAppleMeaningfulIconScale(page);
+  const loginWordmark = page.getByRole("link", { name: "Back to Future You welcome" });
+  await expect(loginWordmark).toContainText("FUTUREYOUAI");
+  await expect(loginWordmark.locator(".auth-brand-symbol")).toHaveCount(0);
+  expect(Number.parseFloat(await loginWordmark.evaluate((element) => getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(17);
+  const loginWordmarkSizes = await loginWordmark.locator(":scope > *").evaluateAll(
+    (segments) => segments.map((segment) => Number.parseFloat(getComputedStyle(segment).fontSize))
+  );
+  expect(loginWordmarkSizes.every((size) => size >= 17)).toBe(true);
   const loginPassword = page.locator("#password");
   await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
   await page.getByRole("button", { name: "Show password" }).click();
@@ -425,10 +433,13 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await expectAppleMeaningfulIconScale(page);
+  await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
+  await page.screenshot({ path: evidence("02-login-414x896.png") });
 
   await page.goto("/signup");
   await expect(page.getByRole("heading", { name: "Create account" })).toBeVisible();
   await expectAppleMeaningfulIconScale(page);
+  await page.screenshot({ path: evidence("03-signup-414x896.png") });
 
   await signIn(page, "sarah", "/home");
   await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
