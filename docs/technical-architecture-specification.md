@@ -6,6 +6,11 @@
 **Canonical fixture:** Sarah v1  
 **Architecture style:** TypeScript modular monolith with a deterministic domain core
 
+**Registration-contract supersession:** `employer-provisioned-registration-contract.md` replaces the
+open email/password signup and optional post-onboarding workplace assumptions in this architecture.
+The new product contract is approved, but its technical architecture is intentionally not designed or
+authorised here. The existing registration implementation must not be treated as satisfying it.
+
 ## 0. Purpose, authority and scope
 
 This document defines the smallest credible technical architecture for the approved Future You MVP. It specifies how to build the product already defined; it does not redefine financial behaviour, Sarah v1, conversation behaviour, UI behaviour or MVP scope.
@@ -23,9 +28,10 @@ season-ticket-loan UI branch is not part of Slice 6.
 
 The governing product contracts are:
 
-1. `simulation-rules-specification.md` for financial meaning and deterministic calculation rules
-2. `golden-path-conversation-specification.md` for conversational behaviour
-3. `golden-path-ui-mapping.md` for screen, state and interaction behaviour
+1. `employer-provisioned-registration-contract.md` for first-time account activation and returning login
+2. `simulation-rules-specification.md` for financial meaning and deterministic calculation rules
+3. `golden-path-conversation-specification.md` for conversational behaviour
+4. `golden-path-ui-mapping.md` for screen, state and interaction behaviour
 4. `mvp-specification.md` for the subset that version one must implement
 
 When a broader contract describes a capability that the MVP specification defers, the MVP scope wins for implementation. This produces three important scope resolutions:
@@ -108,7 +114,7 @@ domain never imports UI, database, auth or AI code
 | Conversation orchestrator | Turn user text into a typed action, determine clarification, invoke approved use cases and assemble a response | Calculate numbers or expose unrestricted application access to the model |
 | LLM adapter | Structured intent interpretation and bounded explanation of supplied facts | Become a source of financial truth or hold authoritative conversation/context state |
 | Persistence adapter | Store immutable context/scenario/run records and active-thread messages; enforce ownership and atomic writes | Become the place where financial rules are implemented |
-| Authentication adapter | Account access, session validation and authenticated user identity | Collect financial or employer data during signup |
+| Authentication/registration boundary | Returning account access and, through a separately approved design, activation after verified employer provisioning | Collect financial data, expose provisioning details or permit account creation without valid workplace proof |
 | Employer/benefit representation | Match an optional employer association to curated/mock opportunity records and persist user-visible status | Treat availability as eligibility, uptake or cash-flow impact |
 
 ### 2.2 Independently deployable services
@@ -713,19 +719,23 @@ Storing a result is justified even though it is reproducible: it preserves exact
 ### 12.1 Flow separation
 
 ```text
-Account authentication
+Employer-provisioned workplace verification
+  -> private personal-email/password account activation
   -> minimum financial onboarding
   -> explicit review/confirmation
   -> first context version + baseline
-  -> optional workplace association
   -> Home / Ask
 ```
 
-Authentication collects email/password or an equivalent Supabase Auth credential only. Creating `profiles` sets `onboardingState = financial_context_required`; it does not ask for an employer.
+The product sequence above is frozen by `employer-provisioned-registration-contract.md`. The technical
+mechanism for provisioned records, verification codes, account creation, atomic claiming and access
+state is intentionally not specified by this older architecture and requires a new design before code.
 
 Financial onboarding builds a draft snapshot in server-validated session state. The user supplies the exact minimum fields from the MVP specification: cash/balance date, net income/payday, routine spending, required-obligation confirmation, desired buffer, at least one goal and the allocation order. Only the Review confirmation creates version one and permits a numeric baseline.
 
-Workplace association is a separate, skippable step after the financial snapshot is confirmed. Skipping it hides employer-specific opportunities but never blocks Home, Ask, Goals or simulation.
+The verified workplace association is established by registration and must not be requested again as
+an optional financial-onboarding field. Employer provisioning still supplies no financial-context
+values and does not activate any benefit.
 
 ### 12.2 Sarah demo data
 
@@ -737,9 +747,8 @@ Sarah v1 lives in a read-only versioned fixture used by tests and demo seeding. 
 
 | Product area | Route | Primary client/server state |
 |---|---|---|
-| Authentication | `/login`, `/signup` | Auth form and session state only |
+| Registration/Login | `/login`, `/signup` or a later approved registration-route family | Provisioned workplace proof, personal-account activation and returning session state; exact technical routing is not yet designed |
 | Financial onboarding | `/onboarding/financial` | Draft steps, validation, review and confirm command |
-| Optional workplace | `/onboarding/workplace` | Skippable employer association |
 | Home | `/home` | Current-path summary, supported prompts and opportunity preview |
 | Ask | `/ask` and optional `/ask/{threadId}` | Conversation plus result/scenario state machine |
 | Goals | `/goals` | Current-path list or explicit scenario-preview state |
@@ -1455,7 +1464,7 @@ This is a development seam, not a new production form or fallback.
 - Add Supabase Auth, user-owned schema, migrations, RLS and repository adapters.
 - Implement immutable context versions, profile pointer, baseline/run cache, decision threads/messages/scenarios and idempotent transactions.
 - Seed Sarah per demo user.
-- Implement minimum financial onboarding, review/confirmation and optional workplace step.
+- Historical implementation note: this slice implemented optional workplace entry under the former contract; the replacement employer-provisioned registration architecture remains unimplemented.
 
 **Exit:** Sarah can sign in, reload and retain current context/thread/S1; cross-user isolation tests pass.
 
