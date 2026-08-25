@@ -48,6 +48,12 @@ async function expectActive(page: Page, name: "Home" | "Goals" | "Ask" | "Benefi
 }
 
 test("delivers the shared Home, Goals, Ask and Benefits product journey", async ({ page }) => {
+  let conversationMessageRequests = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && /\/api\/v1\/conversations\/[^/]+\/messages$/.test(new URL(request.url()).pathname)) {
+      conversationMessageRequests += 1;
+    }
+  });
   await page.goto("/");
   await expect(page).toHaveURL(/\/login$/);
   await signIn(page, "sarah", "/home");
@@ -58,8 +64,11 @@ test("delivers the shared Home, Goals, Ask and Benefits product journey", async 
   await expect(page.getByText("What are you thinking about?")).toBeVisible();
   await expect(page.getByText("£900", { exact: true })).toBeVisible();
   await expect(page.getByText("December 2026")).toBeVisible();
-  await expect(page.getByText(/season.?ticket/i)).toHaveCount(0);
+  await expect(page.getByText("Season-ticket loan", { exact: true })).toBeVisible();
+  await expect(page.getByText("Eligibility unknown", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /See details/ })).toHaveAttribute("href", "/benefits#opportunity-season-ticket-loan");
   await expect(page.getByText(/match up to 5%/i)).toHaveCount(0);
+  expect(conversationMessageRequests).toBe(0);
   await page.screenshot({ path: evidence("home-top-414x896.png") });
   await page.getByText("Your future right now").evaluate((element) => element.scrollIntoView({ block: "start" }));
   await page.waitForTimeout(100);
@@ -91,12 +100,20 @@ test("delivers the shared Home, Goals, Ask and Benefits product journey", async 
 
   await page.getByRole("navigation", { name: "Product navigation" }).getByRole("link", { name: "Benefits" }).click();
   await expectActive(page, "Benefits");
-  await expect(page.getByTestId("active-pension-fact")).toContainText("3% employee contribution");
-  await expect(page.getByTestId("active-pension-fact")).toContainText("3% employer contribution");
+  await expect(page.getByTestId("active-pension-fact")).toContainText("You contribute");
+  await expect(page.getByTestId("active-pension-fact")).toContainText("OniBank contributes");
+  await expect(page.getByTestId("active-pension-fact")).toContainText("3%");
   await expect(page.getByTestId("active-pension-fact")).toContainText("not spendable cash");
-  await expect(page.getByTestId("workplace-state")).toContainText("No workplace added");
-  await expect(page.getByText(/season.?ticket/i)).toHaveCount(0);
-  await expect(page.getByText(/5% employer/i)).toHaveCount(0);
+  await expect(page.getByTestId("workplace-state")).toContainText("OniBank");
+  await expect(page.getByTestId("workplace-state")).toContainText("Verified workplace");
+  await expect(page.getByTestId("workplace-state")).toContainText("Active membership");
+  await expect(page.getByTestId("benefit-opportunity-additional_pension_match")).toContainText("up to 5%");
+  await expect(page.getByTestId("benefit-opportunity-additional_pension_match")).toContainText("Eligibility has not been confirmed");
+  await expect(page.getByTestId("benefit-opportunity-additional_pension_match")).toContainText("No numerical effect has been calculated");
+  await expect(page.getByTestId("benefit-opportunity-season_ticket_loan")).toContainText("Eligibility unknown");
+  await expect(page.getByTestId("benefit-opportunity-season_ticket_loan")).toContainText("Not included in your current financial plan");
+  await expect(page.getByRole("button", { name: /simulate|activate|apply/i })).toHaveCount(0);
+  expect(conversationMessageRequests).toBe(0);
   await page.screenshot({ path: evidence("benefits-canonical-414x896.png") });
 
   await signOut(page);
@@ -148,7 +165,7 @@ test("renders loading, safe error, empty-benefits and historical-preview states"
       contentType: "application/json",
       body: JSON.stringify({
         apiVersion: "future-you.product-surfaces/v1",
-        schemaVersion: "benefits-surface/1.0.0",
+        schemaVersion: "benefits-surface/1.1.0",
         kind: "benefits_surface",
         context: actualHome.context,
         workplace: { status: "not_supplied", name: null, statusLabel: "No workplace added" },
