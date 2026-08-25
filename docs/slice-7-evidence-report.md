@@ -322,3 +322,11 @@ The Welcome identity and entry actions remain centred, but no longer read as one
 Browser geometry requires at least 72px between the completed identity block and the action group and at least 16px between the two actions at `414 × 896`. A `360 × 640` compact-height check proves that the brand and actions remain inside the viewport rather than being clipped. The Welcome visual baseline records the revised vertical composition.
 
 The updated Welcome visual passes its final no-update comparison 1/1. The full Vitest suite passes 234/234; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Auth-logo contrast refinement
+
+Login and Register now place the supplied splash SVG between the compact angular logo and the blue header artwork. The repository copy is sanitised, filled white and layered behind the original coloured logo without changing the rest of the `FutureYou` wordmark. Welcome, onboarding and authenticated product headers deliberately omit this backdrop.
+
+Renderer coverage verifies the local backdrop source, white fill, absence of the original black fill, removal of the source DOCTYPE, and absence of scripts. Browser coverage verifies the SVG is present on both Login and Register and absent from Welcome and the authenticated Home header. Updated auth visual evidence protects the final layering and contrast.
+
+The focused no-update Welcome/auth run passes 2/2 and proves the white backdrop is stacked below the coloured logo. The full Vitest suite passes 235/235; TypeScript, ESLint, production build and `git diff --check` pass.
