@@ -294,3 +294,15 @@ The browser audit examines every visible meaningful SVG on Login, Signup, Home, 
 Login and Signup no longer introduce the compact angular symbol-and-stacked-copy lockup. A shared renderer now supplies the same `FUTURE YOU AI` wordmark used by the authenticated product header, while the full angular emblem remains on Welcome only. The wordmark and its `AI` suffix now render at the 17px body scale instead of 13.44px and 11px respectively.
 
 Regression coverage verifies the Login back link retains its accessible name, contains the complete wordmark, contains no compact symbol, and renders every wordmark segment at 17px or larger. Login and five signed-in visual baselines were regenerated; the combined no-update visual and wordmark run passes 2/2. Vitest passes 232/232; TypeScript, ESLint and the production build pass. The separate evidence-capture clipping noted in UI-02 remains open and was not hidden inside this branding change.
+
+## Superseding symbol and Ask-only AI refinement
+
+The preceding under-review rule was superseded by the requested final naming treatment. The compact angular symbol now precedes every compact Future You wordmark, including Login, Signup, onboarding/settings and all four signed-in destinations. Compact wordmark text increased from 17px to 20px. Product and auth surfaces show `FutureYou`; only Ask shows `FutureYou AI`. Welcome keeps its full-size symbol treatment.
+
+The shared renderer owns the symbol geometry and optional suffix. The product shell derives `AI` exclusively from `active === "ask"`. Renderer coverage proves a default Product header omits `AI` and an Ask header includes it. Browser coverage verifies Login, Signup, onboarding, Home, Goals, Ask and Benefits use the correct variant, includes viewport-bound geometry checks, and exercises the signed-in rule at `360 × 800`, `414 × 896`, `768 × 1024` and `1440 × 900`. The responsive gate passes 1/1; the final no-update visual, icon and onboarding run passes 3/3; Vitest passes 233/233; TypeScript, ESLint, production build and `git diff --check` pass.
+
+## Supplied logo-artwork refinement
+
+The temporary CSS reconstruction of the angular mark was replaced by the user-supplied transparent PNG, stored locally as `public/images/future-you-logo.png`. One shared renderer uses the same artwork for the full Welcome identity and every compact wordmark without stretching its original `109 × 135` proportions. The image remains decorative because the surrounding brand container or link already supplies the accessible name.
+
+Renderer coverage asserts the local optimised image URL. Browser coverage verifies the supplied asset on Welcome, Login, onboarding and the authenticated product shell, while existing wordmark geometry and visual baselines protect its placement across the remaining surfaces. No remote asset dependency, financial logic or navigation behaviour was introduced.
