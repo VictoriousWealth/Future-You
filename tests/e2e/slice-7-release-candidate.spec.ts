@@ -337,7 +337,7 @@ test("preserves the historical run through a visible immutable context correctio
   await page.getByRole("button", { name: "Start with current plan" }).click();
   await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
   await ask(page, "Can I afford a £650 trip next month?");
-  await expect(page.getByTestId("context-pill")).toHaveText(/Current plan active/);
+  await expect(page.getByTestId("context-pill")).toHaveCount(0);
   await expect(page.getByTestId("stale-context-state")).toHaveCount(0);
 });
 
