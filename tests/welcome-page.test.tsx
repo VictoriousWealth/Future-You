@@ -23,6 +23,7 @@ describe("Welcome page", () => {
     expect(markup).not.toContain("Private financial context. Deterministic what-if results. You stay in control.");
     expect(markup).not.toContain("auth-heading");
     expect(markup).not.toContain("auth-trust-note");
+    expect(markup).toContain('class="auth-brand-break"');
   });
 
   it("layers the supplied white SVG behind the compact auth logo only", () => {
