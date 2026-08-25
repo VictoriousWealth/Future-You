@@ -23,7 +23,7 @@ test("completes and persists the mobile golden Ask journey with cross-user isola
   await expect(page.getByTestId("ask-visual-shell")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Welcome back, Sarah/ })).toBeVisible();
   await expect(page.getByText("What are you thinking about?")).toBeVisible();
-  await expect(page.getByTestId("context-pill")).toHaveText(/Current plan active/);
+  await expect(page.getByTestId("context-pill")).toHaveCount(0);
   await expect(page.getByTestId("ask-composer")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Product navigation" }).getByText("Ask")).toBeVisible();
   const overflow = await page.locator(".fy-prompt-rail").evaluate((element) => element.scrollWidth > element.clientWidth);
