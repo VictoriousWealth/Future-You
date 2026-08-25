@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Register | Future You" };
 
 export default function SignupPage() {
   return (
-    <AuthFrame title="Register" eyebrow="Start with what is true today" description="Workplace information is optional and comes later, separately from registration.">
+    <AuthFrame title="Register" eyebrow="Start with what is true today" description="Workplace information is optional and comes later, separately from account creation.">
       <SignupForm configuration={publicSupabaseConfiguration()}/>
     </AuthFrame>
   );
