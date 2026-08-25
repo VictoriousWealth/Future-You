@@ -320,3 +320,5 @@ The Login/Register label refinement passes its final no-update Welcome compariso
 The Welcome identity and entry actions remain centred, but no longer read as one cramped cluster. Responsive spacing now increases the logo-to-name separation, the identity-to-actions separation and the gap between Login and Register. Clamp bounds preserve the intended rhythm across shorter phones and taller screens.
 
 Browser geometry requires at least 72px between the completed identity block and the action group and at least 16px between the two actions at `414 × 896`. A `360 × 640` compact-height check proves that the brand and actions remain inside the viewport rather than being clipped. The Welcome visual baseline records the revised vertical composition.
+
+The updated Welcome visual passes its final no-update comparison 1/1. The full Vitest suite passes 234/234; TypeScript, ESLint, production build and `git diff --check` pass.
