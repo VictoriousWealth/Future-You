@@ -545,12 +545,18 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   const authLogoStack = await page.locator(".auth-back-brand .fy-angular-symbol").evaluate((symbol) => {
     const backdrop = symbol.querySelector<HTMLElement>(".fy-angular-backdrop");
     const artwork = symbol.querySelector<HTMLElement>(".fy-angular-artwork");
-    if (!backdrop || !artwork) throw new Error("Authentication logo layers are incomplete.");
+    const wordmark = symbol.closest<HTMLElement>(".auth-back-brand");
+    const copy = wordmark?.querySelector<HTMLElement>(".fy-wordmark-copy");
+    if (!backdrop || !artwork || !copy) throw new Error("Authentication logo layers are incomplete.");
     const backdropBox = backdrop.getBoundingClientRect();
     const artworkBox = artwork.getBoundingClientRect();
+    const copyBox = copy.getBoundingClientRect();
     return {
       backdropZ: Number.parseInt(getComputedStyle(backdrop).zIndex, 10),
       artworkZ: Number.parseInt(getComputedStyle(artwork).zIndex, 10),
+      widthRatio: backdropBox.width / artworkBox.width,
+      heightRatio: backdropBox.height / artworkBox.height,
+      copyClearance: copyBox.left - backdropBox.right,
       overlaps:
         backdropBox.left < artworkBox.right &&
         backdropBox.right > artworkBox.left &&
@@ -559,6 +565,9 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     };
   });
   expect(authLogoStack.backdropZ).toBeLessThan(authLogoStack.artworkZ);
+  expect(authLogoStack.widthRatio).toBeGreaterThanOrEqual(2.2);
+  expect(authLogoStack.heightRatio).toBeGreaterThanOrEqual(2.1);
+  expect(authLogoStack.copyClearance).toBeGreaterThanOrEqual(0);
   expect(authLogoStack.overlaps).toBe(true);
   await expectAppleMeaningfulIconScale(page);
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
