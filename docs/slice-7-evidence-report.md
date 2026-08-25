@@ -250,3 +250,9 @@ The financial-context settings link retains its existing accessible name; the ne
 The Login and Signup Show/Hide text controls now use the `FiEye` and `FiEyeOff` React components from the `react-icons` package. Each remains a 44px button with dynamic “Show password(s)”/“Hide password(s)” accessible naming, `aria-controls` and `aria-pressed`; the icon itself is hidden from the accessibility tree.
 
 The browser journey toggles Login and both Signup password fields and verifies their `type` attributes. The Login baseline and Signup evidence were regenerated and visually reviewed. The clean full Chromium suite remains 22/22, while 231/231 Vitest tests, TypeScript, ESLint, production build and whitespace checks pass.
+
+## Approved proportional goal-ring refinement
+
+Goal percentage badges on Home and Goals now use a proportional circular arc matching the supplied reference behavior. The arc starts at the top, uses the existing server-authored bounded `fill` percentage, and leaves the unfunded portion as a pale-purple track; a full circle therefore represents 100% only. Current, compact and stored-hypothetical goal cards share one renderer, while the existing horizontal progress bar remains unchanged.
+
+Renderer-authority coverage now asserts that the circular indicator applies the `12.345%` server sentinel verbatim, alongside the existing linear-fill sentinel. The Home and Goals visual baselines were regenerated and visually reviewed with Sarah's partial 73% and 29% rings. The focused no-update browser run passes 2/2, all 231 Vitest tests pass, and TypeScript, ESLint, production build, client-bundle boundary and whitespace checks pass. No financial calculation, DTO contract or simulator behavior changed.
