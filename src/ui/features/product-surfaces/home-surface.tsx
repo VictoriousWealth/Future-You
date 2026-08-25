@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { HomeSurfaceDTO } from "../../../application/product-surfaces/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
-import { ContextPill } from "../../product-shell/context-pill";
 import { ProductIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
@@ -46,7 +45,6 @@ export function HomeSurface() {
       {error ? <SurfaceError message={error} retry={load}/> : null}
       {data ? (
         <>
-          <ContextPill label={`${data.context.label} active`}/>
           <section className="fy-home-intro">
             <h1 className="fy-personal-greeting">Welcome back,<br/><strong>{data.displayName}!</strong></h1>
             <p className="fy-home-question">What are you thinking about?</p>
