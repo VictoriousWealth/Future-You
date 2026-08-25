@@ -1,10 +1,10 @@
 import type { MoneyDTO, RatioDTO } from "../dto/contracts";
 
 export const PRODUCT_SURFACE_API_VERSION = "future-you.product-surfaces/v1" as const;
-export const HOME_SURFACE_SCHEMA = "home-surface/1.1.0" as const;
+export const HOME_SURFACE_SCHEMA = "home-surface/1.2.0" as const;
 export const GOALS_SURFACE_SCHEMA = "goals-surface/1.0.0" as const;
 export const GOALS_PREVIEW_SURFACE_SCHEMA = "goals-preview-surface/1.0.0" as const;
-export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.0.0" as const;
+export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.1.0" as const;
 
 export interface SurfaceContextDTO {
   readonly id: string;
@@ -56,6 +56,9 @@ export interface HomeSurfaceDTO {
         readonly title: string;
         readonly description: string;
         readonly statusLabel: string;
+        readonly href: "/benefits#opportunity-season-ticket-loan";
+        readonly actionLabel: "See details";
+        readonly sourceReferenceDate: string;
       }>;
   readonly guidedStory:
     | Readonly<{ readonly available: false }>
@@ -124,19 +127,53 @@ export interface BenefitsSurfaceDTO {
     | Readonly<{
         readonly status: "verified";
         readonly name: string;
-        readonly statusLabel: string;
+        readonly statusLabel: "Verified workplace";
+        readonly membershipStatusLabel: "Active membership";
         readonly explanation: string;
       }>;
   readonly activeFacts: readonly Readonly<{
     readonly id: string;
     readonly title: string;
-    readonly statusLabel: "Active · Confirmed in your plan";
+    readonly statusLabel: "Active";
+    readonly employerName: string;
     readonly employeeContribution: string;
     readonly employerContribution: string;
     readonly treatment: string;
     readonly spendability: string;
+    readonly provenance: Readonly<{
+      readonly sourceType: "immutable_financial_context";
+      readonly contextVersion: string;
+      readonly factKey: "PENSION_INFORMATION";
+    }>;
   }>[];
-  readonly opportunities: readonly never[];
+  readonly opportunities: readonly Readonly<{
+    readonly id: string;
+    readonly benefitKey: "ADDITIONAL_PENSION_MATCH" | "SEASON_TICKET_LOAN";
+    readonly title: string;
+    readonly status: "available";
+    readonly statusLabel: "Available opportunity" | "Eligibility unknown";
+    readonly employerName: string;
+    readonly description: string;
+    readonly currentContribution: string | null;
+    readonly eligibility: "unknown";
+    readonly eligibilityLabel: "Eligibility has not been confirmed." | "Eligibility unknown";
+    readonly uptake: "inactive";
+    readonly uptakeLabel: "Not active.";
+    readonly includedInCurrentPlan: false;
+    readonly planInclusionLabel: "Not included in your current financial plan.";
+    readonly numericalSimulationSupported: false;
+    readonly numericalEffectLabel: "No numerical effect has been calculated.";
+    readonly furtherInformationRequired: true;
+    readonly provenance: Readonly<{
+      readonly sourceType: "canonical_employer_reference";
+      readonly sourceReference: string;
+      readonly referenceDate: string;
+      readonly lastConfirmedDate: string | null;
+      readonly recordVersion: number;
+      readonly schemaVersion: string;
+      readonly userStateId: string;
+    }>;
+  }>[];
   readonly emptyState: null | Readonly<{
     readonly kind: "no_workplace" | "no_verified_catalogue" | "no_known_information";
     readonly title: string;
