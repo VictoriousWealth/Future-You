@@ -63,6 +63,14 @@ export function HomeSurface() {
             </div>
           </section>
 
+          {data.guidedStory.available ? (
+            <Link className="fy-story-entry" href={data.guidedStory.href}>
+              <span className="fy-story-entry-art" aria-hidden="true">S</span>
+              <span><small>Guided demonstration</small><strong>{data.guidedStory.label}</strong><em>{data.guidedStory.description}</em></span>
+              <ActionTriangleIcon/>
+            </Link>
+          ) : null}
+
           <section className="fy-overview-section" aria-labelledby="right-now-title">
             <div className="fy-section-heading">
               <div><p>Your current path</p><h2 id="right-now-title">Your future right now</h2></div>
