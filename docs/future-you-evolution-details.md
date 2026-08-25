@@ -665,3 +665,16 @@
     - The supplied mockup communicates the number inside a filled centre while the outer ring alone represents completion, with heavier, friendlier rounded geometry.
   - Effect on Future You:
     - Goal progress now matches the visual construction of the reference more closely while Sarah's percentages, goal dates, balances and every deterministic financial rule remain unchanged.
+
+- **Visual refinement — Goal ring separation and stroke hierarchy clarified**
+  - What changed:
+    - The white space between the inner purple percentage disc and outer ring was widened, and the pale unfunded track was made thinner than the coloured funded arc.
+  - Previous approach:
+    - The two-circle structure was correct, but the inner disc sat too close to the outer ring and both outer strokes shared the same weight.
+  - New approach:
+    - The inner disc now occupies 56% of the full indicator diameter. The pale track uses a 7-unit stroke while the rounded funded arc uses an 11-unit stroke, preserving a clear visual hierarchy at both full and compact sizes.
+    - Mobile visual baselines cover Home and Goals, and a browser geometry assertion requires the funded stroke to remain thicker and the inner disc to remain below 60% of the ring diameter.
+  - Why it changed:
+    - The additional separation and unequal stroke weights are visible construction details in the supplied UI reference and make the funded portion easier to distinguish.
+  - Effect on Future You:
+    - Goal progress has clearer depth and emphasis without changing the authoritative percentage, balance, date or simulator result.
