@@ -172,18 +172,18 @@ All discovered automated tests passed; none were skipped.
 
 | Gate | Discovered | Passed | Failed | Skipped | Result |
 |---|---:|---:|---:|---:|---|
-| Vitest unit/regression | 26 files / 230 tests | 230 | 0 | 0 | PASS |
+| Vitest unit/regression | 26 files / 231 tests | 231 | 0 | 0 | PASS |
 | Supabase integration | 3 files / 10 tests | 10 | 0 | 0 | PASS |
 | PostgreSQL/pgTAP | 3 files / 123 tests | 123 | 0 | 0 | PASS |
 | Conversation evaluation corpus | 1 file / 34 tests | 34 | 0 | 0 | PASS |
 | Fake-provider modes | 1 file / 8 tests | 8 | 0 | 0 | PASS |
 | Product-surface authority/provider-zero | 4 files / 20 tests | 20 | 0 | 0 | PASS |
-| Full Playwright mobile-Chromium project | 21 tests | 21 | 0 | 0 | PASS |
-| Slice 7 release/responsive/accessibility cases | 6 tests | 6 | 0 | 0 | PASS |
+| Full Playwright mobile-Chromium project | 22 tests | 22 | 0 | 0 | PASS |
+| Slice 7 release/responsive/accessibility cases | 7 tests | 7 | 0 | 0 | PASS |
 | Stable visual-regression comparisons | 7 baselines | 7 | 0 | 0 | PASS |
 | Required Slice 7 evidence captures | 26 captures | 26 | 0 | 0 | PASS |
 
-The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The latest Playwright pass used one Chromium worker and completed in 1.4 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
+The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The latest Playwright pass used one Chromium worker and completed in 2.0 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
 
 Additional gates:
 
@@ -238,3 +238,9 @@ The repository is frozen at this verified release-candidate state. Any post-MVP 
 On 2026-08-25, the repeated “Current plan”/“Current plan active” banner was removed from the top of Home, Goals, Ask and Benefits. Current-plan state is now treated as the normal default rather than repeated chrome. Material exceptions remain explicit: hypothetical, historical-plan and stale-conversation warnings were not removed.
 
 The unused `ContextPill` component and its CSS were deleted, desktop grid placement was tightened, and affected renderer tests now assert that the banner is absent. Five approved visual baselines—Home, Goals, Ask initial, Ask £650 result and Benefits—were regenerated. A dedicated regression checks Home, Goals, Ask and Benefits at `414 × 896` and `1440 × 900`, asserting that neither the old banner hook nor its “Current plan active” text is present. The rebuilt Slice 7 suite passes 6/6, followed by a clean local reset and a no-update full Chromium result of 21/21. TypeScript, ESLint and the production build pass.
+
+## Approved generated-profile refinement
+
+The generic profile SVG in the product header was replaced with an AI-generated fictional Sarah portrait. The built-in image-generation tool produced a natural, racially ambiguous young-adult portrait with a pale blue/lavender background and circular-crop-safe framing. The selected image is stored as `public/images/sarah-profile.png`, resized to `512 × 512` (361 KB), and served through Next.js image optimisation.
+
+The financial-context settings link retains its existing accessible name; the nested portrait uses empty alternative text to prevent duplicate announcement. Unit coverage verifies the optimised image URL, link label, empty `alt` and absence of the former profile SVG. A browser regression verifies the visible image, URL, 40px-or-larger rendered dimensions and SVG absence. Home, Goals and Benefits baselines were regenerated. The rebuilt Slice 7 suite passes 7/7 and the clean no-update full Chromium suite passes 22/22; all 231 Vitest tests, TypeScript, ESLint, production build and whitespace checks pass.
