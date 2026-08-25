@@ -178,12 +178,12 @@ All discovered automated tests passed; none were skipped.
 | Conversation evaluation corpus | 1 file / 34 tests | 34 | 0 | 0 | PASS |
 | Fake-provider modes | 1 file / 8 tests | 8 | 0 | 0 | PASS |
 | Product-surface authority/provider-zero | 4 files / 20 tests | 20 | 0 | 0 | PASS |
-| Full Playwright mobile-Chromium project | 20 tests | 20 | 0 | 0 | PASS |
-| Slice 7 release/responsive/accessibility cases | 5 tests | 5 | 0 | 0 | PASS |
+| Full Playwright mobile-Chromium project | 21 tests | 21 | 0 | 0 | PASS |
+| Slice 7 release/responsive/accessibility cases | 6 tests | 6 | 0 | 0 | PASS |
 | Stable visual-regression comparisons | 7 baselines | 7 | 0 | 0 | PASS |
 | Required Slice 7 evidence captures | 26 captures | 26 | 0 | 0 | PASS |
 
-The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The definitive Playwright pass used one Chromium worker and completed in 1.3 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
+The evaluation, fake-provider, product-authority and Slice 7 counts are named subsets of their parent Vitest/Playwright suites and are shown separately because they are explicit release gates. The latest Playwright pass used one Chromium worker and completed in 1.4 minutes. Chromium was the only browser engine required and run; optional Firefox/WebKit smoke was not attempted.
 
 Additional gates:
 
@@ -237,4 +237,4 @@ The repository is frozen at this verified release-candidate state. Any post-MVP 
 
 On 2026-08-25, the repeated “Current plan”/“Current plan active” banner was removed from the top of Home, Goals, Ask and Benefits. Current-plan state is now treated as the normal default rather than repeated chrome. Material exceptions remain explicit: hypothetical, historical-plan and stale-conversation warnings were not removed.
 
-The unused `ContextPill` component and its CSS were deleted, desktop grid placement was tightened, and affected renderer tests now assert that the banner is absent. Five approved visual baselines—Home, Goals, Ask initial, Ask £650 result and Benefits—were regenerated. The rebuilt Slice 7 suite passed 5/5, followed by a clean local reset and a no-update full Chromium result of 20/20. TypeScript, ESLint and the production build pass.
+The unused `ContextPill` component and its CSS were deleted, desktop grid placement was tightened, and affected renderer tests now assert that the banner is absent. Five approved visual baselines—Home, Goals, Ask initial, Ask £650 result and Benefits—were regenerated. A dedicated regression checks Home, Goals, Ask and Benefits at `414 × 896` and `1440 × 900`, asserting that neither the old banner hook nor its “Current plan active” text is present. The rebuilt Slice 7 suite passes 6/6, followed by a clean local reset and a no-update full Chromium result of 21/21. TypeScript, ESLint and the production build pass.
