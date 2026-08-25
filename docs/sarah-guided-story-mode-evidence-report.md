@@ -225,3 +225,11 @@ No Slice 1–7 or Track A expectation was weakened, no frozen Sarah number chang
 - There is no live-provider dependency or generated dialogue.
 
 Any Phase B2 proposal should begin with a separate design and privacy review. The next useful candidate is not a more autonomous avatar; it is a narrowly scoped review of whether an optional, permanently disableable everyday companion adds value without obscuring the decision simulator. Real-user human-context persistence, if considered, needs its own provenance, purpose, RLS, retention, export, deletion and opt-out contract before schema or UI work.
+
+## Post-B1 correction note
+
+This report remains the historical B1 evidence at story version `1.0.0`. The later employer and
+Benefits correction advanced the story contracts to `1.1.0` only to source the opportunity step from
+Sarah's explicit OniBank offering/state records. Its four run identities and every frozen financial
+fact remain unchanged. Current verification is recorded in
+`sarah-employer-and-benefits-correction-evidence-report.md`.
