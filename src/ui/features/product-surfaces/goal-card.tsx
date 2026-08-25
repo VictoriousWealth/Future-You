@@ -25,6 +25,17 @@ export function GoalProgressRing({ progress }: Readonly<{
   );
 }
 
+export function GoalProgressBar({ progress }: Readonly<{
+  progress: SurfaceGoalDTO["progress"];
+}>) {
+  const completionClass = progress.fill === "100%" ? "is-complete" : "is-partial";
+  return (
+    <div className="fy-progress-track" role="img" aria-label={progress.accessibleLabel}>
+      <span className={completionClass} style={{ width: progress.fill }}/>
+    </div>
+  );
+}
+
 export function GoalCard({ goal, compact = false }: Readonly<{
   goal: SurfaceGoalDTO;
   compact?: boolean;
@@ -42,9 +53,7 @@ export function GoalCard({ goal, compact = false }: Readonly<{
         <strong>{goal.currentBalance.display}</strong>
         <span>of {goal.targetBalance.display}</span>
       </div>
-      <div className="fy-progress-track" role="img" aria-label={goal.progress.accessibleLabel}>
-        <span style={{ width: goal.progress.fill }}/>
-      </div>
+      <GoalProgressBar progress={goal.progress}/>
       <footer><span>Expected</span><strong>{goal.completion.display}</strong></footer>
     </article>
   );
