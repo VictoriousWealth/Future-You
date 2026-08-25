@@ -112,6 +112,12 @@ export interface BenefitsSurfaceDTO {
         readonly name: string;
         readonly statusLabel: string;
         readonly explanation: string;
+      }>
+    | Readonly<{
+        readonly status: "verified";
+        readonly name: string;
+        readonly statusLabel: string;
+        readonly explanation: string;
       }>;
   readonly activeFacts: readonly Readonly<{
     readonly id: string;
