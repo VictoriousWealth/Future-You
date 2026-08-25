@@ -18,7 +18,7 @@ export function AuthFrame({
   children,
   variant = "form"
 }: Readonly<{
-  title: string;
+  title?: string;
   eyebrow?: string;
   description?: string;
   children: ReactNode;
@@ -26,17 +26,19 @@ export function AuthFrame({
 }>) {
   return (
     <main className={`auth-page auth-page--${variant}`}>
-      <section className="auth-panel" aria-labelledby="auth-title">
+      <section className="auth-panel" aria-labelledby={title ? "auth-title" : undefined}>
         {variant === "welcome" ? <FutureYouBrand/> : (
           <Link className="auth-back-brand fy-wordmark" href="/welcome" aria-label="Back to Future You welcome">
             <FutureYouWordmark/>
           </Link>
         )}
-        <div className="auth-heading">
-          {eyebrow ? <p>{eyebrow}</p> : null}
-          <h1 id="auth-title">{title}</h1>
-          {description ? <span>{description}</span> : null}
-        </div>
+        {eyebrow || title || description ? (
+          <div className="auth-heading">
+            {eyebrow ? <p>{eyebrow}</p> : null}
+            {title ? <h1 id="auth-title">{title}</h1> : null}
+            {description ? <span>{description}</span> : null}
+          </div>
+        ) : null}
         {children}
       </section>
     </main>
