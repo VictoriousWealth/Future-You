@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import {
   createBrowserSupabaseClient,
   type BrowserSupabaseConfiguration
@@ -58,7 +59,15 @@ export function LoginForm({ configuration }: Readonly<{
         <label htmlFor="password">Password</label>
         <div className="auth-password-control">
           <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required />
-          <button type="button" aria-controls="password" aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button>
+          <button
+            type="button"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-controls="password"
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((value) => !value)}
+          >
+            {showPassword ? <FiEyeOff aria-hidden="true"/> : <FiEye aria-hidden="true"/>}
+          </button>
         </div>
       </div>
       {message ? <p id={messageId} className="auth-message error" role="alert">{message}</p> : null}
