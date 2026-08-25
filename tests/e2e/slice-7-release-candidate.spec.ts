@@ -195,7 +195,22 @@ test("captures the returning Sarah journey and every canonical visual state", as
   await page.screenshot({ path: evidence("07-home-lower-414x896.png") });
 
   await settleRoute(page, "/goals");
-  await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("December 2026");
+  const emergencyGoal = page.getByTestId("goal-goal-emergency-fund");
+  await expect(emergencyGoal).toContainText("December 2026");
+  const ringGeometry = await emergencyGoal.locator(".fy-goal-ratio").evaluate((ring) => {
+    const track = ring.querySelector<SVGCircleElement>(".fy-goal-ratio-track");
+    const arc = ring.querySelector<SVGCircleElement>(".fy-goal-ratio-arc");
+    if (!track || !arc) throw new Error("Goal progress ring geometry is incomplete.");
+    const ringWidth = ring.getBoundingClientRect().width;
+    const innerWidth = Number.parseFloat(getComputedStyle(ring, "::before").width);
+    return {
+      arcStroke: Number.parseFloat(getComputedStyle(arc).strokeWidth),
+      trackStroke: Number.parseFloat(getComputedStyle(track).strokeWidth),
+      innerRatio: innerWidth / ringWidth
+    };
+  });
+  expect(ringGeometry.arcStroke).toBeGreaterThan(ringGeometry.trackStroke);
+  expect(ringGeometry.innerRatio).toBeLessThan(0.6);
   await expect(page).toHaveScreenshot("goals-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("08-goals-current-414x896.png") });
 
