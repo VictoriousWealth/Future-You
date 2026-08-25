@@ -262,7 +262,7 @@ test("captures the returning Sarah journey and every canonical visual state", as
     (fill) => getComputedStyle(fill).backgroundImage
   );
   expect(progressFillBackground).toContain("repeating-linear-gradient");
-  expect(progressFillBackground).toContain("linear-gradient");
+  expect(progressFillBackground.match(/linear-gradient/g)?.length).toBeGreaterThanOrEqual(2);
   await expect(page).toHaveScreenshot("goals-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("08-goals-current-414x896.png") });
 
