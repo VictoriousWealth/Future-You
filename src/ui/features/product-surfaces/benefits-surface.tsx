@@ -57,6 +57,10 @@ export function BenefitsSurface() {
                   <h3>{fact.title}</h3>
                   <div className="fy-contribution-pair"><div><span>You</span><strong>{fact.employeeContribution}</strong></div><div><span>Employer</span><strong>{fact.employerContribution}</strong></div></div>
                   <p>{fact.treatment}</p><p>{fact.spendability}</p>
+                  <details className="fy-benefit-details">
+                    <summary>Why this appears</summary>
+                    <p>This is a confirmed informational fact in your current financial plan. It is not a new opportunity or spendable balance.</p>
+                  </details>
                 </article>
               ))}
             </section>
