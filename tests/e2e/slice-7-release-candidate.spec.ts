@@ -501,7 +501,7 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
       actionGap: secondButtonBox.top - firstButtonBox.bottom
     };
   });
-  expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(72);
+  expect(welcomeSpacing.identityToActions).toBeGreaterThanOrEqual(128);
   expect(welcomeSpacing.actionGap).toBeGreaterThanOrEqual(16);
   await expect(page).toHaveScreenshot("welcome.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
@@ -519,6 +519,22 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
   });
   expect(compactGeometry.brandTop).toBeGreaterThanOrEqual(0);
   expect(compactGeometry.actionsBottom).toBeLessThanOrEqual(compactGeometry.viewportHeight);
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  const breakpoint = page.locator(".auth-brand-break");
+  await expect(breakpoint).toHaveCSS("display", "inline");
+
+  await page.setViewportSize({ width: 769, height: 900 });
+  await expect(breakpoint).toHaveCSS("display", "none");
+  const desktopNameAlignment = await page.locator(".auth-brand-copy strong > span").evaluateAll((segments) =>
+    segments.map((segment) => segment.getBoundingClientRect().top)
+  );
+  expect(desktopNameAlignment).toHaveLength(2);
+  expect(Math.abs((desktopNameAlignment[0] ?? 0) - (desktopNameAlignment[1] ?? 0))).toBeLessThan(1);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page).toHaveScreenshot("welcome-desktop.png", { animations: "disabled" });
+  await page.screenshot({ path: evidence("welcome-1440x900.png"), animations: "disabled" });
 });
 
 test("scales meaningful interface icons with the Apple-aligned body type", async ({ page }) => {
