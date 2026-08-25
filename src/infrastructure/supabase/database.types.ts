@@ -305,6 +305,45 @@ export type Database = {
           },
         ]
       }
+      employer_memberships: {
+        Row: {
+          created_at: string
+          employer_display_name: string
+          employer_id: string
+          provision_id: string
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string
+          work_email_normalized: string
+        }
+        Insert: {
+          created_at?: string
+          employer_display_name: string
+          employer_id: string
+          provision_id: string
+          source: string
+          status: string
+          updated_at?: string
+          user_id: string
+          verified_at: string
+          work_email_normalized: string
+        }
+        Update: {
+          created_at?: string
+          employer_display_name?: string
+          employer_id?: string
+          provision_id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string
+          work_email_normalized?: string
+        }
+        Relationships: []
+      }
       financial_context_versions: {
         Row: {
           compatible_calendar_version: string
@@ -369,29 +408,38 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_activation_state: string
           created_at: string
           current_financial_context_version_id: string | null
           display_name: string
           is_demo: boolean
           onboarding_state: string
+          personal_email_confirmed_at: string | null
+          registration_origin: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_activation_state?: string
           created_at?: string
           current_financial_context_version_id?: string | null
           display_name: string
           is_demo?: boolean
           onboarding_state?: string
+          personal_email_confirmed_at?: string | null
+          registration_origin?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_activation_state?: string
           created_at?: string
           current_financial_context_version_id?: string | null
           display_name?: string
           is_demo?: boolean
           onboarding_state?: string
+          personal_email_confirmed_at?: string | null
+          registration_origin?: string
           updated_at?: string
           user_id?: string
         }
@@ -720,6 +768,180 @@ export type Database = {
         Returns: {
           context_version_id: string
           status: string
+        }[]
+      }
+      registration_activation_status: {
+        Args: {
+          p_activation_digest: string
+          p_now: string
+          p_registration_id: string
+        }
+        Returns: {
+          auth_user_id: string
+          employer_display_name: string
+          onboarding_complete: boolean
+          personal_email_confirmed: boolean
+          result_category: string
+          state: string
+        }[]
+      }
+      registration_begin: {
+        Args: {
+          p_code_digest: string
+          p_code_key_version: string
+          p_code_salt: string
+          p_company_id: string
+          p_correlation_id: string
+          p_delivery_id: string
+          p_now: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+          p_work_email_fingerprint: string
+          p_work_email_normalized: string
+        }
+        Returns: {
+          delivery_address: string
+          delivery_id: string
+          registration_id: string
+          result_category: string
+          should_deliver: boolean
+        }[]
+      }
+      registration_challenge_material: {
+        Args: { p_registration_id: string }
+        Returns: {
+          code_digest: string
+          code_expires_at: string
+          code_key_version: string
+          code_salt: string
+          state: string
+        }[]
+      }
+      registration_mark_account_conflict: {
+        Args: {
+          p_correlation_id: string
+          p_now: string
+          p_registration_id: string
+        }
+        Returns: undefined
+      }
+      registration_mark_delivery: {
+        Args: {
+          p_correlation_id: string
+          p_delivery_id: string
+          p_now: string
+          p_registration_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      registration_operational_issue_provision: {
+        Args: {
+          p_company_id: string
+          p_correlation_id: string
+          p_external_reference: string
+          p_now: string
+          p_provision_id: string
+          p_work_email_fingerprint: string
+          p_work_email_normalized: string
+        }
+        Returns: {
+          provision_id: string
+          result_category: string
+        }[]
+      }
+      registration_operational_revoke_provision: {
+        Args: {
+          p_correlation_id: string
+          p_now: string
+          p_provision_id: string
+          p_reason_code: string
+        }
+        Returns: {
+          affected_user_id: string
+          result_category: string
+        }[]
+      }
+      registration_release_personal_account_reservation: {
+        Args: {
+          p_correlation_id: string
+          p_now: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+          p_rotated_activation_digest: string
+        }
+        Returns: boolean
+      }
+      registration_resend_work_code: {
+        Args: {
+          p_code_digest: string
+          p_code_key_version: string
+          p_code_salt: string
+          p_correlation_id: string
+          p_delivery_id: string
+          p_now: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+        }
+        Returns: {
+          delivery_address: string
+          delivery_id: string
+          result_category: string
+          should_deliver: boolean
+        }[]
+      }
+      registration_reserve_personal_account: {
+        Args: {
+          p_activation_digest: string
+          p_auth_claim_digest: string
+          p_correlation_id: string
+          p_delivery_id: string
+          p_now: string
+          p_personal_email_fingerprint: string
+          p_personal_email_normalized: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+          p_rotated_activation_digest: string
+        }
+        Returns: {
+          reserved: boolean
+          result_category: string
+        }[]
+      }
+      registration_reserve_personal_confirmation_resend: {
+        Args: {
+          p_activation_digest: string
+          p_correlation_id: string
+          p_delivery_id: string
+          p_now: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+        }
+        Returns: {
+          auth_user_id: string
+          delivery_id: string
+          result_category: string
+          should_deliver: boolean
+        }[]
+      }
+      registration_verify_work_code: {
+        Args: {
+          p_activation_digest: string
+          p_candidate_digest: string
+          p_correlation_id: string
+          p_now: string
+          p_registration_id: string
+          p_request_fingerprint: string
+          p_request_id: string
+        }
+        Returns: {
+          result_category: string
+          verified: boolean
         }[]
       }
     }
