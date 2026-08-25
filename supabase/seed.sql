@@ -298,3 +298,113 @@ insert into private.employee_provisions (
   statement_timestamp(),
   statement_timestamp() + interval '30 days'
 );
+
+-- Sarah predates Track A. This canonical fixture backfill records the equivalent verified
+-- employer-provisioned membership without fabricating an OTP or another Auth identity.
+insert into private.employee_provisions (
+  provision_id, employer_id, work_email_normalized, work_email_fingerprint,
+  external_reference, status, available_from, expires_at, claimed_user_id, claimed_at,
+  created_at, updated_at
+) values (
+  '55555555-5555-4555-8555-555555555559',
+  '44444444-4444-4444-8444-444444444444',
+  'sarah.wonk@onibank.test',
+  encode(extensions.digest(convert_to('canonical-demo:sarah.wonk@onibank.test', 'UTF8'), 'sha256'), 'hex'),
+  'canonical-sarah-employer-membership-v1',
+  'CLAIMED',
+  '2026-08-01 00:00:00+00'::timestamptz,
+  '2026-08-31 00:00:00+00'::timestamptz,
+  '11111111-1111-4111-8111-111111111111',
+  '2026-08-25 12:00:00+00'::timestamptz,
+  '2026-08-25 12:00:00+00'::timestamptz,
+  '2026-08-25 12:00:00+00'::timestamptz
+);
+
+insert into public.employer_memberships (
+  user_id, employer_id, employer_display_name, provision_id, work_email_normalized,
+  status, source, verified_at, created_at, updated_at
+) values (
+  '11111111-1111-4111-8111-111111111111',
+  '44444444-4444-4444-8444-444444444444',
+  'OniBank',
+  '55555555-5555-4555-8555-555555555559',
+  'sarah.wonk@onibank.test',
+  'ACTIVE',
+  'employer_provisioned',
+  '2026-08-25 12:00:00+00'::timestamptz,
+  '2026-08-25 12:00:00+00'::timestamptz,
+  '2026-08-25 12:00:00+00'::timestamptz
+);
+
+insert into public.employer_benefit_offerings (
+  offering_id, employer_id, benefit_key, display_name, category, offering_status,
+  provenance_source_type, source_reference, reference_date, last_confirmed_date,
+  numerical_simulation_supported, further_information_required,
+  record_version, schema_version, created_at
+) values (
+  '77777777-7777-4777-8777-777777777701',
+  '44444444-4444-4444-8444-444444444444',
+  'ADDITIONAL_PENSION_MATCH',
+  'Additional pension match',
+  'PENSION',
+  'AVAILABLE',
+  'CANONICAL_DEMONSTRATION_REFERENCE',
+  'Canonical OniBank demonstration benefit record',
+  '2026-08-31'::date,
+  '2026-08-31'::date,
+  false,
+  true,
+  1,
+  'future-you.employer-benefit-offering/1.0.0',
+  '2026-08-31 00:00:00+00'::timestamptz
+), (
+  '77777777-7777-4777-8777-777777777702',
+  '44444444-4444-4444-8444-444444444444',
+  'SEASON_TICKET_LOAN',
+  'Season-ticket loan',
+  'TRAVEL',
+  'AVAILABLE',
+  'CANONICAL_DEMONSTRATION_REFERENCE',
+  'Canonical OniBank demonstration benefit record',
+  '2026-08-31'::date,
+  '2026-08-31'::date,
+  false,
+  true,
+  1,
+  'future-you.employer-benefit-offering/1.0.0',
+  '2026-08-31 00:00:00+00'::timestamptz
+);
+
+insert into public.user_benefit_states (
+  state_id, user_id, employer_id, offering_id, eligibility_status, uptake_status,
+  included_in_financial_baseline, information_completeness, provenance_source_type,
+  source_reference, last_confirmed_date, schema_version, created_at
+) values (
+  '88888888-8888-4888-8888-888888888801',
+  '11111111-1111-4111-8111-111111111111',
+  '44444444-4444-4444-8444-444444444444',
+  '77777777-7777-4777-8777-777777777701',
+  'UNKNOWN',
+  'INACTIVE',
+  false,
+  'INCOMPLETE',
+  'CANONICAL_DEMONSTRATION_FIXTURE',
+  'Canonical Sarah opportunity status v1',
+  '2026-08-31'::date,
+  'future-you.user-benefit-state/1.0.0',
+  '2026-08-31 00:00:00+00'::timestamptz
+), (
+  '88888888-8888-4888-8888-888888888802',
+  '11111111-1111-4111-8111-111111111111',
+  '44444444-4444-4444-8444-444444444444',
+  '77777777-7777-4777-8777-777777777702',
+  'UNKNOWN',
+  'INACTIVE',
+  false,
+  'INCOMPLETE',
+  'CANONICAL_DEMONSTRATION_FIXTURE',
+  'Canonical Sarah opportunity status v1',
+  '2026-08-31'::date,
+  'future-you.user-benefit-state/1.0.0',
+  '2026-08-31 00:00:00+00'::timestamptz
+);
