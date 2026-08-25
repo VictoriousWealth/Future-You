@@ -1,7 +1,7 @@
 # Slice 6 — Clean-state evidence report
 
-Status: complete implementation evidence; awaiting product approval  
-Verification date: 2026-08-24  
+Status: approved
+Verification date: 2026-08-24
 Slice 7: not started
 
 ## Outcome
