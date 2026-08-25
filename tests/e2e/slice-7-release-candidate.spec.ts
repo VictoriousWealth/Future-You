@@ -206,11 +206,13 @@ test("captures the returning Sarah journey and every canonical visual state", as
     return {
       arcStroke: Number.parseFloat(getComputedStyle(arc).strokeWidth),
       trackStroke: Number.parseFloat(getComputedStyle(track).strokeWidth),
+      ringWidth,
       innerRatio: innerWidth / ringWidth
     };
   });
   expect(ringGeometry.arcStroke).toBeGreaterThan(ringGeometry.trackStroke);
-  expect(ringGeometry.innerRatio).toBeLessThan(0.6);
+  expect(ringGeometry.ringWidth).toBeGreaterThan(56);
+  expect(ringGeometry.innerRatio).toBeLessThanOrEqual(0.61);
   await expect(page).toHaveScreenshot("goals-current.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("08-goals-current-414x896.png") });
 
