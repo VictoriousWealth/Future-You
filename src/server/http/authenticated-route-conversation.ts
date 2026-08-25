@@ -2,6 +2,7 @@ import "server-only";
 import type { ConversationApplication } from "../../application/conversation/application";
 import { ConversationApplicationError } from "../../application/conversation/application-error";
 import { AuthenticationBoundaryError } from "../../infrastructure/auth/authentication-error";
+import { AccountActivationRequiredError } from "../../infrastructure/auth/account-activation-error";
 import { PersistenceBoundaryError } from "../../infrastructure/persistence/persistence-errors";
 import {
   resolveAuthenticatedConversationApplication,
@@ -32,6 +33,9 @@ export async function withAuthenticatedConversationApplication(
     const context = await resolver();
     return await operation(context.application);
   } catch (error) {
+    if (error instanceof AccountActivationRequiredError) {
+      return apiErrorResponse(403, "ACCOUNT_ACTIVATION_REQUIRED", error.message, correlationId);
+    }
     if (error instanceof AuthenticationBoundaryError) {
       return apiErrorResponse(401, error.code, error.message, correlationId);
     }

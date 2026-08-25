@@ -44,7 +44,7 @@ export function BenefitsSurface() {
           <section className="fy-workplace-card" data-testid="workplace-state">
             <span className="fy-benefit-icon"><ProductIcon name="benefits"/></span>
             <div><p>Workplace</p><h2>{data.workplace.name ?? "Not added"}</h2><strong>{data.workplace.statusLabel}</strong></div>
-            {data.workplace.status === "unverified" ? <small>{data.workplace.explanation}</small> : null}
+            {data.workplace.status !== "not_supplied" ? <small>{data.workplace.explanation}</small> : null}
           </section>
           {data.activeFacts.length > 0 ? (
             <section className="fy-active-benefits" aria-labelledby="active-benefits-title">

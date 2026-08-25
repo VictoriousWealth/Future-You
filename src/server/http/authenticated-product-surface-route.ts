@@ -1,5 +1,6 @@
 import "server-only";
 import { AuthenticationBoundaryError } from "../../infrastructure/auth/authentication-error";
+import { AccountActivationRequiredError } from "../../infrastructure/auth/account-activation-error";
 import { PersistenceBoundaryError } from "../../infrastructure/persistence/persistence-errors";
 import {
   resolveAuthenticatedProductSurfaceApplication,
@@ -16,6 +17,9 @@ export async function withAuthenticatedProductSurface(
     const context = await resolver();
     return await operation(context.application);
   } catch (error) {
+    if (error instanceof AccountActivationRequiredError) {
+      return apiErrorResponse(403, "ACCOUNT_ACTIVATION_REQUIRED", error.message, correlationId);
+    }
     if (error instanceof AuthenticationBoundaryError) {
       return apiErrorResponse(401, error.code, error.message, correlationId);
     }

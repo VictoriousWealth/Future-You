@@ -223,6 +223,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(loginPassword).toHaveAttribute("type", "text");
   await page.getByRole("button", { name: "Hide password" }).click();
   await expect(loginPassword).toHaveAttribute("type", "password");
+  await loginPassword.evaluate((element) => element.blur());
   await expect(page).toHaveScreenshot("login.png", { animations: "disabled" });
   await page.screenshot({ path: evidence("02-login-414x896.png") });
 
@@ -233,18 +234,12 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.getByRole("link", { name: "Back to Future You welcome" })).toContainText("FUTUREYOU");
   await expect(page.getByRole("link", { name: "Back to Future You welcome" })).not.toContainText("AI");
   await expect(page.locator(".auth-back-brand .fy-angular-symbol")).toBeVisible();
-  await expect(page.getByText(/Company ID/i)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Show passwords" })).toBeVisible();
-  await page.getByRole("button", { name: "Show passwords" }).click();
-  await expect(page.locator("#signup-password")).toHaveAttribute("type", "text");
-  await expect(page.getByLabel("Confirm password")).toHaveAttribute("type", "text");
-  await page.getByRole("button", { name: "Hide passwords" }).click();
+  await expect(page.getByLabel("Company ID")).toBeVisible();
+  await expect(page.getByLabel("Work email")).toBeVisible();
+  await expect(page.getByLabel("Personal email")).toHaveCount(0);
+  await expect(page.locator("#signup-password")).toHaveCount(0);
+  await expect(page.getByText("1 of 3 · Verify your workplace")).toBeVisible();
   await page.screenshot({ path: evidence("03-signup-414x896.png") });
-  await page.getByLabel("Personal email").fill("new-user@example.test");
-  await page.locator("#signup-password").fill("Release-Local-Only-2026!");
-  await page.getByLabel("Confirm password").fill("Different-Local-Password-2026!");
-  await page.getByRole("button", { name: "Register", exact: true }).click();
-  await expect(page.locator(".auth-message[role='alert']")).toHaveText("The passwords do not match.");
 
   await signIn(page, "alex");
   await expect(page).toHaveURL(/\/onboarding$/);
@@ -642,11 +637,14 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
   await page.goto("/signup");
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByRole("heading", { name: "Register", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Register", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify my workplace", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Login with your personal email", exact: true })).toBeVisible();
   await expect(page.getByText("Create account", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Sign in", { exact: true })).toHaveCount(0);
-  const registerDescription = page.getByText("Workplace information is optional and comes later, separately from account creation.", { exact: true });
+  await expect(page.getByLabel("Company ID")).toBeVisible();
+  await expect(page.getByLabel("Work email")).toBeVisible();
+  await expect(page.getByLabel("Personal email")).toHaveCount(0);
+  const registerDescription = page.getByText("Verify your workplace, then create the personal Login that belongs to you.", { exact: true });
   const mobileRegisterDescriptionGap = await page.locator(".auth-panel").evaluate((panel) => {
     const form = panel.querySelector<HTMLElement>(".auth-form");
     const description = panel.querySelector<HTMLElement>(".auth-description");
@@ -680,7 +678,7 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
 });
 
 test("captures the shared onboarding lockup without confirming financial context", async ({ page }) => {
-  await signIn(page, "onboarding");
+  await signIn(page, "visualOnboarding");
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(page.getByRole("heading", { name: "A picture of today" })).toBeVisible();
   const onboardingWordmark = page.locator(".onboarding-header .fy-wordmark");

@@ -137,7 +137,8 @@ function fact(amount: string) {
 function buildDraft(
   form: FormState,
   draftKey: string,
-  baseDraft: FinancialOnboardingDraftDTO | null
+  baseDraft: FinancialOnboardingDraftDTO | null,
+  provisionedWorkplace: boolean
 ): FinancialOnboardingDraftDTO {
   const snapshotDate = form.snapshotDate;
   const activeGoals = form.goals;
@@ -214,7 +215,7 @@ function buildDraft(
         : { declaration: "none", items: [] },
     confirmedOneOffEvents: [],
     informationalContext: baseDraft?.informationalContext ?? [],
-    workplace: form.workplace.trim()
+    workplace: !provisionedWorkplace && form.workplace.trim()
       ? {
           name: form.workplace.trim(),
           associationSource: "user_provided",
@@ -230,7 +231,10 @@ export function ManualOnboardingFlow({
   draftKey,
   mode = "initial",
   expectedCurrentContextVersionId = null,
-  initialDraft = null
+  initialDraft = null,
+  provisionedEmployerName = null,
+  confirmationReady = true,
+  registrationActivation = false
 }: {
   configuration: BrowserSupabaseConfiguration;
   snapshotDate: string;
@@ -238,6 +242,9 @@ export function ManualOnboardingFlow({
   mode?: "initial" | "revision";
   expectedCurrentContextVersionId?: string | null;
   initialDraft?: FinancialOnboardingDraftDTO | null;
+  provisionedEmployerName?: string | null;
+  confirmationReady?: boolean;
+  registrationActivation?: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(() => initialForm(snapshotDate, initialDraft));
@@ -325,7 +332,7 @@ export function ManualOnboardingFlow({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          draft: buildDraft(form, draftKey, initialDraft),
+          draft: buildDraft(form, draftKey, initialDraft, provisionedEmployerName !== null),
           mode,
           expectedCurrentContextVersionId
         })
@@ -354,7 +361,7 @@ export function ManualOnboardingFlow({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          draft: buildDraft(form, draftKey, initialDraft),
+          draft: buildDraft(form, draftKey, initialDraft, provisionedEmployerName !== null),
           mode,
           expectedCurrentContextVersionId,
           requestId: `${mode === "initial" ? "confirm" : "revise"}-${draftKey}`,
@@ -381,7 +388,7 @@ export function ManualOnboardingFlow({
           <p className="eyebrow">{mode === "initial" ? "Build current path" : "Correct current facts"}</p>
           <span>Step {step + 1} of {STEP_TITLES.length}</span>
         </div>
-        <SignOutButton configuration={configuration} />
+        {registrationActivation ? <span className="registration-secure-state">Activation in progress</span> : <SignOutButton configuration={configuration} />}
       </header>
       {mode === "revision" ? (
         <aside className="revision-notice" aria-labelledby="revision-notice-title">
@@ -471,8 +478,18 @@ export function ManualOnboardingFlow({
         )}
         {step === 6 && (
           <div className="form-stack">
-            <p>Workplace information is separate, optional and unverified. It cannot change this calculation.</p>
-            <label>Employer or workplace <small>Optional</small><input aria-label="Employer or workplace" value={form.workplace} onChange={(event) => update("workplace", event.target.value)} /></label>
+            {provisionedEmployerName ? (
+              <div className="verified-workplace-summary">
+                <span>Verified through your employer invitation</span>
+                <strong>{provisionedEmployerName}</strong>
+                <p>This verified membership stays separate from your financial calculation.</p>
+              </div>
+            ) : (
+              <>
+                <p>Workplace information is separate, optional and unverified. It cannot change this calculation.</p>
+                <label>Employer or workplace <small>Optional</small><input aria-label="Employer or workplace" value={form.workplace} onChange={(event) => update("workplace", event.target.value)} /></label>
+              </>
+            )}
           </div>
         )}
         {step === 7 && (
@@ -480,7 +497,8 @@ export function ManualOnboardingFlow({
             {!preview && <p>Future You will now model your current path on the server. {mode === "initial" ? "No financial context has been saved yet." : "Your current version will remain active until you confirm the preview."}</p>}
             {preview && <FinancialContextPreviewView preview={preview} />}
             {!preview && <button type="button" className="primary-button" disabled={busy} onClick={requestPreview}>{busy ? "Building preview…" : "Preview my current path"}</button>}
-            {preview && <button type="button" className="primary-button" disabled={busy} onClick={confirm}>{busy ? "Confirming…" : "Confirm this financial context"}</button>}
+            {preview && !confirmationReady ? <p className="registration-confirmation-gate">Confirm your personal email above before activating this reviewed financial context.</p> : null}
+            {preview && <button type="button" className="primary-button" disabled={busy || !confirmationReady} onClick={confirm}>{busy ? "Confirming…" : "Confirm this financial context"}</button>}
           </div>
         )}
         {busy ? <p className="onboarding-busy" role="status">Your confirmed values are being handled securely…</p> : null}

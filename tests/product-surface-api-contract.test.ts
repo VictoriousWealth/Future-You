@@ -10,6 +10,7 @@ import { handleGET as previewGET } from "../src/app/api/v1/goals/preview/route";
 import { handleGET as benefitsGET } from "../src/app/api/v1/benefits/route";
 import { slice2TestDependencies } from "./helpers/slice-2";
 import { AuthenticationBoundaryError } from "../src/infrastructure/auth/authentication-error";
+import { AccountActivationRequiredError } from "../src/infrastructure/auth/account-activation-error";
 
 function resolver(): AuthenticatedProductSurfaceResolver {
   const contextSource = new SarahV1ContextSource();
@@ -76,5 +77,20 @@ describe("Slice 6 product-surface API contracts", () => {
       expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
       expect(await response.json()).toMatchObject({ error: { code: "AUTHENTICATION_REQUIRED" } });
     }
+  });
+
+  it("distinguishes a signed-in account that has not completed activation", async () => {
+    const pendingActivation: AuthenticatedProductSurfaceResolver = async () => {
+      throw new AccountActivationRequiredError();
+    };
+    const response = await homeGET(pendingActivation);
+    expect(response.status).toBe(403);
+    expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "ACCOUNT_ACTIVATION_REQUIRED",
+        message: expect.stringContaining("onboarding")
+      }
+    });
   });
 });

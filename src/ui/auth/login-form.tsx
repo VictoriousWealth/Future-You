@@ -42,9 +42,16 @@ export function LoginForm({ configuration }: Readonly<{
       return;
     }
     const requested = searchParams.get("next");
-    const destination = requested?.startsWith("/") && !requested.startsWith("//")
+    let destination = requested?.startsWith("/") && !requested.startsWith("//")
       ? requested
       : "/home";
+    if (!requested) {
+      const onboardingResponse = await fetch("/api/v1/onboarding/status", { cache: "no-store" });
+      if (onboardingResponse.ok) {
+        const onboarding = await onboardingResponse.json();
+        destination = onboarding.status === "COMPLETE" ? "/home" : "/onboarding";
+      }
+    }
     router.replace(destination);
     router.refresh();
   }
@@ -73,7 +80,7 @@ export function LoginForm({ configuration }: Readonly<{
       </div>
       {message ? <p id={messageId} className="auth-message error" role="alert">{message}</p> : null}
       <button className="auth-primary" type="submit" disabled={pending || !ready}>{pending ? "Logging in…" : "Login"}</button>
-      <p className="auth-switch">New to Future You? <Link href="/signup">Register</Link></p>
+      <p className="auth-switch">Invited by your employer? <Link href="/register">Register</Link></p>
     </form>
   );
 }

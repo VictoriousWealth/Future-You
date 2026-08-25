@@ -12,6 +12,10 @@ export const LOCAL_USERS = {
   onboarding: {
     email: "onboarding@example.test",
     password: "Onboarding-Local-Only-2026!"
+  },
+  visualOnboarding: {
+    email: "visual-onboarding@example.test",
+    password: "Visual-Onboarding-Only-2026!"
   }
 } as const;
 

@@ -23,7 +23,20 @@ select ok(not has_table_privilege('anon', 'public.simulation_runs', 'insert'), '
 select ok(has_column_privilege('authenticated', 'public.profiles', 'current_financial_context_version_id', 'update'), 'authenticated may update only the current pointer');
 select ok(not has_column_privilege('authenticated', 'public.profiles', 'onboarding_state', 'update'), 'authenticated cannot update onboarding state in Slice 3');
 select ok(not has_column_privilege('authenticated', 'public.profiles', 'updated_at', 'update'), 'authenticated cannot forge profile timestamps');
-select ok(not exists(select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prosecdef), 'public exposes no security-definer function');
+select ok(not exists(
+  select 1 from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef
+    and p.proname not in (
+      'registration_begin', 'registration_mark_delivery',
+      'registration_challenge_material', 'registration_verify_work_code',
+      'registration_resend_work_code', 'registration_reserve_personal_account',
+      'registration_release_personal_account_reservation',
+      'registration_reserve_personal_confirmation_resend',
+      'registration_operational_issue_provision', 'registration_operational_revoke_provision',
+      'registration_mark_account_conflict', 'registration_activation_status'
+    )
+), 'public exposes no unapproved security-definer function');
 select ok(not has_schema_privilege('authenticated', 'private', 'usage'), 'authenticated cannot use the private trigger schema');
 
 insert into public.financial_context_versions (

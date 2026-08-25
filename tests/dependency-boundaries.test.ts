@@ -143,6 +143,7 @@ describe("automated dependency-direction enforcement", () => {
     const routeViolations = routeFiles
       .filter((file) => {
         const source = readFileSync(file, "utf8");
+        if (relative(SOURCE_ROOT, file).includes("app/api/v1/registration/")) return false;
         return (
           (!source.includes("authenticated-route") &&
             !source.includes("authenticated-product-surface-route")) ||
@@ -151,6 +152,20 @@ describe("automated dependency-direction enforcement", () => {
       })
       .map((file) => relative(SOURCE_ROOT, file));
     expect(routeViolations).toEqual([]);
+
+    const registrationMutationRoutes = routeFiles.filter((file) => {
+      const path = relative(SOURCE_ROOT, file);
+      return path.includes("app/api/v1/registration/")
+        && !path.includes("/status/")
+        && !path.includes("/test-mails/");
+    });
+    expect(registrationMutationRoutes.length).toBeGreaterThan(0);
+    for (const file of registrationMutationRoutes) {
+      const source = readFileSync(file, "utf8");
+      expect(source).toContain("registration-route");
+      expect(source).toContain("same-origin");
+      expect(source).not.toContain("authenticated-route");
+    }
 
     const composition = readFileSync(
       join(SOURCE_ROOT, "server", "authenticated-application.ts"),
@@ -173,6 +188,27 @@ describe("automated dependency-direction enforcement", () => {
       )
       .map((file) => relative(SOURCE_ROOT, file));
     expect(violations).toEqual([]);
+  });
+
+  it("registration privilege remains isolated from ordinary application paths and browser code", () => {
+    const privilegedName = "SUPABASE_REGISTRATION_SECRET_KEY";
+    const productionFiles = [
+      ...sourceFiles(join(SOURCE_ROOT, "app")),
+      ...sourceFiles(join(SOURCE_ROOT, "server")),
+      ...sourceFiles(join(SOURCE_ROOT, "infrastructure")),
+      ...sourceFiles(join(SOURCE_ROOT, "ui"))
+    ];
+    const holders = productionFiles
+      .filter((file) => readFileSync(file, "utf8").includes(privilegedName))
+      .map((file) => relative(SOURCE_ROOT, file));
+    expect(holders).toEqual(["infrastructure/registration/registration-configuration.ts"]);
+
+    const registrationComposition = readFileSync(
+      join(SOURCE_ROOT, "server", "registration-application.ts"),
+      "utf8"
+    );
+    expect(registrationComposition).toContain("SupabaseRegistrationPersistence");
+    expect(registrationComposition).not.toContain("createRequestSupabaseClient()\n  const admin");
   });
 
   it("server identity is verified from claims and request clients are not global singletons", () => {

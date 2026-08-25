@@ -13,7 +13,7 @@ describe("Welcome page", () => {
     expect(markup).toContain("/images/future-you-logo.svg");
     expect(markup).not.toContain("future-you-auth-backdrop.svg");
     expect(markup).toContain('href="/login"');
-    expect(markup).toContain('href="/signup"');
+    expect(markup).toContain('href="/register"');
     expect(markup).toContain(">Login</a>");
     expect(markup).toContain(">Register</a>");
     expect(markup).not.toContain(">Sign in</a>");
