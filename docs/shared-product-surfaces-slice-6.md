@@ -1,8 +1,12 @@
 # Slice 6 — Shared product surfaces contract
 
-Status: canonical implementation contract  
+Status: historical Slice 6 contract with post-B1 correction
 Approved: 2026-08-24  
 Supersedes: the Home/Goals/Benefits assumptions in the older UI mapping where they conflict with this document
+
+Post-B1 amendment: `sarah-employer-and-benefits-correction-contract.md` is authoritative where Sarah's
+later verified OniBank membership and explicit offering records conflict with this historical Slice 6
+data audit. The financial and provider boundaries in this document remain in force.
 
 ## Purpose and boundary
 
@@ -189,6 +193,8 @@ owner's separate `workplace_associations` row. Then call `GET /api/v1/benefits`.
 change the workplace state, but it cannot create an opportunity. The production product-surface
 composition imports no conversation provider, and the dependency/bundle gates enforce that boundary.
 
-Known limitation: there is no authoritative benefit-catalogue persistence contract in Slice 6. That is
-intentional. Available/eligibility-unknown opportunity cards cannot appear until a later slice defines
-their sources, freshness, ownership and user-facing state.
+Post-B1 correction outcome: the later approved narrow Option B slice supplied the previously missing
+authoritative employer-offering and owner-scoped state model. Sarah now receives a verified OniBank
+Benefits presentation, an informational Home preview and a sourced story opportunity. This does not
+retroactively change the original Slice 6 evidence, and it adds no numerical benefit calculation,
+eligibility claim, activation path, provider dependency or Ask branch.
