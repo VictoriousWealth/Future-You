@@ -897,3 +897,16 @@
     - The first backing treatment was visible but too restrained relative to the requested splash effect.
   - Effect on Future You:
     - The decorative white layer now reads clearly against the blue auth header without obscuring the product name or affecting any other brand surface.
+
+- **Welcome action refinement — Login adopts the reference scale**
+  - What changed:
+    - The primary Welcome Login action increased from a compact pill to a near-full-width control matching the supplied Screen 1 hierarchy.
+  - Geometry rule:
+    - The action group may grow to `20.75rem`.
+    - Login fills that width and has a `4.25rem` minimum height.
+    - Register remains centred at 85% of the group width, preserving clear primary/secondary emphasis.
+    - At the canonical mobile viewport, Login must render at least 320px wide, 68px tall and 15% wider than Register.
+  - Scope rule:
+    - The enlargement applies only to the Welcome entry action; Login and Register form submit buttons remain unchanged.
+  - Effect on Future You:
+    - The primary entry action now has the confident size and visual priority shown in the approved mockup without changing its `/login` destination.
