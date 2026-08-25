@@ -922,3 +922,24 @@
     - The prior 72×68px treatment was still smaller than the intended decorative emphasis.
   - Effect on Future You:
     - The white splash is now unmistakable while the coloured logo and `FutureYou` remain legible and unclipped.
+
+- **Authentication brand refinement — Angular artwork receives an optical offset**
+  - What changed:
+    - The coloured logo inside the Login/Register splash now uses `top: -7px` and `right: 1px`.
+  - Scope rule:
+    - The relative offset applies only inside `.auth-back-brand` and does not move the logo on Welcome, onboarding or authenticated product surfaces.
+    - The splash size, card placement, stacking and wordmark clearance remain unchanged.
+  - Effect on Future You:
+    - The angular mark sits at the requested optical position within the enlarged white splash without altering any accessible name or navigation behaviour.
+
+- **Superseding authentication terminology refinement — Login and Register apply to the forms**
+  - What changed:
+    - The prior Welcome-only terminology change now extends through the `/login` and `/signup` screens.
+  - User-facing rule:
+    - `/login` uses `Login`, `Logging in…`, `Preparing secure login…` and `We couldn’t log you in`.
+    - `/signup` uses `Register`, `Registering…`, registration-oriented supporting copy and a reciprocal `Login` link.
+    - Page metadata uses `Login | Future You` and `Register | Future You`.
+  - Preserved implementation:
+    - Routes remain `/login` and `/signup`; Supabase `signInWithPassword` and `signUp` calls and internal component names remain unchanged.
+  - Effect on Future You:
+    - Entry and form terminology now remain consistent from Welcome through authentication without changing account or session behaviour.
