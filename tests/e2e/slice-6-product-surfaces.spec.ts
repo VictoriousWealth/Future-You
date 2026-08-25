@@ -123,7 +123,9 @@ test("renders loading, safe error, empty-benefits and historical-preview states"
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(actualHome) });
   });
   await page.reload();
-  await expect(page.getByTestId("surface-loading")).toBeVisible();
+  await expect(page.getByTestId("home-surface")).toBeVisible();
+  await expect(page.getByTestId("surface-loading")).toHaveCount(1);
+  await expect(page.getByTestId("home-surface").getByTestId("surface-loading")).toBeVisible();
   await page.screenshot({ path: evidence("home-loading-414x896.png") });
   await expect(page.getByText("What are you thinking about?")).toBeVisible();
   await page.unroute("**/api/v1/home");
@@ -208,24 +210,24 @@ test("keeps an actual stored run paired with its original plan after a revision"
 
   const current = await page.evaluate(async () => await (await fetch("/api/v1/financial-context/current")).json());
   const originalVersion = current.context.version as string;
-  const runId = await page.evaluate(async ({ version, paymentPeriod, requestId }) => {
+  const runRequest = {
+    ...oneOffCommand(`s6_historical_run_${stamp}`),
+    expectedContextVersionId: originalVersion,
+    change: {
+      ...oneOffCommand(`s6_historical_run_${stamp}`).change,
+      paymentPeriod: current.context.projectionStartPeriod as string
+    }
+  };
+  const runId = await page.evaluate(async (payload) => {
     const response = await fetch("/api/v1/scenarios/one-off-purchases", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...oneOffCommand(requestId),
-        expectedContextVersionId: version,
-        change: { ...oneOffCommand(requestId).change, paymentPeriod }
-      })
+      body: JSON.stringify(payload)
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error?.message ?? "run failed");
     return body.calculation.runId as string;
-  }, {
-    version: originalVersion,
-    paymentPeriod: current.context.projectionStartPeriod as string,
-    requestId: `s6_historical_run_${stamp}`
-  });
+  }, runRequest);
 
   const correction = await page.evaluate(async () => await (await fetch("/api/v1/financial-context/current/revisions")).json());
   correction.draft.identity.contextVersion = `slice6-revision-${stamp}`;
