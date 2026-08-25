@@ -718,3 +718,16 @@
     - The smallest text should follow an explicit, testable readability floor rather than being reduced until it merely fits a component.
   - Effect on Future You:
     - Supporting labels and metadata remain compact but are materially easier to read across phone, tablet and desktop, with no change to financial authority or functionality.
+
+- **Visual refinement — Horizontal goal progress adopts segmented gradient blocks**
+  - What changed:
+    - Goal progress bars on Home, Goals and stored hypothetical previews changed from one continuous funded strip to a staccato sequence of funded blocks.
+  - Previous approach:
+    - The cyan-to-blue gradient and exact proportional width were useful, but the uninterrupted fill did not reproduce the supplied mockup's segmented progress construction.
+  - New approach:
+    - A repeating light-separator layer sits above the existing gradient, producing short coloured blocks without replacing the preferred Future You palette. The empty portion remains a clean outlined track.
+    - The server's bounded `fill` string still sets the span width verbatim. A computed-style browser assertion requires both the repeating segmentation and underlying gradient layers, and refreshed Home and Goals visual baselines cover current and hypothetical states.
+  - Why it changed:
+    - The segmented rhythm is a distinctive structural detail of the approved reference UI, while the existing gradient is stronger than the reference's flat fill colour.
+  - Effect on Future You:
+    - Goal bars now align more closely with the mockup without changing their percentage, accessibility label or deterministic source.
