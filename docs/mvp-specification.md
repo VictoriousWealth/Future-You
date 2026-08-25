@@ -1,11 +1,17 @@
 # Future You — MVP Specification
 
-**Version:** 1.0-draft  
+**Version:** 1.1-draft  
 **Status:** Proposed scope contract  
 **Market assumption:** UK, GBP, monthly employed-income use case  
 **Canonical acceptance profile:** Sarah v1  
 **Behavioural dependencies:** `simulation-rules-specification.md`, `golden-path-conversation-specification.md`, `golden-path-ui-mapping.md`  
 **Out of scope for this document:** Frontend, backend, database, model/provider and deployment architecture
+
+**Employer-provisioned registration amendment:** `employer-provisioned-registration-contract.md` is
+authoritative for first-time access and returning login. It supersedes the earlier open-signup and
+optional-post-onboarding workplace rules in this document. Registration now requires a matching
+Company ID and provisioned work email, work-email code verification, and subsequent creation of a
+personal-email/password account before financial onboarding.
 
 **Slice 6 scoped amendment:** `shared-product-surfaces-slice-6.md` is authoritative for Home, Goals and
 Benefits. Only persisted active facts or authoritative opportunity records may be shown. The current
@@ -51,9 +57,9 @@ The MVP is not trying to prove that Future You can answer every financial questi
 
 | Stage | MVP status | Minimum behaviour | Simplification or deferral |
 |---|---|---|---|
-| Account creation/login | **MUST** | Create or access an account with ordinary authentication fields | No social login, identity verification or employer data in signup |
+| Employer-provisioned registration/login | **MUST** | Verify provisioned workplace access before creating a personal-email/password account; returning users log in with personal email/password | No open public signup, social login or SSO |
 | Financial onboarding | **MUST** | Manually collect the minimum context required for a baseline | No bank, payroll or document connection |
-| Employer/workplace onboarding | **SHOULD** | Optional employer selection or manual employer name after financial onboarding | Skippable; no employer verification or integration |
+| Verified workplace association | **MUST** | Create the association from the claimed employer-provisioned record before onboarding | No employer re-entry during financial onboarding |
 | Baseline review | **MUST** | Show the financial context and goal plan Future You will use | A concise review, not a budgeting dashboard |
 | Home | **MUST** | Decision-first entry, supported prompts, compact goal and opportunity preview | No transaction feed or category charts |
 | Ask initial state | **MUST** | Natural-language input using existing context | No compulsory pre-question form |
@@ -69,9 +75,9 @@ The MVP is not trying to prove that Future You can answer every financial questi
 ### 2.1 Canonical route
 
 ```text
-Authentication
+Employer-provisioned registration or returning Login
+  → verified workplace association
   → manual financial onboarding
-  → optional workplace details
   → baseline review
   → Home
   → Ask
@@ -97,7 +103,7 @@ The MVP supports:
 - Required bills and repayments
 - A user-chosen safety buffer
 - One or more cash savings goals
-- Optional employer and benefit information
+- A verified workplace association established outside financial context, plus optional active-benefit information
 
 Multiple cash accounts, variable-income forecasting, investments and multi-currency context are POST-MVP.
 
@@ -131,7 +137,7 @@ Multiple cash accounts, variable-income forecasting, investments and multi-curre
 | Overflow goal | Optional | No | No | Yes | If omitted, unused contribution remains unallocated cash |
 | Current-cycle committed goal transfers | Required none/list declaration | No | Yes | No | Explicitly confirm none or provide goal, exact amount and date/funding-event dependency |
 | Upcoming confirmed commitments | Optional, with required none/yes confirmation | No | Yes | Yes after “none known” | Included only when entered or confirmed |
-| Employer | Optional | No | No | Yes | Collected after account creation; skipping hides employer opportunities |
+| Employer | Required access fact | From the claimed provisioned record | No | No | Verified before account creation; not re-entered as financial onboarding data |
 | Active-benefit status | Optional | No | No | Yes | Informational unless its cash effect is already represented elsewhere |
 | Available-benefit information | Optional | Curated/mock data | No | Yes | May be surfaced as an opportunity only |
 | Pension employee percentage | Optional | No | No | Yes | Informational; net income already reflects it |
@@ -403,18 +409,24 @@ Employer pension contributions remain non-spendable. Sarah's current pension is 
 
 ### 10.1 Authentication
 
-Authentication collects only account-access information:
+First-time registration follows the frozen employer-provisioned sequence:
 
-- Email
-- Password or equivalent account credential
-- Login/signup choice
+1. Company ID and work email
+2. Verification code sent to and confirmed through the work email
+3. Personal email, password and password confirmation
+4. Financial onboarding
+5. Full-app access after onboarding and personal-email confirmation
 
-It MUST NOT require:
+Registration MUST NOT:
 
-- Company ID
-- Employer
-- Workplace verification
-- Financial details
+- permit an unprovisioned visitor to create an account using only personal credentials;
+- create an account before work-email verification;
+- ask the user to re-enter an employer during financial onboarding; or
+- expose the user's personal or financial information to the employer.
+
+Returning Login requires only personal email and password. Company ID and work email are not routine
+login credentials. `employer-provisioned-registration-contract.md` defines the complete activation,
+privacy, verification and failure rules.
 
 ### 10.2 Minimum financial onboarding
 
@@ -549,7 +561,8 @@ The core proposition is decision simulation, not data aggregation. Manual and mo
 |---|---|---|
 | Welcome | **MUST** | Entry to login or signup |
 | Login | **MUST** | Access an existing account |
-| Signup | **MUST** | Create an account without employer association |
+| Register — workplace verification | **MUST** | Match Company ID and work email to employer-provisioned access and verify the work email by code |
+| Register — account creation | **MUST** | Create the private personal-email/password account after workplace proof succeeds |
 | Financial onboarding flow | **MUST** | Create a usable baseline |
 | Home | **MUST** | Decision-first starting point |
 | Ask | **MUST** | Conversation, simulation and scenario exploration |
@@ -560,8 +573,10 @@ The core proposition is decision simulation, not data aggregation. Manual and mo
 
 | Screen | State | Status |
 |---|---|---|
+| Register | Company ID and work email | **MUST** |
+| Register | Work-email verification code | **MUST** |
+| Register | Personal email, password and password confirmation | **MUST** |
 | Onboarding | Cash, income, spending, buffer, goals and review steps | **MUST** |
-| Onboarding | Optional employer/workplace step | **SHOULD** |
 | Home | Current-path default | **MUST** |
 | Ask | Initial/new question | **MUST** |
 | Ask | Brief calculating feedback | **MUST** |
@@ -678,7 +693,7 @@ The MVP does not support automatically turning a hypothetical purchase into a re
 
 | ID | Criterion |
 |---|---|
-| MVP-001 | A user can create an account without providing employer information |
+| MVP-001 | Only an employee with a matching provisioned Company ID/work-email record and verified work-email code can create a personal Future You account |
 | MVP-002 | A user can complete manual financial onboarding and review the resulting current context |
 | MVP-003 | The product refuses or requests missing information when a material baseline input is absent |
 | MVP-004 | Home leads with Ask Future You and only presents supported decision prompts as MVP actions |
@@ -715,7 +730,7 @@ Further acceptance requirements:
 - Returning to **Your current path** restores baseline presentation without deleting what-ifs.
 - The £500 overdraft never contributes to available cash.
 - The £2,100 September closing account is not confused with the £250 safety buffer.
-- Employer information is absent from mandatory signup.
+- Employer verification is mandatory for first-time registration and remains separate from financial context and benefit activation.
 - Unsupported prototype prompts do not appear as functional MVP promises.
 
 ## 17. Demo definition
@@ -847,10 +862,11 @@ These choices must be decided during implementation planning by applying the sta
 
 | Feature / behaviour | MVP status | Reason | Dependency | Deferred destination if excluded |
 |---|---|---|---|---|
-| Account creation and login | MUST | Required to retain context and scenarios | Authentication UX | — |
-| Employer field in signup | OUT OF SCOPE | Employer association belongs after financial onboarding | Frozen UI mapping | — |
+| Employer-provisioned registration and returning login | MUST | Access is supplied through an employer while future login remains private | Registration verification and authentication UX | — |
+| Company ID + work-email verification | MUST | Proves the employer provisioned access and the employee controls the work address | Provisioned access record and code delivery | — |
+| Personal-email/password account creation | MUST | Creates the user's private routine login after workplace proof | Valid registration proof | — |
 | Manual financial onboarding | MUST | Creates the baseline required for simulation | Context field rules | — |
-| Optional workplace onboarding | SHOULD | Enables opportunity surfacing without blocking simulation | Manual/curated employer data | Employer and benefits |
+| Verified workplace association from registration | MUST | Preserves the employer relationship without asking for it again in onboarding | Claimed provisioned access record | Employer and benefits |
 | Sarah v1 demo profile | MUST | Canonical demo and acceptance fixture | Frozen Sarah values | — |
 | One current account | MUST | Minimum cash context for MVP | Manual balance entry | Multiple accounts: Simulator |
 | Fixed recurring net income | MUST | Required to project funding cycles | Amount and payday | Variable income: Simulator |
