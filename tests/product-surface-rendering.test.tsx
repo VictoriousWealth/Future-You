@@ -59,8 +59,17 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain('aria-label="Future You home"');
     expect(markup).toContain("FUTURE");
     expect(markup).toContain("YOU");
-    expect(markup).toContain("AI");
+    expect(markup).toContain("fy-angular-symbol");
+    expect(markup).toContain("%2Fimages%2Ffuture-you-logo.png");
+    expect(markup).not.toContain("<i>AI</i>");
     expect(markup).toContain('alt=""');
     expect(markup).not.toContain('<svg viewBox="0 0 24 24"><circle cx="12" cy="8"');
+  });
+
+  it("shows the AI wordmark suffix only for the Ask header", () => {
+    const markup = renderToStaticMarkup(createElement(ProductHeader, { showAI: true }));
+    expect(markup).toContain("fy-angular-symbol");
+    expect(markup).toContain("%2Fimages%2Ffuture-you-logo.png");
+    expect(markup).toContain("<i>AI</i>");
   });
 });
