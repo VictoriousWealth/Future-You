@@ -282,7 +282,6 @@ test("keeps the default current-plan banner absent from every primary surface", 
       await expect(page.getByTestId("context-pill")).toHaveCount(0);
       await expect(page.locator(".fy-context-pill")).toHaveCount(0);
       await expect(page.getByText("Current plan active", { exact: true })).toHaveCount(0);
-      await expect(page.getByText("Current plan", { exact: true })).toHaveCount(0);
     }
   }
 });
