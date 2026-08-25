@@ -481,7 +481,7 @@ These items were already reviewed and should not be reopened incidentally while 
 - Welcome's identity-to-actions separation was increased again; its brand name remains stacked through 768px and becomes the single-line `FutureYou` above 768px.
 - Welcome's primary Login action now follows the reference hierarchy with a near-full-width 68px pill; Register remains a narrower secondary action.
 - Login and Register layer the supplied white splash SVG behind the angular logo so it remains distinct from their blue header artwork; other brand surfaces do not use the backing layer.
-- The auth-only splash is deliberately more than twice the logo artwork's rendered width and height, with added wordmark clearance so it does not obscure `FutureYou`.
+- The auth-only splash is now roughly 100×94px—more than three times the logo artwork's rendered width—with added card and wordmark clearance so it is neither clipped nor obscures `FutureYou`.
 
 ## Working method
 
