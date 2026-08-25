@@ -1,6 +1,6 @@
 # Sarah Employer and Benefits Correction Contract
 
-**Status:** Proposed for approval
+**Status:** Approved and implemented
 
 **Contract date:** 25 August 2026
 
@@ -16,16 +16,18 @@ This contract resolves a canonical-data inconsistency discovered after Track B P
 Sarah's employer relationship, separates active benefit facts from employer opportunities, and defines
 the minimum honest persistence and presentation model for a later implementation slice.
 
-This is a documentation and product/data-contract change only. It does not authorise or claim a change
-to application code, database schema, migrations, seed data, authentication, RLS, financial contexts,
-simulator behaviour, Home, Benefits, story mode, tests or visual baselines.
+This document first froze the product/data contract. A subsequent explicit approval authorised the
+narrow Option B implementation, including its migration, seed, request-scoped read models, tests and
+reviewed visual updates. It still does not authorise simulator mathematics, financial-context mutation,
+benefit calculation, activation or a new Ask branch.
 
 If approved, this contract is authoritative for Sarah's employer and Benefits state wherever it
 conflicts with older product, UI, fixture or evidence descriptions. Historical evidence remains an
 accurate record of what existed and passed at its original gate; it must not be rewritten as though the
 inconsistency never existed.
 
-Implementation must stop behind a separate approval. Track C and Phase B2 remain paused.
+That separate implementation approval was received. Track C and Phase B2 remain paused until the
+correction evidence gate is accepted.
 
 Normative terms in this document use **must**, **must not**, **should** and **may** in their ordinary
 contract sense.
@@ -697,4 +699,25 @@ Approval of this document would freeze:
 - no change to Sarah v1 or any frozen result; and
 - continued pause of Track C and Phase B2 until the correction implementation passes its own gate.
 
-No implementation has been performed by this contract. Stop for approval.
+The contract approval and subsequent implementation approval were both received. The implemented
+outcome is recorded below; Track C and Phase B2 did not begin.
+
+## 21. Implementation record
+
+The narrow Option B implementation uses the existing OniBank employer, provision and membership
+system. Sarah's existing Auth identity now owns one active employer-provisioned OniBank membership,
+backed by the claimed canonical provision for `sarah.wonk@onibank.test`. Her personal Login remains
+`sarah@example.test`; no second Auth identity or work-email Login was created.
+
+Two append-only employer offering records represent the additional pension match and season-ticket
+loan. Two separate owner-scoped Sarah state records retain unknown eligibility, inactive uptake,
+incomplete information and exclusion from the financial baseline. Forced RLS and read-only ordinary
+grants restrict offerings to active members of the same employer and state to its owner.
+
+Home, Benefits and the Sarah story now consume the request-scoped authoritative projection. Sarah's
+active 3%/3% pension still comes only from `sarah-v1@2026-09-01`; the opportunity records contain no
+active contribution percentages or monetary effects. No context version, current pointer, run,
+scenario, rules version or calendar version changed. Numerical benefit requests remain unsupported.
+
+The implementation evidence is recorded in
+`sarah-employer-and-benefits-correction-evidence-report.md`.
