@@ -9,6 +9,7 @@ import {
   ENGLAND_WALES_WORKING_DAY_CALENDAR
 } from "../../src/fixtures/calendar/england-wales-bank-holidays";
 import { SupabaseFinancialContextSource } from "../../src/infrastructure/context/supabase-financial-context-source";
+import { SupabaseEmployerBenefitSource } from "../../src/infrastructure/context/supabase-employer-benefit-source";
 import { SupabaseSimulationRunStore } from "../../src/infrastructure/runs/supabase-simulation-run-store";
 import type { Database } from "../../src/infrastructure/supabase/database.types";
 import type { RequestSupabaseClient } from "../../src/infrastructure/supabase/server-client";
@@ -50,6 +51,7 @@ function storyApplication(configured: RequestSupabaseClient, principal: Authenti
   });
   return new SarahStoryApplication({
     manifest: SARAH_STORY_MANIFEST,
+    opportunityReader: new SupabaseEmployerBenefitSource(configured, principal),
     runReader: simulator.getSimulationRun
   });
 }
