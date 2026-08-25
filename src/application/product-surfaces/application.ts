@@ -35,6 +35,7 @@ interface SurfaceSimulator {
 
 export interface ProductSurfaceDependencies {
   readonly displayName: string;
+  readonly sarahStoryAvailable?: boolean;
   readonly contextSource: FinancialContextSource;
   readonly workplaceSource: WorkplaceAssociationSource;
   readonly simulator: SurfaceSimulator;
@@ -236,7 +237,15 @@ export class ProductSurfaceApplication {
         statusLabel: atPreferred ? "At your preferred level" : "Below your preferred level"
       },
       goals: goals.value,
-      opportunityPreview: { kind: "none" }
+      opportunityPreview: { kind: "none" },
+      guidedStory: this.dependencies.sarahStoryAvailable
+        ? {
+            available: true,
+            label: "Play Sarah’s story",
+            href: "/story/sarah",
+            description: "Follow the frozen £650 trip decision from uncertainty to understanding."
+          }
+        : { available: false }
     });
   }
 
