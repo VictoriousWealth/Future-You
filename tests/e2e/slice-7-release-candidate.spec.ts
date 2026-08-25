@@ -24,13 +24,14 @@ async function freshConversation(page: Page) {
   await expect(page.getByText("What are you thinking about?")).toBeVisible();
 }
 
-async function ask(page: Page, message: string) {
+async function ask(page: Page, message: string, expectSuccess = true) {
   const response = page.waitForResponse((candidate) =>
     candidate.request().method() === "POST" && candidate.url().includes("/api/v1/conversations/") && candidate.url().endsWith("/messages")
   );
   await page.getByLabel("Ask Future You").fill(message);
   await page.getByRole("button", { name: "Send message" }).click();
-  await response;
+  const completed = await response;
+  if (expectSuccess) expect(completed.ok(), await completed.text()).toBe(true);
   await expect(page.getByTestId("interpreting-state")).toBeHidden({ timeout: 15_000 });
 }
 
@@ -241,7 +242,7 @@ test("captures the returning Sarah journey and every canonical visual state", as
       body: JSON.stringify({ error: { code: "PROVIDER_UNAVAILABLE", message: "Future You is temporarily unavailable. Your financial plan was not changed.", retryable: true } })
     });
   });
-  await ask(page, "Can I afford a £650 trip next month?");
+  await ask(page, "Can I afford a £650 trip next month?", false);
   await expect(page.getByTestId("provider-error-state")).toContainText("Your financial plan was not changed");
   await expect(page.getByTestId("scenario-result")).toHaveCount(0);
   await page.screenshot({ path: evidence("15-ask-provider-error-414x896.png") });
@@ -284,6 +285,21 @@ test("keeps the default current-plan banner absent from every primary surface", 
       await expect(page.getByText("Current plan active", { exact: true })).toHaveCount(0);
     }
   }
+});
+
+test("uses the generated profile portrait for the financial-context settings link", async ({ page }) => {
+  await signIn(page, "sarah", "/home");
+  const profileLink = page.getByRole("link", { name: "Open financial context settings" });
+  const portrait = profileLink.locator("img");
+
+  await expect(profileLink).toBeVisible();
+  await expect(portrait).toBeVisible();
+  await expect(portrait).toHaveAttribute("src", /sarah-profile\.png/);
+  await expect(portrait).toHaveAttribute("alt", "");
+  await expect(profileLink.locator("svg")).toHaveCount(0);
+  const size = await portrait.boundingBox();
+  expect(size?.width).toBeGreaterThanOrEqual(40);
+  expect(size?.height).toBeGreaterThanOrEqual(40);
 });
 
 test("uses intentional phone, tablet and desktop layouts without changing route authority", async ({ page }) => {
