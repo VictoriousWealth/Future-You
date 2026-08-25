@@ -1256,3 +1256,40 @@
   - Phase boundary:
     - Track B Phase B2 has not started.
     - Real-user human-context persistence, everyday companion behaviour, public Sarah projection, voice, customisation and generated dialogue remain deferred behind new design and approval gates.
+
+- **Post-B1 consistency discovery — Sarah's canonical OniBank relationship is missing from persistence**
+  - Discovery:
+    - Sarah's canonical profile identifies her as a Customer Insights Analyst at OniBank, and the private employer record identifies active OniBank with Company ID `FY7K3M9Q2D`.
+    - The canonical Sarah seed nevertheless creates neither a verified employer membership nor a fallback workplace association for her existing identity.
+    - Benefits consequently reports `No workplace added`, contradicting Sarah's established employment context.
+  - Orphaned active fact:
+    - Sarah's immutable financial context still supplies the active 3% employee and 3% employer pension fact.
+    - The employer contribution is correctly non-spendable and already excluded from the cash ledger, but its Benefits presentation is not connected to a verified OniBank relationship.
+  - Missing opportunities:
+    - The canonical additional OniBank pension match up to 5% is absent from Home and Benefits.
+    - The canonical OniBank season-ticket-loan opportunity is also absent.
+    - The product has no authoritative employer-benefit opportunity records from which either item can be presented safely.
+  - Classification:
+    - This is a data-contract and fixture inconsistency, not a simulator-mathematics error.
+    - Existing green tests preserve different incomplete Sarah states rather than proving cross-layer canonical consistency.
+
+- **Correction direction — Employer membership, active facts and opportunities remain separate**
+  - Canonical membership direction:
+    - Sarah should have one active verified OniBank membership backed by a controlled claimed employer-provisioned demo record and the non-real work address `sarah.wonk@onibank.test`.
+    - Her existing Auth identity and personal Login remain unchanged; the controlled legacy fixture must not be misrepresented as having literally completed the modern Track A screens.
+  - Benefit separation:
+    - Verified membership proves workplace association and access entitlement only.
+    - Sarah's active 3%/3% pension percentages remain financial-context facts.
+    - The additional match and season-ticket loan remain employer opportunities with separate eligibility and uptake state.
+  - Provenance direction:
+    - Explicit employer opportunity records are needed so the product never infers benefits from the name OniBank, Company ID, industry, job title, LLM output, prototype text, general knowledge or web search.
+    - The preferred later implementation is a narrow, sourced employer-offering store plus owner-scoped user status, rather than embedding available opportunities in immutable financial contexts.
+  - Financial authority:
+    - No opportunity changes the baseline automatically.
+    - The additional match is not active and has no calculated payroll or retirement-value effect.
+    - The season-ticket loan has unknown eligibility, no calculated value and no simulator or Ask branch.
+    - Sarah v1 and the frozen £650, £500, £400 and October outcomes remain unchanged.
+  - Work pause:
+    - `sarah-employer-and-benefits-correction-contract.md` is proposed for review before any correction implementation.
+    - Track C remains paused until Sarah's canonical employer and Benefits context is coherent.
+    - Track B Phase B2 remains paused.
