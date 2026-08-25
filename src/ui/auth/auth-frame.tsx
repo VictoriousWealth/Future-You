@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FutureYouWordmark } from "../brand/future-you-wordmark";
+import { FutureYouAngularSymbol, FutureYouWordmark } from "../brand/future-you-wordmark";
 
 export function FutureYouBrand() {
   return (
     <div className="auth-brand" aria-label="Future You">
-      <span className="auth-brand-symbol" aria-hidden="true"><i/><i/><i/></span>
+      <FutureYouAngularSymbol fullSize/>
       <span className="auth-brand-copy"><strong>Future<br/>You</strong><small>You can do better</small></span>
     </div>
   );
