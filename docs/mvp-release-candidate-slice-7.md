@@ -5,6 +5,10 @@ Contract approved: 2026-08-24
 Release candidate approved: 2026-08-25
 Scope: product-wide visual, responsive and accessibility hardening only
 
+> **Historical registration boundary:** This completed slice records the former open-signup UI
+> contract. `employer-provisioned-registration-contract.md` now supersedes that product direction.
+> Slice 7 did not implement the new Company ID/work-email verification flow.
+
 ## Purpose and non-negotiable boundary
 
 Slice 7 presents the existing validated MVP as one coherent release candidate. It does not change simulator mathematics, Sarah, forecast dates, classifications, scenario types, conversational intents, context versioning, immutable runs, RLS, exact money, provider authority or browser/server authority.
