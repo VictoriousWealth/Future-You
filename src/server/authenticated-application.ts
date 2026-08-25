@@ -6,6 +6,7 @@ import {
   ENGLAND_WALES_WORKING_DAY_CALENDAR
 } from "../fixtures/calendar/england-wales-bank-holidays";
 import { SupabasePrincipalProvider } from "../infrastructure/auth/supabase-principal-provider";
+import { requireActiveFutureYouAccount } from "../infrastructure/auth/supabase-account-activation";
 import { SupabaseFinancialContextSource } from "../infrastructure/context/supabase-financial-context-source";
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
@@ -21,6 +22,7 @@ export type AuthenticatedApplicationResolver = () => Promise<AuthenticatedApplic
 export const resolveAuthenticatedApplication: AuthenticatedApplicationResolver = async () => {
   const client = await createRequestSupabaseClient();
   const principal = await new SupabasePrincipalProvider(client).requirePrincipal();
+  await requireActiveFutureYouAccount(client, principal);
   const dependencies = Object.freeze({
     contextSource: new SupabaseFinancialContextSource(client, principal),
     rules: SLICE_1_RULES,
