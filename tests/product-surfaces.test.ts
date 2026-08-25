@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ProductSurfaceApplication } from "../src/application/product-surfaces/application";
 import type { WorkplaceAssociationSource } from "../src/application/ports/workplace-association-source";
+import type { EmployerBenefitSource } from "../src/application/ports/employer-benefit-source";
 import type { FinancialContextSource } from "../src/application/ports/financial-context-source";
 import type { FinancialContextSnapshot } from "../src/domain/simulator/types";
 import { createSimulatorApplication } from "../src/server/simulator-application";
@@ -13,17 +14,30 @@ import {
   ENGLAND_WALES_CALENDAR_METADATA,
   ENGLAND_WALES_WORKING_DAY_CALENDAR
 } from "../src/fixtures/calendar/england-wales-bank-holidays";
+import {
+  EMPTY_EMPLOYER_BENEFIT_SOURCE,
+  SARAH_EMPLOYER_BENEFIT_SOURCE
+} from "./fixtures/employer-benefits";
 
 class WorkplaceSource implements WorkplaceAssociationSource {
-  constructor(private readonly name: string | null) {}
+  constructor(
+    private readonly name: string | null,
+    private readonly verified = false
+  ) {}
   async getWorkplace() {
     return this.name
-      ? { name: this.name, associationSource: "user_provided" as const, verificationStatus: "unverified" as const }
+      ? this.verified
+        ? { name: this.name, associationSource: "employer_provisioned" as const, verificationStatus: "verified" as const }
+        : { name: this.name, associationSource: "user_provided" as const, verificationStatus: "unverified" as const }
       : null;
   }
 }
 
-function setup(contextSource: FinancialContextSource = new SarahV1ContextSource()) {
+function setup(
+  contextSource: FinancialContextSource = new SarahV1ContextSource(),
+  workplaceSource: WorkplaceAssociationSource = new WorkplaceSource("OniBank", true),
+  employerBenefitSource: EmployerBenefitSource = SARAH_EMPLOYER_BENEFIT_SOURCE
+) {
   const runStore = new InMemorySimulationRunStore();
   const simulator = createSimulatorApplication({
     contextSource,
@@ -38,7 +52,8 @@ function setup(contextSource: FinancialContextSource = new SarahV1ContextSource(
     application: new ProductSurfaceApplication({
       displayName: "Sarah Wonk",
       contextSource,
-      workplaceSource: new WorkplaceSource("OniBank"),
+      workplaceSource,
+      employerBenefitSource,
       simulator
     })
   };
@@ -51,7 +66,7 @@ describe("Slice 6 product-surface application", () => {
     configured = setup();
   });
 
-  it("builds Home from one current baseline without inventing an opportunity", async () => {
+  it("builds Home from one current baseline and one explicitly sourced informational opportunity", async () => {
     const result = await configured.application.home();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -64,15 +79,23 @@ describe("Slice 6 product-surface application", () => {
         preferred: { minorUnits: "90000", display: "£900" },
         statusLabel: "At your preferred level"
       },
-      opportunityPreview: { kind: "none" }
+      opportunityPreview: {
+        kind: "authoritative",
+        title: "Season-ticket loan",
+        description: "OniBank lists a season-ticket loan. Your eligibility has not been confirmed.",
+        statusLabel: "Eligibility unknown",
+        href: "/benefits#opportunity-season-ticket-loan",
+        actionLabel: "See details",
+        sourceReferenceDate: "2026-08-31"
+      }
     });
     expect(result.value.goals.map((goal) => [goal.label, goal.currentBalance.display, goal.completion.display])).toEqual([
       ["Emergency fund", "£3,300", "December 2026"],
       ["House deposit", "£7,200", "June 2029"],
       ["Holiday", "£350", "May 2027"]
     ]);
-    expect(JSON.stringify(result.value)).not.toContain("season-ticket");
-    expect(JSON.stringify(result.value)).not.toContain("5% ");
+    expect(JSON.stringify(result.value)).not.toContain("saves");
+    expect(JSON.stringify(result.value)).not.toContain("monthly value");
     expect(() => JSON.stringify(result.value)).not.toThrow();
   });
 
@@ -138,7 +161,8 @@ describe("Slice 6 product-surface application", () => {
     const app = new ProductSurfaceApplication({
       displayName: "Sarah Wonk",
       contextSource: versionedSource,
-      workplaceSource: new WorkplaceSource("OniBank"),
+      workplaceSource: new WorkplaceSource("OniBank", true),
+      employerBenefitSource: SARAH_EMPLOYER_BENEFIT_SOURCE,
       simulator: {
         generateBaseline: original.simulator.generateBaseline,
         getSimulationRun: original.simulator.getSimulationRun
@@ -156,30 +180,59 @@ describe("Slice 6 product-surface application", () => {
     expect(JSON.stringify(preview.value)).not.toContain("sarah-v2@2026-10-01");
   });
 
-  it("keeps Benefits informational and shows only Sarah's persisted active fact", async () => {
+  it("composes verified membership, context pension facts and inert sourced opportunities", async () => {
     const result = await configured.application.benefits();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value).toMatchObject({
       workplace: {
-        status: "unverified",
+        status: "verified",
         name: "OniBank",
-        statusLabel: "User-provided · Not verified"
+        statusLabel: "Verified workplace",
+        membershipStatusLabel: "Active membership"
       },
       activeFacts: [{
         title: "Workplace pension",
-        employeeContribution: "3% employee contribution",
-        employerContribution: "3% employer contribution",
-        spendability: "Employer contributions are not spendable cash."
+        statusLabel: "Active",
+        employerName: "OniBank",
+        employeeContribution: "3%",
+        employerContribution: "3%",
+        spendability: "Retirement value — not spendable cash.",
+        provenance: {
+          sourceType: "immutable_financial_context",
+          contextVersion: "sarah-v1@2026-09-01",
+          factKey: "PENSION_INFORMATION"
+        }
       }],
-      opportunities: [],
+      opportunities: [
+        {
+          benefitKey: "ADDITIONAL_PENSION_MATCH",
+          title: "Additional pension match",
+          statusLabel: "Available opportunity",
+          currentContribution: "You currently contribute 3%.",
+          eligibility: "unknown",
+          uptake: "inactive",
+          includedInCurrentPlan: false,
+          numericalSimulationSupported: false
+        },
+        {
+          benefitKey: "SEASON_TICKET_LOAN",
+          title: "Season-ticket loan",
+          statusLabel: "Eligibility unknown",
+          eligibility: "unknown",
+          uptake: "inactive",
+          includedInCurrentPlan: false,
+          numericalSimulationSupported: false
+        }
+      ],
       emptyState: null
     });
     const serialized = JSON.stringify(result.value);
-    expect(serialized).not.toMatch(/season.?ticket/i);
-    expect(serialized).not.toContain("5% employer");
+    expect(serialized).toMatch(/season.?ticket/i);
+    expect(serialized).toContain("match contributions up to 5%");
     expect(serialized).not.toContain('"status":"eligible"');
     expect(serialized).not.toContain('"eligibility":"eligible"');
+    expect(serialized).not.toContain("£100");
   });
 
   it("shows honest empty Benefits states and never calls the simulator", async () => {
@@ -196,6 +249,7 @@ describe("Slice 6 product-surface application", () => {
       displayName: "Alex",
       contextSource,
       workplaceSource: new WorkplaceSource(null),
+      employerBenefitSource: EMPTY_EMPLOYER_BENEFIT_SOURCE,
       simulator
     });
     const noWorkplace = await withoutWorkplace.benefits();
@@ -204,10 +258,49 @@ describe("Slice 6 product-surface application", () => {
       displayName: "Alex",
       contextSource,
       workplaceSource: new WorkplaceSource("Example Workplace"),
+      employerBenefitSource: EMPTY_EMPLOYER_BENEFIT_SOURCE,
       simulator
     });
     const noCatalogue = await unverified.benefits();
     expect(noCatalogue.ok && noCatalogue.value.emptyState?.kind).toBe("no_verified_catalogue");
+
+    const verifiedWithoutReferenceRecords = new ProductSurfaceApplication({
+      displayName: "Alex",
+      contextSource,
+      workplaceSource: new WorkplaceSource("Employer Without Catalogue", true),
+      employerBenefitSource: EMPTY_EMPLOYER_BENEFIT_SOURCE,
+      simulator
+    });
+    const noConfirmedInformation = await verifiedWithoutReferenceRecords.benefits();
+    expect(noConfirmedInformation.ok && noConfirmedInformation.value.emptyState).toEqual({
+      kind: "no_known_information",
+      title: "No confirmed benefit information yet",
+      description: "We do not have confirmed benefit information for this workplace yet."
+    });
+  });
+
+  it("does not surface explicit records without a verified matching membership", async () => {
+    const unverified = setup(
+      new SarahV1ContextSource(),
+      new WorkplaceSource("OniBank"),
+      SARAH_EMPLOYER_BENEFIT_SOURCE
+    );
+    const benefits = await unverified.application.benefits();
+    const home = await unverified.application.home();
+    expect(benefits.ok && benefits.value.opportunities).toEqual([]);
+    expect(benefits.ok && benefits.value.emptyState?.kind).toBe("no_verified_catalogue");
+    expect(home.ok && home.value.opportunityPreview).toEqual({ kind: "none" });
+
+    const differentEmployer = setup(
+      new SarahV1ContextSource(),
+      new WorkplaceSource("Different Employer", true),
+      SARAH_EMPLOYER_BENEFIT_SOURCE
+    );
+    const differentEmployerBenefits = await differentEmployer.application.benefits();
+    const differentEmployerHome = await differentEmployer.application.home();
+    expect(differentEmployerBenefits.ok && differentEmployerBenefits.value.opportunities).toEqual([]);
+    expect(differentEmployerBenefits.ok && differentEmployerBenefits.value.emptyState?.kind).toBe("no_known_information");
+    expect(differentEmployerHome.ok && differentEmployerHome.value.opportunityPreview).toEqual({ kind: "none" });
   });
 
   it("returns the same not-found error for foreign-shaped and nonexistent run IDs", async () => {
