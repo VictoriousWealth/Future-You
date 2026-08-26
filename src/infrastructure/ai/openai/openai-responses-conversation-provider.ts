@@ -2,6 +2,8 @@ import "server-only";
 import OpenAI from "openai";
 import { z } from "zod";
 import type {
+  ClarificationResolution,
+  ClarificationResolutionProviderRequest,
   ConversationInterpretation,
   ConversationModelProvider,
   ExplanationPlan,
@@ -10,157 +12,50 @@ import type {
   ProviderResult
 } from "../../../application/conversation/contracts";
 import {
-  explanationPlanSchema
+  amountClarificationResolutionSchema,
+  conversationInterpretationEnvelopeV2Schema,
+  explanationPlanSchema,
+  monthClarificationResolutionSchema,
+  scenarioClarificationResolutionSchema
 } from "../../../application/conversation/schemas";
 import { ConversationProviderError } from "../../../application/conversation/provider-error";
 import {
+  CLARIFICATION_RESOLUTION_PROMPT,
   EXPLANATION_PROMPT,
   INTERPRETATION_PROMPT
 } from "../../../application/conversation/prompts";
+import {
+  AMBIGUITY_IDS,
+  INTERPRETATION_INTENT_IDS,
+  UNSUPPORTED_CATEGORY_IDS
+} from "../../../application/conversation/interpretation-policy";
+import {
+  AMOUNT_CLARIFICATION_PARAMETERS,
+  EXPLANATION_PARAMETERS_V1,
+  INTERPRETATION_PARAMETERS_V2,
+  MONTH_CLARIFICATION_PARAMETERS,
+  SCENARIO_CLARIFICATION_PARAMETERS,
+  assertStrictProviderSchema
+} from "./provider-json-schemas";
 import {
   OPENAI_BASELINE_MAX_OUTPUT_TOKENS,
   type OpenAIReasoningEffort
 } from "./openai-runtime-configuration";
 
-const INTERPRET_TOOL = "submit_conversation_interpretation";
-const EXPLANATION_TOOL = "submit_explanation_plan";
+export const INTERPRET_TOOL = "submit_conversation_interpretation_v2";
+export const CLARIFICATION_TOOL = "submit_clarification_resolution";
+export const EXPLANATION_TOOL = "submit_explanation_plan";
 
-const nullableString = { anyOf: [{ type: "string" }, { type: "null" }] } as const;
-const nullableInteger = { anyOf: [{ type: "integer" }, { type: "null" }] } as const;
+type ProviderValue = ConversationInterpretation | ClarificationResolution | ExplanationPlan;
+type JsonSchema = Readonly<Record<string, unknown>>;
 
-const interpretationParameters = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    kind: { type: "string", enum: [
-      "CREATE_ONE_OFF_PURCHASE", "CHANGE_PURCHASE_AMOUNT", "CHANGE_PURCHASE_MONTH",
-      "EXPLAIN_SELECTED_RESULT", "SELECT_EXISTING_SCENARIO", "HELP", "GREETING",
-      "UNSUPPORTED", "AMBIGUOUS"
-    ] },
-    amountQuote: nullableString,
-    currency: { anyOf: [{ type: "string", enum: ["GBP", "UNSUPPORTED"] }, { type: "null" }] },
-    timingQuote: nullableString,
-    timingKind: { type: "string", enum: [
-      "NEXT_MONTH", "MONTHS_AFTER_SELECTED", "NAMED_MONTH", "EXPLICIT_YEAR_MONTH", "MISSING", "AMBIGUOUS"
-    ] },
-    timingMonthNumber: nullableInteger,
-    timingYear: nullableInteger,
-    timingOffsetMonths: nullableInteger,
-    purposeQuote: nullableString,
-    referencedScenarioLabel: nullableString,
-    missingFields: { type: "array", items: { type: "string" } },
-    unsupportedFeatures: { type: "array", items: { type: "string" } },
-    explanationTarget: { anyOf: [{ type: "string", enum: [
-      "OVERALL_CLASSIFICATION", "SAFETY_BUFFER", "BUFFER_RECOVERY", "GOAL_DELAY",
-      "BILLS", "BORROWING", "ASSUMPTIONS", "OTHER"
-    ] }, { type: "null" }] },
-    goalReferenceQuote: nullableString,
-    scenarioReferenceQuote: nullableString,
-    category: nullableString,
-    userGoalSummary: nullableString,
-    ambiguity: nullableString,
-    clarificationKey: nullableString
-  },
-  required: [
-    "kind", "amountQuote", "currency", "timingQuote", "timingKind", "timingMonthNumber",
-    "timingYear", "timingOffsetMonths", "purposeQuote", "referencedScenarioLabel",
-    "missingFields", "unsupportedFeatures", "explanationTarget", "goalReferenceQuote",
-    "scenarioReferenceQuote", "category", "userGoalSummary", "ambiguity", "clarificationKey"
-  ]
-} as const;
-
-const explanationParameters = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    templateId: { type: "string", enum: [
-      "PURCHASE_RESULT_SIGNIFICANT", "PURCHASE_RESULT_NOTICEABLE", "PURCHASE_RESULT_MINIMAL",
-      "PURCHASE_RESULT_RISKY", "BUFFER_EXPLANATION", "GOAL_DELAY_EXPLANATION",
-      "TIMING_NO_IMPROVEMENT", "CURRENT_PATH_SUMMARY"
-    ] },
-    primaryFactKey: { type: "string", enum: [
-      "OVERALL_CLASSIFICATION", "BUFFER_REDUCTION", "BILLS_COVERED", "NO_BORROWING",
-      "BUFFER_RECOVERY", "GOAL_DELAY", "TIMING_NO_IMPROVEMENT", "ASSUMPTIONS", "CURRENT_PATH"
-    ] },
-    orderedFactKeys: { type: "array", items: { type: "string", enum: [
-      "OVERALL_CLASSIFICATION", "BUFFER_REDUCTION", "BILLS_COVERED", "NO_BORROWING",
-      "BUFFER_RECOVERY", "GOAL_DELAY", "TIMING_NO_IMPROVEMENT", "ASSUMPTIONS", "CURRENT_PATH"
-    ] } },
-    caveatKeys: { type: "array", items: { type: "string", enum: [
-      "ASSUMED_TIMING", "HYPOTHETICAL_ONLY", "CALENDAR_FALLBACK"
-    ] } },
-    followUpActionKeys: { type: "array", items: { type: "string", enum: [
-      "TRY_LOWER_AMOUNT", "TRY_ANOTHER_MONTH", "VIEW_ASSUMPTIONS", "VIEW_CURRENT_PATH"
-    ] } },
-    tone: { type: "string", enum: ["CLEAR", "SUPPORTIVE", "DIRECT"] }
-  },
-  required: [
-    "templateId", "primaryFactKey", "orderedFactKeys", "caveatKeys", "followUpActionKeys", "tone"
-  ]
-} as const;
-
-const envelopeSchema = z.object({
-  kind: z.enum([
-    "CREATE_ONE_OFF_PURCHASE", "CHANGE_PURCHASE_AMOUNT", "CHANGE_PURCHASE_MONTH",
-    "EXPLAIN_SELECTED_RESULT", "SELECT_EXISTING_SCENARIO", "HELP", "GREETING",
-    "UNSUPPORTED", "AMBIGUOUS"
-  ]),
-  amountQuote: z.string().nullable(),
-  currency: z.enum(["GBP", "UNSUPPORTED"]).nullable(),
-  timingQuote: z.string().nullable(),
-  timingKind: z.enum([
-    "NEXT_MONTH", "MONTHS_AFTER_SELECTED", "NAMED_MONTH", "EXPLICIT_YEAR_MONTH", "MISSING", "AMBIGUOUS"
-  ]),
-  timingMonthNumber: z.number().int().min(1).max(12).nullable(),
-  timingYear: z.number().int().min(2000).max(2200).nullable(),
-  timingOffsetMonths: z.number().int().min(0).max(120).nullable(),
-  purposeQuote: z.string().nullable(),
-  referencedScenarioLabel: z.string().nullable(),
-  missingFields: z.array(z.string()).max(4),
-  unsupportedFeatures: z.array(z.string()).max(8),
-  explanationTarget: z.enum([
-    "OVERALL_CLASSIFICATION", "SAFETY_BUFFER", "BUFFER_RECOVERY", "GOAL_DELAY",
-    "BILLS", "BORROWING", "ASSUMPTIONS", "OTHER"
-  ]).nullable(),
-  goalReferenceQuote: z.string().nullable(),
-  scenarioReferenceQuote: z.string().nullable(),
-  category: z.string().nullable(),
-  userGoalSummary: z.string().nullable(),
-  ambiguity: z.string().nullable(),
-  clarificationKey: z.string().nullable()
-}).strict();
-
-function toInterpretation(value: z.infer<typeof envelopeSchema>): ConversationInterpretation {
-  const amount = { quote: value.amountQuote, currency: value.currency };
-  const timing = {
-    quote: value.timingQuote,
-    kind: value.timingKind,
-    monthNumber: value.timingMonthNumber,
-    year: value.timingYear,
-    offsetMonths: value.timingOffsetMonths
-  };
-  switch (value.kind) {
-    case "CREATE_ONE_OFF_PURCHASE":
-      return { kind: value.kind, amount, timing, purposeQuote: value.purposeQuote, missingFields: value.missingFields, unsupportedFeatures: value.unsupportedFeatures };
-    case "CHANGE_PURCHASE_AMOUNT":
-      return { kind: value.kind, amount, referencedScenarioLabel: value.referencedScenarioLabel, missingFields: value.missingFields, unsupportedFeatures: value.unsupportedFeatures };
-    case "CHANGE_PURCHASE_MONTH":
-      return { kind: value.kind, timing, referencedScenarioLabel: value.referencedScenarioLabel, missingFields: value.missingFields, unsupportedFeatures: value.unsupportedFeatures };
-    case "EXPLAIN_SELECTED_RESULT":
-      if (!value.explanationTarget) throw new ConversationProviderError("INVALID_OUTPUT", true, "Explanation target missing.");
-      return { kind: value.kind, explanationTarget: value.explanationTarget, goalReferenceQuote: value.goalReferenceQuote };
-    case "SELECT_EXISTING_SCENARIO":
-      return { kind: value.kind, scenarioReferenceQuote: value.scenarioReferenceQuote };
-    case "HELP":
-    case "GREETING":
-      return { kind: value.kind };
-    case "UNSUPPORTED":
-      if (!value.category) throw new ConversationProviderError("INVALID_OUTPUT", true, "Unsupported category missing.");
-      return { kind: value.kind, category: value.category, userGoalSummary: value.userGoalSummary };
-    case "AMBIGUOUS":
-      if (!value.ambiguity || !value.clarificationKey) throw new ConversationProviderError("INVALID_OUTPUT", true, "Ambiguity fields missing.");
-      return { kind: value.kind, ambiguity: value.ambiguity, clarificationKey: value.clarificationKey };
-  }
+interface ForcedCallResult<T extends ProviderValue> {
+  readonly value: T;
+  readonly attempts: number;
+  readonly latencyMs: number;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly totalTokens: number;
 }
 
 function providerError(error: unknown): ConversationProviderError {
@@ -174,6 +69,42 @@ function providerError(error: unknown): ConversationProviderError {
     return new ConversationProviderError("TIMEOUT", true, "The provider request timed out.");
   }
   return new ConversationProviderError("UNAVAILABLE", true, "The provider request failed.");
+}
+
+function validationIssueCodes(error: unknown): readonly Readonly<{ path: string; code: string }>[] {
+  if (!(error instanceof z.ZodError)) return [{ path: "", code: "INVALID_PROVIDER_OUTPUT" }];
+  const issues = error.issues.slice(0, 12).map((issue) => ({
+    path: issue.path.map(String).join("."),
+    code: issue.code
+  }));
+  return issues.length > 0 ? issues : [{ path: "", code: "INVALID_PROVIDER_OUTPUT" }];
+}
+
+function minimalState(input: unknown): unknown {
+  if (!input || typeof input !== "object") return null;
+  const request = input as Partial<InterpretationProviderRequest & ClarificationResolutionProviderRequest>;
+  return {
+    userMessage: request.userMessage,
+    pendingClarification: request.pendingClarification ? { type: request.pendingClarification.type } : null,
+    selectedScenarioType: request.selectedScenarioType ?? null,
+    availableScenarioLabels: request.availableScenarios?.map((scenario) => scenario.label) ?? [],
+    trustedDate: request.trustedDate,
+    timezone: request.timezone
+  };
+}
+
+function repairInput(input: unknown, invalidOutput: unknown, validationErrors: readonly unknown[]): unknown {
+  return {
+    mode: "BOUNDED_REPAIR",
+    originalRequest: minimalState(input),
+    invalidInterpretation: invalidOutput,
+    validationErrors,
+    permittedIdentifiers: {
+      intents: INTERPRETATION_INTENT_IDS,
+      unsupportedCategories: UNSUPPORTED_CATEGORY_IDS,
+      ambiguityIdentifiers: AMBIGUITY_IDS
+    }
+  };
 }
 
 export class OpenAIResponsesConversationModelProvider implements ConversationModelProvider {
@@ -193,41 +124,40 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     this.client = new OpenAI({ apiKey, timeout: options.timeoutMs ?? 12_000, maxRetries: 0 });
     this.reasoningEffort = options.reasoningEffort ?? null;
     this.maxRetries = options.maxRetries ?? 1;
+    assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V2);
   }
 
-  private async forcedCall(
-    toolName: string,
-    instructions: string,
-    input: unknown,
-    parameters: typeof interpretationParameters | typeof explanationParameters,
-    parse: (value: unknown) => ConversationInterpretation | ExplanationPlan
-  ): Promise<{
-    value: ConversationInterpretation | ExplanationPlan;
-    attempts: number;
-    latencyMs: number;
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  }> {
+  private async forcedCall<T extends ProviderValue>(input: Readonly<{
+    toolName: string;
+    instructions: string;
+    request: unknown;
+    parameters: JsonSchema;
+    parse: (value: unknown) => T;
+    allowValidationRepair: boolean;
+  }>): Promise<ForcedCallResult<T>> {
     let lastError: ConversationProviderError | null = null;
     let inputTokens = 0;
     let outputTokens = 0;
     let totalTokens = 0;
+    let nextInput = input.request;
+    let repairUsed = false;
     const startedAt = performance.now();
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt += 1) {
+      let invalidOutput: unknown = null;
+      let issueCodes: readonly unknown[] = [];
       try {
         const response = await this.client.responses.create({
           model: this.model,
-          instructions,
-          input: JSON.stringify(input),
+          instructions: input.instructions,
+          input: JSON.stringify(nextInput),
           tools: [{
             type: "function",
-            name: toolName,
+            name: input.toolName,
             description: "Return the validated Future You structured decision.",
-            parameters,
+            parameters: input.parameters,
             strict: true
           }],
-          tool_choice: { type: "function", name: toolName },
+          tool_choice: { type: "function", name: input.toolName },
           parallel_tool_calls: false,
           store: false,
           max_output_tokens: OPENAI_BASELINE_MAX_OUTPUT_TOKENS,
@@ -238,6 +168,10 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
         totalTokens += response.usage?.total_tokens ?? 0;
         const calls = response.output.filter((item) => item.type === "function_call");
         if (calls.length !== 1) {
+          issueCodes = [{
+            path: "",
+            code: calls.length > 1 ? "MULTIPLE_FUNCTION_CALLS" : "MISSING_FUNCTION_CALL"
+          }];
           throw new ConversationProviderError(
             calls.length > 1 ? "MULTIPLE_TOOL_CALLS" : "INVALID_OUTPUT",
             calls.length === 0,
@@ -245,44 +179,44 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           );
         }
         const call = calls[0]!;
-        if (call.name !== toolName) {
+        if (call.name !== input.toolName) {
           throw new ConversationProviderError("UNKNOWN_TOOL", false, "The provider returned an unknown tool.");
         }
-        let argumentsValue: unknown;
         try {
-          argumentsValue = JSON.parse(call.arguments);
+          invalidOutput = JSON.parse(call.arguments);
         } catch {
+          issueCodes = [{ path: "", code: "INVALID_JSON_ARGUMENTS" }];
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider returned invalid JSON arguments.");
         }
-        let parsed: ConversationInterpretation | ExplanationPlan;
         try {
-          parsed = parse(argumentsValue);
+          const parsed = input.parse(invalidOutput);
+          return {
+            value: parsed,
+            attempts: attempt,
+            latencyMs: Math.round(performance.now() - startedAt),
+            inputTokens,
+            outputTokens,
+            totalTokens
+          };
         } catch (error) {
-          if (error instanceof ConversationProviderError) throw error;
+          issueCodes = validationIssueCodes(error);
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider arguments failed runtime validation.");
         }
-        return {
-          value: parsed,
-          attempts: attempt,
-          latencyMs: Math.round(performance.now() - startedAt),
-          inputTokens,
-          outputTokens,
-          totalTokens
-        };
       } catch (error) {
         lastError = providerError(error);
+        const canRepair = input.allowValidationRepair && !repairUsed && lastError.category === "INVALID_OUTPUT";
+        if (canRepair && attempt < this.maxRetries + 1) {
+          repairUsed = true;
+          nextInput = repairInput(input.request, invalidOutput, issueCodes);
+          continue;
+        }
         if (!lastError.retryable || attempt === this.maxRetries + 1) {
           throw new ConversationProviderError(
             lastError.category,
             lastError.retryable,
             lastError.message,
             attempt,
-            {
-              latencyMs: Math.round(performance.now() - startedAt),
-              inputTokens,
-              outputTokens,
-              totalTokens
-            }
+            { latencyMs: Math.round(performance.now() - startedAt), inputTokens, outputTokens, totalTokens }
           );
         }
       }
@@ -290,47 +224,62 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     throw lastError ?? new ConversationProviderError("UNAVAILABLE", true, "The provider request failed.");
   }
 
-  async interpret(request: InterpretationProviderRequest): Promise<ProviderResult<ConversationInterpretation>> {
-    const result = await this.forcedCall(
-      INTERPRET_TOOL,
-      INTERPRETATION_PROMPT,
-      request,
-      interpretationParameters,
-      (value) => toInterpretation(envelopeSchema.parse(value))
-    );
+  private metadata(result: ForcedCallResult<ProviderValue>) {
     return {
-      value: result.value as ConversationInterpretation,
-      metadata: {
-        provider: "openai",
-        model: this.model,
-        attempts: result.attempts,
-        latencyMs: result.latencyMs,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens,
-        totalTokens: result.totalTokens
+      provider: "openai", model: this.model, attempts: result.attempts,
+      latencyMs: result.latencyMs, inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens, totalTokens: result.totalTokens
+    } as const;
+  }
+
+  async interpret(request: InterpretationProviderRequest): Promise<ProviderResult<ConversationInterpretation>> {
+    const result = await this.forcedCall({
+      toolName: INTERPRET_TOOL,
+      instructions: INTERPRETATION_PROMPT,
+      request,
+      parameters: INTERPRETATION_PARAMETERS_V2,
+      parse: (value) => conversationInterpretationEnvelopeV2Schema.parse(value).interpretation,
+      allowValidationRepair: true
+    });
+    return { value: result.value, metadata: this.metadata(result) };
+  }
+
+  async resolveClarification(request: ClarificationResolutionProviderRequest): Promise<ProviderResult<ClarificationResolution>> {
+    const pending = request.pendingClarification.type;
+    const parameters = pending === "PURCHASE_AMOUNT"
+      ? AMOUNT_CLARIFICATION_PARAMETERS
+      : pending === "PURCHASE_MONTH"
+        ? MONTH_CLARIFICATION_PARAMETERS
+        : SCENARIO_CLARIFICATION_PARAMETERS;
+    const parse = (value: unknown): ClarificationResolution => {
+      if (!value || typeof value !== "object" || !("resolution" in value)) {
+        throw new z.ZodError([]);
       }
+      const resolution = (value as { resolution: unknown }).resolution;
+      if (pending === "PURCHASE_AMOUNT") return amountClarificationResolutionSchema.parse(resolution);
+      if (pending === "PURCHASE_MONTH") return monthClarificationResolutionSchema.parse(resolution);
+      return scenarioClarificationResolutionSchema.parse(resolution);
     };
+    const result = await this.forcedCall({
+      toolName: CLARIFICATION_TOOL,
+      instructions: CLARIFICATION_RESOLUTION_PROMPT,
+      request,
+      parameters,
+      parse,
+      allowValidationRepair: true
+    });
+    return { value: result.value, metadata: this.metadata(result) };
   }
 
   async planExplanation(request: ExplanationProviderRequest): Promise<ProviderResult<ExplanationPlan>> {
-    const result = await this.forcedCall(
-      EXPLANATION_TOOL,
-      EXPLANATION_PROMPT,
+    const result = await this.forcedCall({
+      toolName: EXPLANATION_TOOL,
+      instructions: EXPLANATION_PROMPT,
       request,
-      explanationParameters,
-      (value) => explanationPlanSchema.parse(value)
-    );
-    return {
-      value: result.value as ExplanationPlan,
-      metadata: {
-        provider: "openai",
-        model: this.model,
-        attempts: result.attempts,
-        latencyMs: result.latencyMs,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens,
-        totalTokens: result.totalTokens
-      }
-    };
+      parameters: EXPLANATION_PARAMETERS_V1,
+      parse: (value) => explanationPlanSchema.parse(value),
+      allowValidationRepair: true
+    });
+    return { value: result.value, metadata: this.metadata(result) };
   }
 }
