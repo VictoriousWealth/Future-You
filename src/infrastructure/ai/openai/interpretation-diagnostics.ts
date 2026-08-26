@@ -11,8 +11,23 @@ import {
   SCENARIO_SELECTION_TARGET_IDS,
   UNSUPPORTED_CATEGORY_IDS
 } from "../../../application/conversation/interpretation-policy";
+import {
+  COMPLETE_TIMING_KINDS,
+  TIMING_KIND_POLICY,
+  TIMING_OFFSET_MAX,
+  TIMING_OFFSET_MIN,
+  TIMING_REPAIR_RULE_BY_CODE,
+  TIMING_YEAR_MAX,
+  TIMING_YEAR_MIN,
+  timingKindAllowedForIntent,
+  timingQuoteEquivalenceIssues,
+  type CompleteTimingInterpretation,
+  type CompleteTimingKind,
+  type TimingIntentContext
+} from "../../../application/conversation/timing-policy";
 
-export const INTERPRETATION_DIAGNOSTIC_VERSION = "fy-interpretation-diagnostic/1.0.0" as const;
+export const INTERPRETATION_DIAGNOSTIC_VERSION_V1 = "fy-interpretation-diagnostic/1.0.0" as const;
+export const INTERPRETATION_DIAGNOSTIC_VERSION = "fy-interpretation-diagnostic/2.0.0" as const;
 
 export const INTERPRETATION_VALIDATION_STAGES = [
   "PROVIDER_RESPONSE_RECEIVED",
@@ -56,6 +71,25 @@ export const INTERPRETATION_DIAGNOSTIC_CODES = [
   "AMOUNT_QUOTE_NOT_FOUND",
   "AMOUNT_QUOTE_NOT_PARSEABLE",
   "TIMING_QUOTE_NOT_FOUND",
+  "TIMING_KIND_REQUIRED",
+  "TIMING_QUOTE_REQUIRED",
+  "TIMING_QUOTE_NOT_GROUNDED",
+  "TIMING_QUOTE_UNRECOGNISED",
+  "TIMING_QUOTE_AMBIGUOUS",
+  "TIMING_QUOTE_KIND_MISMATCH",
+  "TIMING_MONTH_NUMBER_REQUIRED",
+  "TIMING_MONTH_NUMBER_FORBIDDEN",
+  "TIMING_MONTH_NUMBER_MISMATCH",
+  "TIMING_YEAR_REQUIRED",
+  "TIMING_YEAR_FORBIDDEN",
+  "TIMING_YEAR_MISMATCH",
+  "TIMING_OFFSET_REQUIRED",
+  "TIMING_OFFSET_FORBIDDEN",
+  "TIMING_OFFSET_MUST_EQUAL_ONE",
+  "TIMING_OFFSET_MISMATCH",
+  "TIMING_SELECTED_SCENARIO_REQUIRED",
+  "TIMING_KIND_NOT_ALLOWED_FOR_INTENT",
+  "TIMING_FIELDS_INCOMPATIBLE",
   "SCENARIO_LABEL_QUOTE_NOT_FOUND",
   "MODEL_SUPPLIED_UNTRUSTED_SCENARIO_ID",
   "SCENARIO_REFERENCE_UNRESOLVED",
@@ -125,6 +159,7 @@ export interface SanitisedInterpretationDiagnostic {
     | "EXHAUSTED";
   readonly selectedToolNameStatus: "EXPECTED" | "MISSING" | "UNEXPECTED" | "MULTIPLE";
   readonly selectedBranchKind: ApprovedDiagnosticBranchKind | "UNKNOWN" | null;
+  readonly selectedTimingKind: CompleteTimingKind | "UNKNOWN" | null;
   readonly presentFieldNames: readonly string[];
   readonly stageTrace: readonly InterpretationDiagnosticStageEvent[];
   readonly deepestCompletedStage: InterpretationValidationStage;
@@ -232,6 +267,27 @@ function approvedBranchKind(value: unknown, rootField: "interpretation" | "resol
     : "UNKNOWN";
 }
 
+function timingRecord(value: unknown, rootField: "interpretation" | "resolution"):
+  Readonly<{ value: Record<string, unknown>; path: string }> | null {
+  const root = asRecord(value);
+  const branch = root ? asRecord(root[rootField]) : null;
+  if (!branch) return null;
+  const direct = asRecord(branch.timing);
+  if (direct) return { value: direct, path: `/${rootField}/timing` };
+  const attempted = asRecord(branch.attemptedOperation);
+  const nested = attempted ? asRecord(attempted.timing) : null;
+  return nested ? { value: nested, path: `/${rootField}/attemptedOperation/timing` } : null;
+}
+
+function selectedTimingKind(value: unknown, rootField: "interpretation" | "resolution"):
+  CompleteTimingKind | "UNKNOWN" | null {
+  const timing = timingRecord(value, rootField)?.value;
+  if (!timing || !Object.hasOwn(timing, "kind")) return null;
+  return typeof timing.kind === "string" && COMPLETE_TIMING_KINDS.includes(timing.kind as CompleteTimingKind)
+    ? timing.kind as CompleteTimingKind
+    : "UNKNOWN";
+}
+
 function baseDiagnostic(
   metadata: InterpretationDiagnosticMetadata,
   input: Readonly<{
@@ -256,6 +312,7 @@ function baseDiagnostic(
     repairOutcome: "NOT_APPLICABLE",
     selectedToolNameStatus: input.toolStatus,
     selectedBranchKind: approvedBranchKind(input.rawValue, metadata.rootField),
+    selectedTimingKind: selectedTimingKind(input.rawValue, metadata.rootField),
     presentFieldNames: collectSafeFieldNames(input.rawValue),
     stageTrace: input.stageTrace,
     deepestCompletedStage: input.deepestCompletedStage,
@@ -308,6 +365,82 @@ export function jsonArgumentsDiagnostic(
       { stage: "TOOL_ARGUMENT_JSON_PARSE", outcome: "FAILED" }
     ]
   });
+}
+
+type TimingStructuralIssue = Readonly<{
+  code: InterpretationDiagnosticCode;
+  path: string;
+  stage: InterpretationValidationStage;
+}>;
+
+function timingStructuralIssues(
+  rawValue: unknown,
+  rootField: "interpretation" | "resolution"
+): readonly TimingStructuralIssue[] {
+  const located = timingRecord(rawValue, rootField);
+  if (!located) return [];
+  const timing = located.value;
+  const path = located.path;
+  const issues: TimingStructuralIssue[] = [];
+  const push = (field: string, code: InterpretationDiagnosticCode, stage: InterpretationValidationStage = "BRANCH_SEMANTIC_VALIDATION") => {
+    issues.push({ code, path: `${path}/${field}`, stage });
+  };
+
+  if (typeof timing.kind !== "string" || !timing.kind) {
+    push("kind", "TIMING_KIND_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+    return issues;
+  }
+  if (!COMPLETE_TIMING_KINDS.includes(timing.kind as CompleteTimingKind)) return [];
+  const kind = timing.kind as CompleteTimingKind;
+  if (typeof timing.quote !== "string" || timing.quote.trim().length === 0) {
+    push("quote", "TIMING_QUOTE_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+  }
+
+  const monthPresent = Object.hasOwn(timing, "monthNumber") && timing.monthNumber !== null && timing.monthNumber !== undefined;
+  const yearPresent = Object.hasOwn(timing, "year") && timing.year !== null && timing.year !== undefined;
+  const offsetPresent = Object.hasOwn(timing, "offsetMonths") && timing.offsetMonths !== null && timing.offsetMonths !== undefined;
+  if (TIMING_KIND_POLICY[kind].monthNumber === "NULL" && monthPresent) {
+    push("monthNumber", "TIMING_MONTH_NUMBER_FORBIDDEN");
+  }
+  if (TIMING_KIND_POLICY[kind].monthNumber === "MONTH" && !monthPresent) {
+    push("monthNumber", "TIMING_MONTH_NUMBER_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+  }
+  if (TIMING_KIND_POLICY[kind].year === "NULL" && yearPresent) {
+    push("year", "TIMING_YEAR_FORBIDDEN");
+  }
+  if (TIMING_KIND_POLICY[kind].year === "YEAR" && !yearPresent) {
+    push("year", "TIMING_YEAR_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+  }
+  if (TIMING_KIND_POLICY[kind].offsetMonths === "NULL" && offsetPresent) {
+    push("offsetMonths", "TIMING_OFFSET_FORBIDDEN");
+  }
+  if (TIMING_KIND_POLICY[kind].offsetMonths === "ONE" && timing.offsetMonths !== 1) {
+    push(
+      "offsetMonths",
+      offsetPresent ? "TIMING_OFFSET_MUST_EQUAL_ONE" : "TIMING_OFFSET_REQUIRED",
+      offsetPresent ? "BRANCH_SEMANTIC_VALIDATION" : "STRICT_SCHEMA_VALIDATION"
+    );
+  }
+  if (TIMING_KIND_POLICY[kind].offsetMonths === "POSITIVE_BOUNDED") {
+    if (!offsetPresent || typeof timing.offsetMonths !== "number"
+      || !Number.isInteger(timing.offsetMonths)
+      || timing.offsetMonths < TIMING_OFFSET_MIN
+      || timing.offsetMonths > TIMING_OFFSET_MAX) {
+      push("offsetMonths", "TIMING_OFFSET_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+    }
+  }
+  if (monthPresent && (typeof timing.monthNumber !== "number" || !Number.isInteger(timing.monthNumber)
+    || timing.monthNumber < 1 || timing.monthNumber > 12)) {
+    push("monthNumber", "TIMING_MONTH_NUMBER_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+  }
+  if (yearPresent && (typeof timing.year !== "number" || !Number.isInteger(timing.year)
+    || timing.year < TIMING_YEAR_MIN || timing.year > TIMING_YEAR_MAX)) {
+    push("year", "TIMING_YEAR_REQUIRED", "STRICT_SCHEMA_VALIDATION");
+  }
+  if (issues.filter((issue) => /_(?:REQUIRED|FORBIDDEN|MUST_EQUAL_ONE)$/.test(issue.code)).length > 1) {
+    issues.push({ code: "TIMING_FIELDS_INCOMPATIBLE", path, stage: "BRANCH_SEMANTIC_VALIDATION" });
+  }
+  return issues;
 }
 
 function issueCodes(
@@ -399,10 +532,21 @@ export function runtimeValidationDiagnostic(
     paths = [`/${metadata.rootField}/kind`];
     failedStage = "BRANCH_SEMANTIC_VALIDATION";
   } else {
-    const classified = issueCodes(rawValue, error, selected);
-    codes = classified.codes;
-    paths = classified.paths;
-    failedStage = classified.failedStage;
+    const timingIssues = metadata.schemaVersion === "fy-conversation-intent/2.0.0"
+      ? []
+      : timingStructuralIssues(rawValue, metadata.rootField);
+    if (timingIssues.length > 0) {
+      codes = timingIssues.map((issue) => issue.code);
+      paths = timingIssues.map((issue) => issue.path);
+      failedStage = timingIssues.some((issue) => issue.stage === "STRICT_SCHEMA_VALIDATION")
+        ? "STRICT_SCHEMA_VALIDATION"
+        : "BRANCH_SEMANTIC_VALIDATION";
+    } else {
+      const classified = issueCodes(rawValue, error, selected);
+      codes = classified.codes;
+      paths = classified.paths;
+      failedStage = classified.failedStage;
+    }
   }
 
   if (selected === "UNSUPPORTED") {
@@ -487,6 +631,35 @@ function timingQuote(value: ConversationInterpretation | ClarificationResolution
   return null;
 }
 
+function timingInterpretation(
+  value: ConversationInterpretation | ClarificationResolution
+): CompleteTimingInterpretation | null {
+  if ("timing" in value && value.timing) return value.timing;
+  if (value.kind === "CLARIFY_SCENARIO_REFERENCE" && value.attemptedOperation.kind === "CHANGE_PURCHASE_MONTH") {
+    return value.attemptedOperation.timing;
+  }
+  return null;
+}
+
+function timingIntentContext(
+  value: ConversationInterpretation | ClarificationResolution,
+  request: InterpretationProviderRequest | ClarificationResolutionProviderRequest
+): TimingIntentContext | null {
+  if (value.kind === "CREATE_ONE_OFF_PURCHASE") return "CREATE_ONE_OFF_PURCHASE";
+  if (value.kind === "CHANGE_PURCHASE_MONTH") return "CHANGE_PURCHASE_MONTH";
+  if (value.kind === "CLARIFY_PURCHASE_AMOUNT") return "CLARIFY_PURCHASE_AMOUNT";
+  if (value.kind === "CLARIFY_SCENARIO_REFERENCE"
+    && value.attemptedOperation.kind === "CHANGE_PURCHASE_MONTH") {
+    return "CLARIFY_SCENARIO_REFERENCE_CHANGE_MONTH";
+  }
+  if (value.kind === "RESOLVE_PURCHASE_MONTH") {
+    return request.pendingClarification?.attemptedOperation === "CHANGE_PURCHASE_MONTH"
+      ? "RESOLVE_PURCHASE_MONTH_FOR_CHANGE"
+      : "RESOLVE_PURCHASE_MONTH_FOR_CREATE";
+  }
+  return null;
+}
+
 function scenarioQuote(value: ConversationInterpretation | ClarificationResolution): string | null {
   if ("scenarioReferenceQuote" in value) return value.scenarioReferenceQuote;
   if ("scenarioLabelQuote" in value) return value.scenarioLabelQuote;
@@ -524,8 +697,30 @@ export function successfulInterpretationDiagnostic(
     return failAfterProviderValidation(diagnostic, "SOURCE_GROUNDING", "AMOUNT_QUOTE_NOT_PARSEABLE", `/${metadata.rootField}/amount/quote`);
   }
   const timing = timingQuote(value);
+  const completeTiming = timingInterpretation(value);
+  const timingPath = value.kind === "CLARIFY_SCENARIO_REFERENCE"
+    ? `/${metadata.rootField}/attemptedOperation/timing`
+    : `/${metadata.rootField}/timing`;
   if (timing !== null && !quotePresent(request.userMessage, timing)) {
-    return failAfterProviderValidation(diagnostic, "SOURCE_GROUNDING", "TIMING_QUOTE_NOT_FOUND", `/${metadata.rootField}/timing/quote`);
+    return failAfterProviderValidation(
+      diagnostic,
+      "SOURCE_GROUNDING",
+      metadata.schemaVersion === "fy-conversation-intent/2.0.0"
+        ? "TIMING_QUOTE_NOT_FOUND"
+        : "TIMING_QUOTE_NOT_GROUNDED",
+      `${timingPath}/quote`
+    );
+  }
+  if (completeTiming && metadata.schemaVersion !== "fy-conversation-intent/2.0.0") {
+    const equivalenceIssues = timingQuoteEquivalenceIssues(completeTiming);
+    if (equivalenceIssues.length > 0) {
+      return failTimingValidation(
+        diagnostic,
+        "SOURCE_GROUNDING",
+        equivalenceIssues,
+        timingPath
+      );
+    }
   }
   const label = scenarioQuote(value);
   if (label !== null && !quotePresent(request.userMessage, label)) {
@@ -544,6 +739,27 @@ export function successfulInterpretationDiagnostic(
   const selectedTarget = "selectionTarget" in value && value.selectionTarget === "SELECTED_SCENARIO";
   if ((selectedStrategy || selectedTarget) && !selected) {
     return failConversationState(diagnostic, "BRANCH_NOT_ALLOWED_IN_CONVERSATION_STATE", `/${metadata.rootField}/scenarioReferenceStrategy`);
+  }
+  const timingContext = timingIntentContext(value, request);
+  if (metadata.schemaVersion !== "fy-conversation-intent/2.0.0"
+    && completeTiming && timingContext && !timingKindAllowedForIntent(completeTiming.kind, timingContext)) {
+    return failTimingValidation(
+      diagnostic,
+      "CONVERSATION_STATE_VALIDATION",
+      completeTiming.kind === "MONTHS_AFTER_SELECTED"
+        ? ["TIMING_KIND_NOT_ALLOWED_FOR_INTENT", "TIMING_SELECTED_SCENARIO_REQUIRED"]
+        : ["TIMING_KIND_NOT_ALLOWED_FOR_INTENT"],
+      timingPath
+    );
+  }
+  if (metadata.schemaVersion !== "fy-conversation-intent/2.0.0"
+    && completeTiming?.kind === "MONTHS_AFTER_SELECTED" && !selected) {
+    return failTimingValidation(
+      diagnostic,
+      "CONVERSATION_STATE_VALIDATION",
+      ["TIMING_SELECTED_SCENARIO_REQUIRED"],
+      timingPath
+    );
   }
   const explicitStrategy = "scenarioReferenceStrategy" in value && value.scenarioReferenceStrategy === "EXPLICIT_SCENARIO_LABEL";
   const explicitTarget = "selectionTarget" in value && value.selectionTarget === "EXPLICIT_SCENARIO_LABEL";
@@ -600,6 +816,40 @@ function failAfterProviderValidation(
   };
 }
 
+function timingIssuePath(basePath: string, code: InterpretationDiagnosticCode): string {
+  if (code.includes("QUOTE")) return `${basePath}/quote`;
+  if (code.includes("MONTH_NUMBER")) return `${basePath}/monthNumber`;
+  if (code.includes("YEAR")) return `${basePath}/year`;
+  if (code.includes("OFFSET")) return `${basePath}/offsetMonths`;
+  if (code.includes("KIND")) return `${basePath}/kind`;
+  return basePath;
+}
+
+function failTimingValidation(
+  diagnostic: SanitisedInterpretationDiagnosticDraft,
+  stage: "SOURCE_GROUNDING" | "CONVERSATION_STATE_VALIDATION",
+  codes: readonly InterpretationDiagnosticCode[],
+  basePath: string
+): SanitisedInterpretationDiagnosticDraft {
+  return {
+    ...diagnostic,
+    failedStage: stage,
+    diagnosticCodes: uniqueSorted([
+      ...diagnostic.diagnosticCodes,
+      ...codes,
+      ...(stage === "CONVERSATION_STATE_VALIDATION" ? ["APPLICATION_COMMAND_REJECTED" as const] : [])
+    ]),
+    jsonPointerPaths: uniqueSorted([
+      ...diagnostic.jsonPointerPaths,
+      ...codes.map((code) => timingIssuePath(basePath, code))
+    ]),
+    sourceGroundingValid: stage === "SOURCE_GROUNDING" ? false : diagnostic.sourceGroundingValid,
+    conversationStateValid: stage === "CONVERSATION_STATE_VALIDATION" ? false : diagnostic.conversationStateValid,
+    applicationCommandAuthorized: false,
+    stageTrace: [...diagnostic.stageTrace, { stage, outcome: "FAILED" }]
+  };
+}
+
 function failConversationState(
   diagnostic: SanitisedInterpretationDiagnosticDraft,
   code: InterpretationDiagnosticCode,
@@ -625,6 +875,7 @@ function failureSignature(diagnostic: SanitisedInterpretationDiagnosticDraft): s
     failedStage: diagnostic.failedStage,
     selectedToolNameStatus: diagnostic.selectedToolNameStatus,
     selectedBranchKind: diagnostic.selectedBranchKind,
+    selectedTimingKind: diagnostic.selectedTimingKind,
     diagnosticCodes: diagnostic.diagnosticCodes,
     jsonPointerPaths: diagnostic.jsonPointerPaths,
     presentFieldNames: diagnostic.presentFieldNames
@@ -686,12 +937,22 @@ export function markFinalFailure(
 
 export function repairValidationErrors(
   diagnostic: SanitisedInterpretationDiagnosticDraft
-): readonly Readonly<{ path: string; code: InterpretationDiagnosticCode }>[] {
+): readonly Readonly<{ path: string; code: InterpretationDiagnosticCode; rule?: string }>[] {
   const paths = diagnostic.jsonPointerPaths.length > 0 ? diagnostic.jsonPointerPaths : ["/"];
-  return diagnostic.diagnosticCodes.map((code, index) => ({
-    path: paths[Math.min(index, paths.length - 1)]!,
-    code
-  }));
+  return diagnostic.diagnosticCodes.map((code, index) => {
+    const rule = Object.hasOwn(TIMING_REPAIR_RULE_BY_CODE, code)
+      ? TIMING_REPAIR_RULE_BY_CODE[code as keyof typeof TIMING_REPAIR_RULE_BY_CODE]
+      : undefined;
+    const timingPath = paths.find((path) => path.includes("/timing"));
+    const timingBasePath = timingPath?.slice(0, timingPath.indexOf("/timing") + "/timing".length);
+    return {
+      path: code.startsWith("TIMING_") && timingBasePath
+        ? timingIssuePath(timingBasePath, code)
+        : paths[Math.min(index, paths.length - 1)]!,
+      code,
+      ...(rule ? { rule } : {})
+    };
+  });
 }
 
 export function evaluationDiagnosticsEnabled(
