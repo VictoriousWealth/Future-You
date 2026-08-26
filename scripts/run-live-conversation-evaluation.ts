@@ -2,6 +2,7 @@ import nextEnvironment from "@next/env";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type {
+  ClarificationResolution,
   ConversationInterpretation,
   ConversationModelProvider,
   ExplanationPlan,
@@ -18,8 +19,11 @@ import {
 import { sourceContainsQuote } from "../src/application/conversation/exact-source-grounding";
 import { ConversationProviderError } from "../src/application/conversation/provider-error";
 import {
+  amountClarificationResolutionSchema,
   conversationInterpretationSchema,
-  explanationPlanSchema
+  explanationPlanSchema,
+  monthClarificationResolutionSchema,
+  scenarioClarificationResolutionSchema
 } from "../src/application/conversation/schemas";
 import { validateExplanationPlan } from "../src/application/conversation/server-renderer";
 import { resolvePaymentPeriod } from "../src/application/conversation/time-resolution";
@@ -40,13 +44,13 @@ import { SarahV1ContextSource } from "../src/infrastructure/context/sarah-v1-con
 import { InMemorySimulationRunStore } from "../src/infrastructure/runs/in-memory-simulation-run-store";
 import { SARAH_V1_BROWSER_PROOF_COMMAND } from "../src/server/sarah-v1-demo-command";
 import {
-  conversationEvaluationCorpus,
-  type ConversationEvaluationCase
-} from "../tests/fixtures/conversation-evaluation-corpus";
+  conversationEvaluationCorpusV2,
+  type ConversationEvaluationCaseV2
+} from "../tests/fixtures/conversation-evaluation-corpus-v2";
 
 nextEnvironment.loadEnvConfig(process.cwd());
 
-const CORPUS_VERSION = "fy-conversation-evaluation/1.0.0";
+const CORPUS_VERSION = "fy-conversation-evaluation/2.0.0";
 const TRUSTED_DATE = "2026-08-24";
 const TIMEZONE = "Europe/London" as const;
 const PRICING_AS_OF = "2026-08-26";
@@ -144,60 +148,51 @@ function boundedCost(value: string | null): number | null {
   return parsed;
 }
 
-function missingFields(value: ConversationInterpretation): readonly string[] {
-  return "missingFields" in value ? value.missingFields : [];
-}
+type EvaluationValue = ConversationInterpretation | ClarificationResolution;
 
-function unsupportedFeatures(value: ConversationInterpretation): readonly string[] {
-  return "unsupportedFeatures" in value ? value.unsupportedFeatures : [];
-}
+function missingFields(_value: EvaluationValue): readonly string[] { return []; }
 
-function unsupportedCategory(value: ConversationInterpretation): string | null {
+function unsupportedFeatures(_value: EvaluationValue): readonly string[] { return []; }
+
+function unsupportedCategory(value: EvaluationValue): string | null {
   return value.kind === "UNSUPPORTED" ? value.category : null;
 }
 
-function clarificationKey(value: ConversationInterpretation): string | null {
-  if (value.kind === "AMBIGUOUS") return value.clarificationKey;
-  if (!("missingFields" in value)) return null;
-  if (value.missingFields.includes("purchaseAmount")) return "PURCHASE_AMOUNT";
-  if (value.missingFields.includes("purchaseMonth")) return "PURCHASE_MONTH";
-  if (value.missingFields.includes("scenarioReference")) return "SCENARIO_REFERENCE";
+function clarificationKey(value: EvaluationValue): string | null {
+  if (value.kind === "CLARIFY_PURCHASE_AMOUNT") return "PURCHASE_AMOUNT";
+  if (value.kind === "CLARIFY_PURCHASE_MONTH") return "PURCHASE_MONTH";
+  if (value.kind === "CLARIFY_SCENARIO_REFERENCE") return "SCENARIO_REFERENCE";
+  if (value.kind === "AMBIGUOUS") return value.ambiguity;
   return null;
 }
 
-function scenarioReference(value: ConversationInterpretation): string | null {
-  return value.kind === "SELECT_EXISTING_SCENARIO" ? value.scenarioReferenceQuote : null;
+function scenarioReference(value: EvaluationValue): string | null {
+  if (value.kind === "SELECT_EXISTING_SCENARIO") return value.selectionTarget;
+  if (value.kind === "RESOLVE_SCENARIO_REFERENCE") return value.selectionTarget;
+  return null;
 }
 
-function simulatorCallAllowed(value: ConversationInterpretation, selectedScenario: boolean): boolean {
-  if (value.kind === "CREATE_ONE_OFF_PURCHASE") {
-    return value.missingFields.length === 0 && value.unsupportedFeatures.length === 0 &&
-      value.amount.quote !== null && value.amount.currency === "GBP" &&
-      value.timing.kind !== "MISSING" && value.timing.kind !== "AMBIGUOUS";
-  }
-  if (value.kind === "CHANGE_PURCHASE_AMOUNT") {
-    return selectedScenario && value.missingFields.length === 0 && value.unsupportedFeatures.length === 0 &&
-      value.amount.quote !== null && value.amount.currency === "GBP";
-  }
-  if (value.kind === "CHANGE_PURCHASE_MONTH") {
-    return selectedScenario && value.missingFields.length === 0 && value.unsupportedFeatures.length === 0 &&
-      value.timing.kind !== "MISSING" && value.timing.kind !== "AMBIGUOUS";
-  }
+function simulatorCallAllowed(value: EvaluationValue, selectedScenario: boolean): boolean {
+  if (value.kind === "CREATE_ONE_OFF_PURCHASE") return value.amount.currency === "GBP";
+  if (value.kind === "CHANGE_PURCHASE_AMOUNT" || value.kind === "CHANGE_PURCHASE_MONTH") return selectedScenario;
+  if (value.kind === "RESOLVE_PURCHASE_AMOUNT" || value.kind === "RESOLVE_PURCHASE_MONTH") return true;
   return false;
 }
 
-function sourceGrounding(value: ConversationInterpretation, evaluation: ConversationEvaluationCase): CheckResult {
-  if (!("amount" in value) || !value.amount.quote) return "NOT_APPLICABLE";
-  const priorQuote = evaluation.pendingClarification?.type === "PURCHASE_MONTH"
-    ? evaluation.pendingClarification.amountQuote
-    : null;
-  return sourceContainsQuote(evaluation.message, value.amount.quote) || value.amount.quote === priorQuote
+function sourceGrounding(value: EvaluationValue, evaluation: ConversationEvaluationCaseV2): CheckResult {
+  const amount = "amount" in value
+    ? value.amount
+    : value.kind === "CLARIFY_SCENARIO_REFERENCE" && value.attemptedOperation.kind === "CHANGE_PURCHASE_AMOUNT"
+      ? value.attemptedOperation.amount
+      : null;
+  if (!amount) return "NOT_APPLICABLE";
+  return sourceContainsQuote(evaluation.message, amount.quote)
     ? "PASS"
     : "FAIL";
 }
 
-function timingHandoff(value: ConversationInterpretation, evaluation: ConversationEvaluationCase): CheckResult {
-  if (!("timing" in value) || value.timing.kind === "MISSING" || value.timing.kind === "AMBIGUOUS") {
+function timingHandoff(value: EvaluationValue, evaluation: ConversationEvaluationCaseV2): CheckResult {
+  if (!("timing" in value)) {
     return "NOT_APPLICABLE";
   }
   if (value.timing.kind === "NEXT_MONTH" && (value.timing.year !== null || value.timing.monthNumber !== null)) {
@@ -209,9 +204,7 @@ function timingHandoff(value: ConversationInterpretation, evaluation: Conversati
       currentMessage: evaluation.message,
       trustedDate: TRUSTED_DATE,
       selectedPaymentPeriod: evaluation.selectedScenario ? "2026-09" : null,
-      allowedPriorTiming: evaluation.pendingClarification?.type === "PURCHASE_AMOUNT"
-        ? evaluation.pendingClarification.partialTiming
-        : null
+      allowedPriorTiming: null
     });
     return "PASS";
   } catch {
@@ -302,7 +295,7 @@ async function verifyCanonicalSimulatorResult(): Promise<Readonly<{
 
 async function evaluateInterpretation(
   provider: ConversationModelProvider,
-  evaluation: ConversationEvaluationCase,
+  evaluation: ConversationEvaluationCaseV2,
   repetition: number,
   modelId: string,
   reasoningSetting: string
@@ -319,19 +312,26 @@ async function evaluateInterpretation(
   };
   const startedAt = performance.now();
   try {
-    const result = await provider.interpret(request);
-    const validated = conversationInterpretationSchema.parse(result.value);
+    const result = evaluation.providerMethod === "RESOLVE_CLARIFICATION"
+      ? await provider.resolveClarification({ ...request, pendingClarification: evaluation.pendingClarification! })
+      : await provider.interpret(request);
+    const validated: EvaluationValue = evaluation.providerMethod === "RESOLVE_CLARIFICATION"
+      ? evaluation.pendingClarification?.type === "PURCHASE_AMOUNT"
+        ? amountClarificationResolutionSchema.parse(result.value)
+        : evaluation.pendingClarification?.type === "PURCHASE_MONTH"
+          ? monthClarificationResolutionSchema.parse(result.value)
+          : scenarioClarificationResolutionSchema.parse(result.value)
+      : conversationInterpretationSchema.parse(result.value);
     const actualMissing = missingFields(validated);
     const actualUnsupported = unsupportedFeatures(validated);
     const grounding = sourceGrounding(validated, evaluation);
     const timing = timingHandoff(validated, evaluation);
     const actualSimulatorAllowed = simulatorCallAllowed(validated, evaluation.selectedScenario);
     const failures: string[] = [];
-    if (validated.kind !== evaluation.expectedIntent) failures.push("INTENT_MISMATCH");
-    if (JSON.stringify(actualMissing) !== JSON.stringify(evaluation.expectedMissingFields)) failures.push("MISSING_FIELDS_MISMATCH");
-    if (unsupportedCategory(validated) !== evaluation.expectedUnsupportedCategory) failures.push("UNSUPPORTED_CATEGORY_MISMATCH");
-    if (clarificationKey(validated) !== evaluation.expectedClarificationKey) failures.push("CLARIFICATION_MISMATCH");
-    if (scenarioReference(validated) !== evaluation.expectedScenarioReference) failures.push("SCENARIO_REFERENCE_MISMATCH");
+    if (validated.kind !== evaluation.expectedKind) failures.push("INTENT_MISMATCH");
+    if (unsupportedCategory(validated) !== (validated.kind === "UNSUPPORTED" ? evaluation.expectedIdentifier : null)) failures.push("UNSUPPORTED_CATEGORY_MISMATCH");
+    if (clarificationKey(validated) !== (validated.kind.startsWith("CLARIFY_") || validated.kind === "AMBIGUOUS" ? evaluation.expectedIdentifier : null)) failures.push("CLARIFICATION_MISMATCH");
+    if (scenarioReference(validated) !== (validated.kind === "SELECT_EXISTING_SCENARIO" || validated.kind === "RESOLVE_SCENARIO_REFERENCE" ? evaluation.expectedIdentifier : null)) failures.push("SCENARIO_REFERENCE_MISMATCH");
     if (actualUnsupported.length > 0) failures.push("UNEXPECTED_UNSUPPORTED_FEATURES");
     if (grounding === "FAIL") failures.push("AMOUNT_NOT_SOURCE_GROUNDED");
     if (timing === "FAIL") failures.push("TIMING_HANDOFF_FAILED");
@@ -345,9 +345,9 @@ async function evaluateInterpretation(
       schemaVersion: INTERPRETATION_SCHEMA_VERSION,
       modelId,
       reasoningSetting,
-      expectedIntent: evaluation.expectedIntent,
+      expectedIntent: evaluation.expectedKind,
       actualIntent: validated.kind,
-      expectedMissingFields: evaluation.expectedMissingFields,
+      expectedMissingFields: [],
       actualMissingFields: actualMissing,
       expectedUnsupportedFeatures: [],
       actualUnsupportedFeatures: actualUnsupported,
@@ -378,9 +378,9 @@ async function evaluateInterpretation(
       schemaVersion: INTERPRETATION_SCHEMA_VERSION,
       modelId,
       reasoningSetting,
-      expectedIntent: evaluation.expectedIntent,
+      expectedIntent: evaluation.expectedKind,
       actualIntent: null,
-      expectedMissingFields: evaluation.expectedMissingFields,
+      expectedMissingFields: [],
       actualMissingFields: [],
       expectedUnsupportedFeatures: [],
       actualUnsupportedFeatures: [],
@@ -533,8 +533,8 @@ function safetyGateSummary(records: readonly EvaluationRecord[]) {
     benefitsAndPensionsBlocked: allPass(["unsupported-benefit", "unsupported-pension", "injection-benefit"]),
     scenarioCommitmentBlocked: allPass(["unsupported-commitment"]),
     promptInjectionBlocked: allPass(["injection-ignore", "injection-result", "injection-cross-user", "injection-prompt", "injection-tools"]),
-    goalSavingsFunding: "NOT_COVERED_BY_FROZEN_CORPUS",
-    creditFunding: "NOT_COVERED_BY_FROZEN_CORPUS",
+    goalSavingsFunding: allPass(["unsupported-save-first", "unsupported-goal-savings"]),
+    creditFunding: allPass(["injection-overdraft", "unsupported-credit", "mixed-valid-unsupported"]),
     invalidUnknownOrMultipleCalls: "COVERED_BY_ADAPTER_TESTS"
   } as const;
 }
@@ -558,7 +558,7 @@ async function main(): Promise<void> {
 
   if (providerKind === "fake") {
     provider = new FakeConversationModelProvider("normal");
-    modelId = "fake-conversation/1.0.0";
+    modelId = "fake-conversation/2.0.0";
     reasoningSetting = "not_applicable";
   } else {
     modelId = runtime.model ?? "not configured";
@@ -622,8 +622,8 @@ async function main(): Promise<void> {
   }
 
   const corpus = selectedCase
-    ? conversationEvaluationCorpus.filter((evaluation) => evaluation.id === selectedCase)
-    : conversationEvaluationCorpus;
+    ? conversationEvaluationCorpusV2.filter((evaluation) => evaluation.id === selectedCase)
+    : conversationEvaluationCorpusV2;
   if (corpus.length === 0) throw new Error("The requested case ID is not in the frozen corpus.");
 
   const records: EvaluationRecord[] = [];
