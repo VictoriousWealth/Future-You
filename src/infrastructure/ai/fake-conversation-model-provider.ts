@@ -11,6 +11,7 @@ import type {
 } from "../../application/conversation/contracts";
 import type { UnsupportedCategoryId } from "../../application/conversation/interpretation-policy";
 import { ConversationProviderError } from "../../application/conversation/provider-error";
+import { parseGroundedTimingQuote } from "../../application/conversation/timing-policy";
 
 export type FakeProviderMode =
   | "normal"
@@ -52,7 +53,21 @@ export type FakeInterpretationDiagnosticMode =
   | "repair_succeeds"
   | "repair_repeats_same_failure"
   | "repair_produces_different_failure"
-  | "repair_remains_invalid";
+  | "repair_remains_invalid"
+  | "timing_valid_canonical_next_month"
+  | "timing_missing_next_month_offset"
+  | "timing_wrong_next_month_offset"
+  | "timing_next_month_as_named_month"
+  | "timing_correct_named_month"
+  | "timing_wrong_named_month_number"
+  | "timing_correct_explicit_year_month"
+  | "timing_wrong_explicit_year"
+  | "timing_correct_months_after_selected"
+  | "timing_missing_selected_scenario"
+  | "timing_quote_kind_mismatch"
+  | "timing_repair_fixes"
+  | "timing_repair_repeats_failure"
+  | "timing_repair_changes_failure";
 
 export const FAKE_INTERPRETATION_DIAGNOSTIC_MODES = [
   "missing_tool_call",
@@ -84,7 +99,21 @@ export const FAKE_INTERPRETATION_DIAGNOSTIC_MODES = [
   "repair_succeeds",
   "repair_repeats_same_failure",
   "repair_produces_different_failure",
-  "repair_remains_invalid"
+  "repair_remains_invalid",
+  "timing_valid_canonical_next_month",
+  "timing_missing_next_month_offset",
+  "timing_wrong_next_month_offset",
+  "timing_next_month_as_named_month",
+  "timing_correct_named_month",
+  "timing_wrong_named_month_number",
+  "timing_correct_explicit_year_month",
+  "timing_wrong_explicit_year",
+  "timing_correct_months_after_selected",
+  "timing_missing_selected_scenario",
+  "timing_quote_kind_mismatch",
+  "timing_repair_fixes",
+  "timing_repair_repeats_failure",
+  "timing_repair_changes_failure"
 ] as const satisfies readonly FakeInterpretationDiagnosticMode[];
 
 export interface FakeInterpretationDiagnosticFixture {
@@ -96,8 +125,8 @@ export interface FakeInterpretationDiagnosticFixture {
   }>[];
 }
 
-const DIAGNOSTIC_INTERPRET_TOOL = "submit_conversation_interpretation_v2";
-const DIAGNOSTIC_CLARIFICATION_TOOL = "submit_clarification_resolution";
+const DIAGNOSTIC_INTERPRET_TOOL = "submit_conversation_interpretation_v3";
+const DIAGNOSTIC_CLARIFICATION_TOOL = "submit_clarification_resolution_v2";
 
 function diagnosticEnvelope(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
   return {
@@ -337,6 +366,101 @@ export function fakeInterpretationDiagnosticFixture(
           response([diagnosticCall({})])
         ]
       };
+    case "timing_valid_canonical_next_month":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [valid] };
+    case "timing_missing_next_month_offset":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({
+        timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null }
+      }))])] };
+    case "timing_wrong_next_month_offset":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({
+        timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 }
+      }))])] };
+    case "timing_next_month_as_named_month":
+    case "timing_quote_kind_mismatch":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({
+        timing: { quote: "next month", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null }
+      }))])] };
+    case "timing_correct_named_month":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford a £650 trip in October?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "October", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null }
+        }))])]
+      };
+    case "timing_wrong_named_month_number":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford a £650 trip in October?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "October", kind: "NAMED_MONTH", monthNumber: 9, year: null, offsetMonths: null }
+        }))])]
+      };
+    case "timing_correct_explicit_year_month":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford a £650 trip in October 2027?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "October 2027", kind: "EXPLICIT_YEAR_MONTH", monthNumber: 10, year: 2027, offsetMonths: null }
+        }))])]
+      };
+    case "timing_wrong_explicit_year":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford a £650 trip in October 2027?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "October 2027", kind: "EXPLICIT_YEAR_MONTH", monthNumber: 10, year: 2028, offsetMonths: null }
+        }))])]
+      };
+    case "timing_correct_months_after_selected":
+      return {
+        method: "INTERPRET",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "What if I wait one month later?",
+          availableScenarios: [{ label: "£650 trip", scenarioType: "one_off_purchase", selected: true }],
+          selectedScenarioType: "one_off_purchase"
+        },
+        responses: [response([diagnosticCall({ interpretation: {
+          kind: "CHANGE_PURCHASE_MONTH",
+          timing: { quote: "one month later", kind: "MONTHS_AFTER_SELECTED", monthNumber: null, year: null, offsetMonths: 1 },
+          scenarioReferenceStrategy: "SELECTED_SCENARIO",
+          scenarioReferenceQuote: null
+        } })])]
+      };
+    case "timing_missing_selected_scenario":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford a £650 trip one month later?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "one month later", kind: "MONTHS_AFTER_SELECTED", monthNumber: null, year: null, offsetMonths: 1 }
+        }))])]
+      };
+    case "timing_repair_fixes":
+      return {
+        method: "INTERPRET", request: diagnosticRequest,
+        responses: [
+          response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 } }))]),
+          valid
+        ]
+      };
+    case "timing_repair_repeats_failure":
+      return {
+        method: "INTERPRET", request: diagnosticRequest,
+        responses: [
+          response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 } }))]),
+          response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 } }))])
+        ]
+      };
+    case "timing_repair_changes_failure":
+      return {
+        method: "INTERPRET", request: diagnosticRequest,
+        responses: [
+          response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 } }))]),
+          response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null } }))])
+        ]
+      };
   }
 }
 
@@ -355,27 +479,24 @@ function amountFrom(message: string) {
 }
 
 function timingFrom(message: string): CompleteTimingInterpretation | null | "AMBIGUOUS" {
-  const lower = message.toLowerCase();
-  if (/next\s+month|nxt\s+month/.test(lower)) {
-    const quote = message.match(/next\s+month|nxt\s+month/i)?.[0] ?? "next month";
-    return { quote, kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 1 };
-  }
-  const explicit = message.match(/\b(20\d{2})-(0[1-9]|1[0-2])\b/);
-  if (explicit) {
-    return { quote: explicit[0], kind: "EXPLICIT_YEAR_MONTH", year: Number(explicit[1]), monthNumber: Number(explicit[2]), offsetMonths: null };
-  }
-  const namedMonths = MONTHS.map((month, index) => ({ month, index })).filter(({ month }) => lower.includes(month));
-  if (namedMonths.length > 1) return "AMBIGUOUS";
-  const named = namedMonths[0];
-  if (named) {
-    return {
-      quote: message.match(new RegExp(named.month, "i"))?.[0] ?? named.month,
-      kind: "NAMED_MONTH", monthNumber: named.index + 1, year: null, offsetMonths: null
-    };
-  }
-  const later = message.match(/(?:one|1)\s+month\s+later|wait\s+(?:one|1)\s+month/i);
-  if (later) return { quote: later[0], kind: "MONTHS_AFTER_SELECTED", monthNumber: null, year: null, offsetMonths: 1 };
-  return null;
+  const parsed = parseGroundedTimingQuote(message);
+  if (parsed.status !== "PARSED") return parsed.status === "AMBIGUOUS" ? "AMBIGUOUS" : null;
+  const quote = parsed.kind === "NEXT_MONTH"
+      ? message.match(/(?:next|nxt)\s+month/i)?.[0]
+      : parsed.kind === "MONTHS_AFTER_SELECTED"
+      ? message.match(/(?:(?:\d{1,3}|one)\s+months?\s+(?:later|after(?:wards)?)|wait\s+(?:\d{1,3}|one)\s+months?)/i)?.[0]
+      : parsed.kind === "EXPLICIT_YEAR_MONTH"
+        ? message.match(/\b(?:20\d{2}|21\d{2}|2200)-(?:0?[1-9]|1[0-2])\b/i)?.[0]
+          ?? message.match(new RegExp(`\\b(?:${MONTHS.join("|")})\\s*,?\\s+(?:20\\d{2}|21\\d{2}|2200)\\b`, "i"))?.[0]
+        : message.match(new RegExp(`\\b(?:${MONTHS.join("|")})\\b`, "i"))?.[0];
+  if (!quote) return null;
+  return {
+    quote,
+    kind: parsed.kind,
+    monthNumber: parsed.monthNumber,
+    year: parsed.year,
+    offsetMonths: parsed.offsetMonths
+  };
 }
 
 export function unsupportedCategory(message: string): UnsupportedCategoryId | null {
