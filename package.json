@@ -10,7 +10,7 @@
     "lint": "eslint src tests vitest.config.ts playwright.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:evaluation": "vitest run tests/conversation-evaluation-corpus.test.ts",
+    "test:evaluation": "vitest run tests/conversation-evaluation-corpus.test.ts tests/conversation-evaluation-corpus-v2.test.ts",
     "test:evaluation:harness": "node --conditions=react-server --import tsx scripts/run-live-conversation-evaluation.ts --provider=fake",
     "test:evaluation:live": "node --conditions=react-server --import tsx scripts/run-live-conversation-evaluation.ts",
     "openai:readiness": "node --conditions=react-server --import tsx scripts/check-openai-readiness.ts",
