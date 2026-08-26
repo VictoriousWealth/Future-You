@@ -548,11 +548,14 @@ async function main(): Promise<void> {
   const providerKind = (argument("provider") ?? "openai") as ProviderKind;
   if (providerKind !== "fake" && providerKind !== "openai") throw new Error("Provider must be fake or openai.");
   const smoke = hasFlag("smoke");
+  const gateSample = hasFlag("gate-sample");
   const requestedCase = argument("case");
+  if (smoke && gateSample) throw new Error("Smoke and gate-sample modes are mutually exclusive.");
   if (smoke && requestedCase && requestedCase !== "canonical-trip-650") {
     throw new Error("Smoke mode is restricted to the canonical £650 case.");
   }
-  const repetitions = smoke ? 1 : boundedInteger(argument("repetitions"), 3, 3, 20);
+  if (gateSample && !requestedCase) throw new Error("Gate-sample mode requires one explicit case ID.");
+  const repetitions = smoke || gateSample ? 1 : boundedInteger(argument("repetitions"), 3, 3, 20);
   const selectedCase = smoke ? "canonical-trip-650" : requestedCase;
   const outputPath = argument("output");
   const maximumEstimatedCostUsd = boundedCost(argument("max-estimated-cost-usd"));
@@ -644,7 +647,7 @@ async function main(): Promise<void> {
       records.push(await evaluateInterpretation(provider, evaluation, repetition, modelId, reasoningSetting));
       enforceEstimatedCostGuard([...records, ...explanationRecords], maximumEstimatedCostUsd);
     }
-    if (!smoke) {
+    if (!smoke && !gateSample) {
       for (const explanation of EXPLANATION_CASES) {
         explanationRecords.push(await evaluateExplanation(provider, explanation, repetition, modelId, reasoningSetting));
         enforceEstimatedCostGuard([...records, ...explanationRecords], maximumEstimatedCostUsd);
@@ -661,7 +664,7 @@ async function main(): Promise<void> {
     status: allRecords.every((record) => record.passed) && (!smoke || simulatorProof?.passed === true)
       ? "PASS"
       : "FAIL",
-    mode: smoke ? "SMOKE" : "BASELINE",
+    mode: smoke ? "SMOKE" : gateSample ? "GATE_SAMPLE" : "BASELINE",
     provider: providerKind,
     model: modelId,
     reasoningSetting,
