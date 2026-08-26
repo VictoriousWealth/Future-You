@@ -2,8 +2,17 @@ import { inputIdentity } from "../../domain/shared/identity";
 import type { FinancialContextSource } from "../ports/financial-context-source";
 import type { ConversationRepository, StoredConversation } from "../ports/conversation-repository";
 import type { ConversationSimulator } from "../ports/conversation-simulator";
-import { conversationInterpretationSchema } from "./schemas";
+import {
+  amountClarificationResolutionSchema,
+  conversationInterpretationSchema,
+  monthClarificationResolutionSchema,
+  scenarioClarificationResolutionSchema
+} from "./schemas";
 import type {
+  AmountInterpretation,
+  ClarificationResolution,
+  CompleteTimingInterpretation,
+  ConversationInterpretation,
   ConversationDetailDTO,
   ConversationIntentKind,
   ConversationListResponseDTO,
@@ -25,6 +34,8 @@ import {
   CONVERSATION_RESPONSE_SCHEMA,
   CONVERSATION_TIMEZONE,
   CONVERSATION_TURN_RESPONSE_SCHEMA,
+  CLARIFICATION_RESOLUTION_PROMPT_VERSION,
+  CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
   EXPLANATION_PROMPT_VERSION,
   EXPLANATION_SCHEMA_VERSION,
   INTERPRETATION_PROMPT_VERSION,
@@ -192,6 +203,11 @@ export class ConversationApplication {
     const userMessageId = `message-user-${suffix({ ...turnSeed, role: "user" })}`;
     const assistantMessageId = `message-assistant-${suffix({ ...turnSeed, role: "assistant" })}`;
     const requestIdentity = inputIdentity({ message: request.message });
+    const contractConversation = await this.dependencies.repository.get(conversationId);
+    if (!contractConversation) {
+      throw new ConversationApplicationError("CONVERSATION_NOT_FOUND", "The conversation was not found.");
+    }
+    const resolvesClarification = contractConversation.pendingClarification !== null;
     const began = await this.dependencies.repository.beginTurn({
       conversationId,
       turnId,
@@ -201,8 +217,12 @@ export class ConversationApplication {
       message: request.message,
       trustedTimestamp,
       trustedTimezone: CONVERSATION_TIMEZONE,
-      interpretationPromptVersion: INTERPRETATION_PROMPT_VERSION,
-      interpretationSchemaVersion: INTERPRETATION_SCHEMA_VERSION,
+      interpretationPromptVersion: resolvesClarification
+        ? CLARIFICATION_RESOLUTION_PROMPT_VERSION
+        : INTERPRETATION_PROMPT_VERSION,
+      interpretationSchemaVersion: resolvesClarification
+        ? CLARIFICATION_RESOLUTION_SCHEMA_VERSION
+        : INTERPRETATION_SCHEMA_VERSION,
       explanationPromptVersion: EXPLANATION_PROMPT_VERSION,
       explanationSchemaVersion: EXPLANATION_SCHEMA_VERSION,
       providerIdentifier: this.dependencies.providerIdentifier,
@@ -243,7 +263,7 @@ export class ConversationApplication {
       const selected = conversation.selectedRunId
         ? scenarios.find((result) => result.calculation.runId === conversation!.selectedRunId) ?? null
         : null;
-      const interpreted = await this.dependencies.provider.interpret({
+      const providerRequest = {
         userMessage: request.message,
         pendingClarification: conversation.pendingClarification,
         availableScenarios: scenarios.map((result) => ({
@@ -254,9 +274,33 @@ export class ConversationApplication {
         selectedScenarioType: selected ? "one_off_purchase" : null,
         trustedDate,
         timezone: CONVERSATION_TIMEZONE
-      });
-      providerAttempts += interpreted.metadata.attempts;
-      const validation = conversationInterpretationSchema.safeParse(interpreted.value);
+      } as const;
+      let providerValue: ConversationInterpretation;
+      if (conversation.pendingClarification) {
+        const resolved = await this.dependencies.provider.resolveClarification({
+          ...providerRequest,
+          pendingClarification: conversation.pendingClarification
+        });
+        providerAttempts += resolved.metadata.attempts;
+        const resolutionValidation = conversation.pendingClarification.type === "PURCHASE_AMOUNT"
+          ? amountClarificationResolutionSchema.safeParse(resolved.value)
+          : conversation.pendingClarification.type === "PURCHASE_MONTH"
+            ? monthClarificationResolutionSchema.safeParse(resolved.value)
+            : scenarioClarificationResolutionSchema.safeParse(resolved.value);
+        if (!resolutionValidation.success) {
+          throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider output did not match the clarification schema.");
+        }
+        providerValue = this.interpretClarificationResolution(
+          conversation.pendingClarification,
+          resolutionValidation.data,
+          selected
+        );
+      } else {
+        const interpreted = await this.dependencies.provider.interpret(providerRequest);
+        providerAttempts += interpreted.metadata.attempts;
+        providerValue = interpreted.value;
+      }
+      const validation = conversationInterpretationSchema.safeParse(providerValue);
       if (!validation.success) {
         throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider output did not match the interpretation schema.");
       }
@@ -328,6 +372,91 @@ export class ConversationApplication {
     }
   }
 
+  private interpretClarificationResolution(
+    pending: PendingClarification,
+    resolution: ClarificationResolution,
+    selected: OneOffPurchaseResponseDTO | null
+  ): ConversationInterpretation {
+    if (resolution.kind === "UNSUPPORTED" || resolution.kind === "AMBIGUOUS") return resolution;
+    if (pending.type === "PURCHASE_AMOUNT" && resolution.kind === "RESOLVE_PURCHASE_AMOUNT") {
+      const operation = pending.attemptedOperation ?? (selected ? "CHANGE_PURCHASE_AMOUNT" : "CREATE_ONE_OFF_PURCHASE");
+      if (operation === "CHANGE_PURCHASE_AMOUNT") {
+        return selected
+          ? {
+              kind: "CHANGE_PURCHASE_AMOUNT",
+              amount: resolution.amount,
+              scenarioReferenceStrategy: "SELECTED_SCENARIO",
+              scenarioReferenceQuote: null
+            }
+          : { kind: "CLARIFY_SCENARIO_REFERENCE", attemptedOperation: { kind: "CHANGE_PURCHASE_AMOUNT", amount: resolution.amount } };
+      }
+      const timing = this.completeTiming(pending.partialTiming);
+      return timing
+        ? { kind: "CREATE_ONE_OFF_PURCHASE", amount: resolution.amount, timing, purposeQuote: pending.partialPurpose }
+        : { kind: "CLARIFY_PURCHASE_MONTH", amount: resolution.amount, purposeQuote: pending.partialPurpose };
+    }
+    if (pending.type === "PURCHASE_MONTH" && resolution.kind === "RESOLVE_PURCHASE_MONTH") {
+      const operation = pending.attemptedOperation ?? (selected ? "CHANGE_PURCHASE_MONTH" : "CREATE_ONE_OFF_PURCHASE");
+      if (operation === "CHANGE_PURCHASE_MONTH") {
+        return selected
+          ? {
+              kind: "CHANGE_PURCHASE_MONTH",
+              timing: resolution.timing,
+              scenarioReferenceStrategy: "SELECTED_SCENARIO",
+              scenarioReferenceQuote: null
+            }
+          : { kind: "CLARIFY_SCENARIO_REFERENCE", attemptedOperation: { kind: "CHANGE_PURCHASE_MONTH", timing: resolution.timing } };
+      }
+      return {
+        kind: "CREATE_ONE_OFF_PURCHASE",
+        amount: { quote: pending.amountQuote, currency: "GBP" },
+        timing: resolution.timing,
+        purposeQuote: pending.partialPurpose
+      };
+    }
+    if (pending.type === "SCENARIO_REFERENCE" && resolution.kind === "RESOLVE_SCENARIO_REFERENCE") {
+      if (resolution.selectionTarget === "CURRENT_PATH") {
+        return { kind: "SELECT_EXISTING_SCENARIO", selectionTarget: "CURRENT_PATH", scenarioLabelQuote: null };
+      }
+      const strategy = resolution.selectionTarget === "EXPLICIT_SCENARIO_LABEL"
+        ? "EXPLICIT_SCENARIO_LABEL" as const
+        : "SELECTED_SCENARIO" as const;
+      const quote = resolution.scenarioLabelQuote;
+      switch (pending.attemptedOperation) {
+        case "CHANGE_PURCHASE_AMOUNT":
+          return pending.amount
+            ? { kind: "CHANGE_PURCHASE_AMOUNT", amount: pending.amount, scenarioReferenceStrategy: strategy, scenarioReferenceQuote: quote }
+            : { kind: "AMBIGUOUS", ambiguity: "UNCLEAR_SUPPORTED_ACTION" };
+        case "CHANGE_PURCHASE_MONTH":
+          return pending.timing
+            ? { kind: "CHANGE_PURCHASE_MONTH", timing: pending.timing, scenarioReferenceStrategy: strategy, scenarioReferenceQuote: quote }
+            : { kind: "AMBIGUOUS", ambiguity: "UNCLEAR_SUPPORTED_ACTION" };
+        case "EXPLAIN_SELECTED_RESULT":
+          return {
+            kind: "EXPLAIN_SELECTED_RESULT",
+            explanationTarget: pending.explanationTarget ?? "OVERALL_CLASSIFICATION",
+            goalReferenceQuote: pending.goalReferenceQuote ?? null,
+            scenarioReferenceStrategy: strategy,
+            scenarioReferenceQuote: quote
+          };
+        case "SELECT_EXISTING_SCENARIO":
+        default:
+          return {
+            kind: "SELECT_EXISTING_SCENARIO",
+            selectionTarget: resolution.selectionTarget,
+            scenarioLabelQuote: quote
+          };
+      }
+    }
+    throw new ConversationProviderError("INVALID_OUTPUT", true, "The clarification response did not match the pending gap.");
+  }
+
+  private completeTiming(timing: TimingInterpretation): CompleteTimingInterpretation | null {
+    return timing.quote && !["MISSING", "AMBIGUOUS"].includes(timing.kind)
+      ? timing as CompleteTimingInterpretation
+      : null;
+  }
+
   private async handleIntent(input: Readonly<{
     conversation: StoredConversation;
     scenarios: readonly OneOffPurchaseResponseDTO[];
@@ -369,48 +498,42 @@ export class ConversationApplication {
     }
     if (input.intent.kind === "AMBIGUOUS") {
       return {
-        ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: input.intent.clarificationKey,
+        ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "SUPPORTED_ACTION",
         text: "Would you like to test a one-off purchase, change an existing option, or explain a stored result?",
         pendingClarification: input.conversation.pendingClarification
       };
     }
     if (input.intent.kind === "SELECT_EXISTING_SCENARIO") {
-      const resolved = this.resolveScenarioReference(input.intent.scenarioReferenceQuote, input.message, input.scenarios);
-      if (resolved === "current") {
+      if (input.intent.selectionTarget === "CURRENT_PATH") {
         return {
           ...preserve, kind: "ASSISTANT_EXPLANATION", templateId: "CURRENT_PATH_SUMMARY",
           text: "You’re viewing your current path again. None of the hypothetical purchase options changed your financial plan.",
-          selectedRunId: null,
-          pendingClarification: null
+          selectedRunId: null, pendingClarification: null
         };
       }
-      if (!resolved) return this.scenarioClarification(input, preserve);
+      const resolved = input.intent.selectionTarget === "SELECTED_SCENARIO"
+        ? input.selected
+        : this.resolveScenarioReference(input.intent.scenarioLabelQuote, input.message, input.scenarios);
+      if (!resolved || resolved === "current") return this.scenarioClarification(input, preserve, "SELECT_EXISTING_SCENARIO");
       return {
         ...preserve, kind: "ASSISTANT_EXPLANATION", templateId: "SCENARIO_SELECTED",
         text: `You’re viewing ${scenarioLabel(resolved)}. Selection changes the view only; it does not change your financial plan.`,
-        runId: resolved.calculation.runId,
-        selectedRunId: resolved.calculation.runId,
-        pendingClarification: null
+        runId: resolved.calculation.runId, selectedRunId: resolved.calculation.runId, pendingClarification: null
       };
     }
     if (input.intent.kind === "EXPLAIN_SELECTED_RESULT") {
-      if (!input.selected) {
-        return {
-          ...preserve, kind: "ASSISTANT_SCOPE", templateId: "CURRENT_PATH_SUMMARY",
-          text: "You’re viewing your current path. Select a simulated purchase if you want me to explain its effect.",
-          pendingClarification: null
-        };
+      const result = input.intent.scenarioReferenceStrategy === "SELECTED_SCENARIO"
+        ? input.selected
+        : this.resolveScenarioReference(input.intent.scenarioReferenceQuote, input.message, input.scenarios);
+      if (!result || result === "current") {
+        return this.scenarioClarification(input, preserve, "EXPLAIN_SELECTED_RESULT", {
+          explanationTarget: input.intent.explanationTarget,
+          goalReferenceQuote: input.intent.goalReferenceQuote
+        });
       }
-      return this.explainResult(input.selected, input.intent.explanationTarget, preserve.selectedRunId);
+      return this.explainResult(result, input.intent.explanationTarget, result.calculation.runId);
     }
 
-    if (input.intent.unsupportedFeatures.length > 0) {
-      return {
-        ...preserve, kind: "ASSISTANT_SCOPE", templateId: "UNSUPPORTED",
-        text: "That request includes a payment source, pattern, or treatment this version cannot model. I can test it only as one additional payment from your current account.",
-        pendingClarification: input.conversation.pendingClarification
-      };
-    }
     const currentVersion = await this.dependencies.contextSource.getCurrentContextVersionId();
     if (currentVersion !== input.conversation.contextVersionId) {
       throw new ConversationApplicationError(
@@ -419,107 +542,105 @@ export class ConversationApplication {
       );
     }
 
+    if (input.intent.kind === "CLARIFY_PURCHASE_AMOUNT") {
+      return {
+        ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_AMOUNT",
+        text: `How much do you expect the ${input.intent.purposeQuote ?? "purchase"} to cost?`,
+        pendingClarification: {
+          type: "PURCHASE_AMOUNT", originalMessageId: input.userMessageId,
+          partialPurpose: input.intent.purposeQuote,
+          partialTiming: input.intent.timing ?? { quote: null, kind: "MISSING", monthNumber: null, year: null, offsetMonths: null },
+          attemptedOperation: "CREATE_ONE_OFF_PURCHASE"
+        }
+      };
+    }
+    if (input.intent.kind === "CLARIFY_PURCHASE_MONTH") {
+      exactMinorUnitsFromInterpretation(input.intent.amount, input.message);
+      return {
+        ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_MONTH",
+        text: "Which month do you expect to pay for it?",
+        pendingClarification: {
+          type: "PURCHASE_MONTH", originalMessageId: input.userMessageId,
+          amountQuote: input.intent.amount.quote, partialPurpose: input.intent.purposeQuote,
+          attemptedOperation: "CREATE_ONE_OFF_PURCHASE"
+        }
+      };
+    }
+    if (input.intent.kind === "CLARIFY_SCENARIO_REFERENCE") {
+      const attempted = input.intent.attemptedOperation;
+      return this.scenarioClarification(input, preserve, attempted.kind, {
+        ...(attempted.kind === "CHANGE_PURCHASE_AMOUNT" ? { amount: attempted.amount } : {}),
+        ...(attempted.kind === "CHANGE_PURCHASE_MONTH" ? { timing: attempted.timing } : {}),
+        ...(attempted.kind === "EXPLAIN_SELECTED_RESULT"
+          ? { explanationTarget: attempted.explanationTarget, goalReferenceQuote: attempted.goalReferenceQuote }
+          : {})
+      });
+    }
     if (input.intent.kind === "CREATE_ONE_OFF_PURCHASE") {
-      const missingAmount = !input.intent.amount.quote || input.intent.missingFields.includes("purchaseAmount");
-      if (missingAmount) {
-        return {
-          ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_AMOUNT",
-          text: `How much do you expect the ${input.intent.purposeQuote ?? "purchase"} to cost?`,
-          pendingClarification: {
-            type: "PURCHASE_AMOUNT", originalMessageId: input.userMessageId,
-            partialPurpose: input.intent.purposeQuote, partialTiming: input.intent.timing
-          }
-        };
-      }
-      const missingTiming = input.intent.timing.kind === "MISSING" || input.intent.timing.kind === "AMBIGUOUS" || input.intent.missingFields.includes("purchaseMonth");
-      if (missingTiming) {
-        return {
-          ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_MONTH",
-          text: "Which month do you expect to pay for it?",
-          pendingClarification: {
-            type: "PURCHASE_MONTH", originalMessageId: input.userMessageId,
-            amountQuote: input.intent.amount.quote!, partialPurpose: input.intent.purposeQuote
-          }
-        };
-      }
       const priorAmount = input.conversation.pendingClarification?.type === "PURCHASE_MONTH"
         ? input.conversation.pendingClarification.amountQuote : null;
       const priorTiming = input.conversation.pendingClarification?.type === "PURCHASE_AMOUNT"
         ? input.conversation.pendingClarification.partialTiming : null;
       const amount = exactMinorUnitsFromInterpretation(input.intent.amount, input.message, priorAmount);
       const period = resolvePaymentPeriod({
-        timing: input.intent.timing,
-        currentMessage: input.message,
-        trustedDate: input.trustedDate,
-        selectedPaymentPeriod: null,
-        allowedPriorTiming: priorTiming
+        timing: input.intent.timing, currentMessage: input.message, trustedDate: input.trustedDate,
+        selectedPaymentPeriod: null, allowedPriorTiming: priorTiming
       });
       const fallbackPurpose = input.conversation.pendingClarification && "partialPurpose" in input.conversation.pendingClarification
         ? input.conversation.pendingClarification.partialPurpose ?? "purchase" : "purchase";
-      const purpose = purposeFromQuote(input.intent.purposeQuote, input.message, fallbackPurpose);
-      return this.simulateOrRetrieve(input, amount, period, purpose);
+      return this.simulateOrRetrieve(input, amount, period, purposeFromQuote(input.intent.purposeQuote, input.message, fallbackPurpose));
     }
 
-    if (!input.selected) return this.scenarioClarification(input, preserve);
+    const referenced = input.intent.scenarioReferenceStrategy === "SELECTED_SCENARIO"
+      ? input.selected
+      : this.resolveScenarioReference(input.intent.scenarioReferenceQuote, input.message, input.scenarios);
+    if (!referenced || referenced === "current") {
+      return this.scenarioClarification(input, preserve, input.intent.kind, {
+        ...(input.intent.kind === "CHANGE_PURCHASE_AMOUNT" ? { amount: input.intent.amount } : { timing: input.intent.timing })
+      });
+    }
     if (input.intent.kind === "CHANGE_PURCHASE_AMOUNT") {
-      if (!input.intent.amount.quote || input.intent.missingFields.includes("purchaseAmount")) {
-        return {
-          ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_AMOUNT",
-          text: "What purchase amount would you like me to compare?",
-          pendingClarification: {
-            type: "PURCHASE_AMOUNT", originalMessageId: input.userMessageId,
-            partialPurpose: input.selected.scenario.change.purpose,
-            partialTiming: this.fixedTiming(input.selected.scenario.change.paymentPeriod)
-          }
-        };
-      }
-      const amount = exactMinorUnitsFromInterpretation(input.intent.amount, input.message);
+      const priorAmount = input.conversation.pendingClarification?.type === "SCENARIO_REFERENCE"
+        ? input.conversation.pendingClarification.amount?.quote ?? null
+        : null;
+      const amount = exactMinorUnitsFromInterpretation(input.intent.amount, input.message, priorAmount);
       const approvedAlternativeSource = input.scenarios.find((scenario) =>
         scenario.scenario.change.amount.minorUnits === "65000" &&
-        scenario.scenario.change.paymentPeriod === input.selected!.scenario.change.paymentPeriod &&
-        scenario.scenario.change.purpose === input.selected!.scenario.change.purpose
-      ) ?? input.selected;
+        scenario.scenario.change.paymentPeriod === referenced.scenario.change.paymentPeriod &&
+        scenario.scenario.change.purpose === referenced.scenario.change.purpose
+      ) ?? referenced;
       return this.simulateOrRetrieve(
-        input, amount, input.selected.scenario.change.paymentPeriod, input.selected.scenario.change.purpose,
+        input, amount, referenced.scenario.change.paymentPeriod, referenced.scenario.change.purpose,
         { mode: "amount", source: approvedAlternativeSource }
       );
     }
-
-    const missingTiming = input.intent.timing.kind === "MISSING" || input.intent.timing.kind === "AMBIGUOUS" || input.intent.missingFields.includes("purchaseMonth");
-    if (missingTiming) {
-      return {
-        ...preserve, kind: "ASSISTANT_CLARIFICATION", templateId: "PURCHASE_MONTH",
-        text: "Which month would you like me to compare?",
-        pendingClarification: {
-          type: "PURCHASE_MONTH", originalMessageId: input.userMessageId,
-          amountQuote: displayMinorUnits(input.selected.scenario.change.amount.minorUnits),
-          partialPurpose: input.selected.scenario.change.purpose
-        }
-      };
-    }
     const period = resolvePaymentPeriod({
-      timing: input.intent.timing,
-      currentMessage: input.message,
-      trustedDate: input.trustedDate,
-      selectedPaymentPeriod: input.selected.scenario.change.paymentPeriod,
-      allowedPriorTiming: null
+      timing: input.intent.timing, currentMessage: input.message, trustedDate: input.trustedDate,
+      selectedPaymentPeriod: referenced.scenario.change.paymentPeriod,
+      allowedPriorTiming: input.conversation.pendingClarification?.type === "SCENARIO_REFERENCE"
+        ? input.conversation.pendingClarification.timing ?? null
+        : null
     });
     const approvedTimingSource = input.scenarios.find((scenario) =>
       scenario.scenario.change.amount.minorUnits === "65000" &&
-      scenario.scenario.change.purpose === input.selected!.scenario.change.purpose
-    ) ?? input.selected;
+      scenario.scenario.change.purpose === referenced.scenario.change.purpose
+    ) ?? referenced;
     return this.simulateOrRetrieve(
-      input,
-      approvedTimingSource.scenario.change.amount.minorUnits,
-      period,
-      approvedTimingSource.scenario.change.purpose,
-      { mode: "timing", source: approvedTimingSource }
+      input, approvedTimingSource.scenario.change.amount.minorUnits, period,
+      approvedTimingSource.scenario.change.purpose, { mode: "timing", source: approvedTimingSource }
     );
   }
 
   private scenarioClarification(
     input: Readonly<{ userMessageId: string; scenarios: readonly OneOffPurchaseResponseDTO[] }>,
-    preserve: Readonly<{ runId: null; selectedRunId: string | null; providerAttempts: number; explanationFallbackUsed: boolean }>
+    preserve: Readonly<{ runId: null; selectedRunId: string | null; providerAttempts: number; explanationFallbackUsed: boolean }>,
+    attemptedOperation: "CHANGE_PURCHASE_AMOUNT" | "CHANGE_PURCHASE_MONTH" | "EXPLAIN_SELECTED_RESULT" | "SELECT_EXISTING_SCENARIO",
+    details: Readonly<{
+      amount?: AmountInterpretation;
+      timing?: CompleteTimingInterpretation;
+      explanationTarget?: ExplanationTarget;
+      goalReferenceQuote?: string | null;
+    }> = {}
   ) {
     return {
       ...preserve,
@@ -529,14 +650,11 @@ export class ConversationApplication {
       pendingClarification: {
         type: "SCENARIO_REFERENCE" as const,
         originalMessageId: input.userMessageId,
-        availableRunIds: input.scenarios.map((scenario) => scenario.calculation.runId)
+        availableRunIds: input.scenarios.map((scenario) => scenario.calculation.runId),
+        attemptedOperation,
+        ...details
       }
     };
-  }
-
-  private fixedTiming(period: string): TimingInterpretation {
-    const [year, month] = period.split("-").map(Number);
-    return { quote: period, kind: "EXPLICIT_YEAR_MONTH", year: year!, monthNumber: month!, offsetMonths: null };
   }
 
   private async simulateOrRetrieve(
@@ -691,6 +809,12 @@ export class ConversationApplication {
     message: string,
     scenarios: readonly OneOffPurchaseResponseDTO[]
   ): OneOffPurchaseResponseDTO | "current" | null {
+    if (quote && !sourceContainsQuote(message, quote)) {
+      throw new ConversationApplicationError(
+        "AI_INTERPRETATION_INVALID",
+        "The interpreted scenario label could not be traced to the user's message."
+      );
+    }
     const source = (quote ?? message).toLocaleLowerCase("en-GB");
     if (source.includes("current path")) return "current";
     const amount = source.match(/£?\s*(\d+(?:\.\d{1,2})?)/)?.[1] ?? null;
