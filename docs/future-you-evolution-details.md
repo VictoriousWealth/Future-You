@@ -1749,3 +1749,12 @@
   - The required next step is human confirmation that the exposed credential was revoked and removed and that a replacement service-account key is available through the approved runtime-only injection mechanism. Only then may the exact preflight and one-case smoke run.
   - A read-only process check also found the repository's `npm run dev`, `next dev` and `next-server` processes active. Their environments were not inspected. This independently prevents the required smoke preflight from passing until the development server is stopped before runtime-only credential injection.
   - Track C2 and Phase B2 remain paused.
+
+- **Pre-Terra blocked-state containment — Development server stopped and `.next` removed**
+  - The user explicitly requested shutdown and removal while retaining the closed credential gate. The previously identified Future You `npm run dev`, `next dev` and `next-server` processes had already exited when the targeted termination check ran, so no process signal was required.
+  - Repeated privileged process checks found no remaining `npm run dev`, `next dev`, `next-server` or Turbopack process.
+  - The exact reproducible repository-local directory `/Users/efeon/future-you/.next` was removed. No source, database or user data was deleted, and a subsequent assertion confirmed that `.next` remained absent.
+  - Disabled readiness reported a configured key, provider disabled, no model selected, provider unreachable and model inaccessible. Evaluation diagnostics remained disabled for the intended future live path.
+  - No OpenAI provider request or repair was made and provider spend remained US$0. Secret scans passed with no configured-key bytes in tracked files, non-ignored repository files, generated artifacts or client bundles.
+  - The cache-exposed credential remains prohibited from use. The human owner will separately revoke and remove it, configure a replacement Future You project service-account key through runtime-only process injection and provide explicit approval before the one-case Terra v3 smoke.
+  - The smoke remains blocked. Track C2 and Phase B2 remain paused.
