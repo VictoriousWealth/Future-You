@@ -231,7 +231,8 @@ export function classifyCanonicalCreateTiming(
       currentMessage: CANONICAL_TIMING_MESSAGE,
       trustedDate: CANONICAL_TRUSTED_DATE,
       selectedPaymentPeriod,
-      allowedPriorTiming: null
+      allowedPriorTiming: null,
+      enforceQuoteEquivalence: false
     });
     return {
       providerSchemaValid: providerSchemaAcceptsTiming(timing),
