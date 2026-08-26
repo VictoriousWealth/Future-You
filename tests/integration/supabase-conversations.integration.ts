@@ -52,7 +52,7 @@ function application(client: RequestSupabaseClient, principal: AuthenticatedPrin
     simulator,
     provider: new FakeConversationModelProvider(),
     providerIdentifier: "fake",
-    modelIdentifier: "fake-conversation/1.0.0",
+    modelIdentifier: "fake-conversation/2.0.0",
     now: () => new Date("2026-08-24T12:00:00.000Z")
   });
 }
