@@ -49,7 +49,8 @@ describe("OpenAI Responses conversation adapter", () => {
 
   it("uses one forced strict function, disables storage and built-in tools, and validates output", async () => {
     openai.create.mockResolvedValue({
-      output: [{ type: "function_call", name: "submit_conversation_interpretation", arguments: JSON.stringify(envelope()) }]
+      output: [{ type: "function_call", name: "submit_conversation_interpretation", arguments: JSON.stringify(envelope()) }],
+      usage: { input_tokens: 101, output_tokens: 19, total_tokens: 120 }
     });
     const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
     const result = await provider.interpret(request);
@@ -58,6 +59,15 @@ describe("OpenAI Responses conversation adapter", () => {
       amount: { quote: "£650", currency: "GBP" },
       timing: { kind: "NEXT_MONTH", quote: "next month" }
     });
+    expect(result.metadata).toMatchObject({
+      provider: "openai",
+      model: "gpt-test",
+      attempts: 1,
+      inputTokens: 101,
+      outputTokens: 19,
+      totalTokens: 120
+    });
+    expect(result.metadata.latencyMs).toEqual(expect.any(Number));
     expect(openai.create).toHaveBeenCalledTimes(1);
     const call = openai.create.mock.calls[0]![0];
     expect(call).toMatchObject({
@@ -108,5 +118,20 @@ describe("OpenAI Responses conversation adapter", () => {
     });
     const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
     await expect(provider.interpret(request)).rejects.toMatchObject({ category: "INVALID_OUTPUT", attempts: 2 });
+  });
+
+  it("applies an explicit reasoning setting and honours a zero-retry configuration", async () => {
+    openai.create.mockResolvedValue({ output: [{ type: "message", content: [] }] });
+    const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test", {
+      reasoningEffort: "low",
+      timeoutMs: 8_000,
+      maxRetries: 0
+    });
+    await expect(provider.interpret(request)).rejects.toMatchObject({
+      category: "INVALID_OUTPUT",
+      attempts: 1
+    });
+    expect(openai.create).toHaveBeenCalledTimes(1);
+    expect(openai.create.mock.calls[0]![0]).toMatchObject({ reasoning: { effort: "low" } });
   });
 });
