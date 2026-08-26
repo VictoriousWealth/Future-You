@@ -198,7 +198,7 @@ git diff --check
 
 Before `db:reset`, verify that `SUPABASE_URL` is loopback, `supabase/config.toml` identifies this local repository project, the command uses `--local`, and no hosted project reference is active. Stateful suites intentionally create immutable data, so pgTAP runs immediately after a reset and browser acceptance begins from another reset. No dashboard or manual SQL correction belongs in the process.
 
-The client-bundle check inspects the production output for server-only simulator/store identifiers. An authorised live-provider evaluation remains separate: set server-only `OPENAI_API_KEY` and an explicitly approved `OPENAI_CONVERSATION_MODEL`, then run `npm run test:evaluation:live`. Do not run or claim this gate without that separate authority.
+The client-bundle check inspects the production output for server-only simulator/store identifiers. An authorised live-provider evaluation remains separate and is governed by `authorised-openai-and-ask-refinement-track-c.md`: the project key, explicit provider enablement and selected `OPENAI_MODEL` are all required before `npm run openai:readiness` and `npm run test:evaluation:live`. Do not run or claim this gate without that separate authority.
 
 ## Completion gate
 
