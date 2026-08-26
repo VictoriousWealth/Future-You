@@ -17,6 +17,7 @@ import { slice2TestDependencies } from "./slice-2";
 interface StoredTurn {
   readonly identity: string;
   readonly turnId: string;
+  readonly beginCommand: BeginConversationTurnCommand;
   status: "processing" | "complete";
   completion?: StoredConversationTurnCompletion;
 }
@@ -58,7 +59,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
         ? { status: "processing", turnId: existing.turnId }
         : { status: "existing", turnId: existing.turnId, completion: existing.completion! };
     }
-    this.turns.set(key, { identity: command.requestIdentity, turnId: command.turnId, status: "processing" });
+    this.turns.set(key, { identity: command.requestIdentity, turnId: command.turnId, beginCommand: command, status: "processing" });
     const messages = this.messages.get(command.conversationId)!;
     messages.push({
       id: command.userMessageId,
@@ -131,7 +132,7 @@ export function conversationTestApplication(mode: FakeProviderMode = "normal") {
     simulator,
     provider,
     providerIdentifier: "fake",
-    modelIdentifier: "fake-conversation/1.0.0",
+    modelIdentifier: "fake-conversation/2.0.0",
     now: () => new Date("2026-08-24T12:00:00.000Z")
   });
   return {
