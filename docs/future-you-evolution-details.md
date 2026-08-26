@@ -1427,3 +1427,35 @@
     - The focused OpenAI boundary tests pass 10/10 and the full Vitest suite passes 269/269 across 30 files.
     - TypeScript, ESLint, the runtime-secret-isolated production build, secret-boundary scan and client dependency boundary pass.
     - Track C1 has not started and Track B Phase B2 remains paused.
+
+- **Track C0 live evaluation — Terra is reachable but fails the mandatory baseline**
+  - Credential rotation and human authorisation:
+    - The authorised owner confirmed that the credential whose bytes entered the ignored Turbopack cache was revoked and removed from the local environment.
+    - The owner confirmed that the replacement `OPENAI_API_KEY` belongs to the authorised Future You Platform project, was generated for its dedicated project service account, is restricted and non-personal, is stored only in the ignored server environment, and has billing, model permissions, monitoring and spend controls.
+    - Live Track C0 evaluation was authorised with a maximum cumulative spend of US$10.
+  - Pre-live safety gate:
+    - Disabled readiness reported key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no` and model accessible `no`, and made no request.
+    - The secret file was ignored and the replacement key was absent from tracked files, non-ignored repository files, generated artifacts and client bundles.
+    - The live harness added an offline-proven single-case smoke mode and an explicit bounded estimated-cost guard without changing prompts, schemas, intents, clarification policy, templates, retries, Ask UI, simulator behavior or evaluation expectations.
+  - Terra smoke:
+    - `gpt-5.6-terra` ran with `OPENAI_REASONING_EFFORT=low`, the existing 12-second timeout, one bounded application retry, strict forced function calling, `parallel_tool_calls: false`, no built-in tools and `store: false`.
+    - The canonical £650 request passed on the first attempt with source-grounded amount and server-owned relative-date handoff.
+    - The local deterministic proof retained £900 to £250, bills covered, £0 overdraft, November 2026 recovery, Emergency fund February 2027 and significant trade-off.
+    - Smoke latency was 2,726 ms; usage was 625 input, 154 output and 779 total tokens; estimated cost was $0.003098.
+  - Terra repeated baseline:
+    - The frozen corpus ran three times: 99 interpretation and six explanation logical evaluations, plus 40 bounded retries, for 145 Responses API requests.
+    - Canonical, natural and noisy decision cases passed 3/3, 9/9 and 9/9; clarification passed 6/18; follow-up passed 9/12; unsupported passed 0/24; adversarial passed 0/24; symbolic explanation plans passed 6/6.
+    - First-attempt strict/runtime-schema success was 65/105 and final success after retries was 66/105.
+    - Baseline median latency was 2,476 ms and P95 was 6,016 ms. Usage was 92,085 input, 24,267 output and 116,352 total tokens; estimated cost was $0.475374.
+    - Across smoke and baseline, estimated cumulative cost was $0.478472. Actual invoiced cost was unavailable to the application process and was not inferred from the estimate.
+  - Authority and failure classification:
+    - Mandatory typed gates for instalments, overdraft funding, benefits/pensions, scenario commitment and prompt injection failed repeatedly, so the baseline failed.
+    - Thirty-nine interpretation evaluations ended as sanitised `INVALID_OUTPUT` after the bounded retry; stable semantic mismatches also affected missing/ambiguous clarification and current-path selection.
+    - The flat nullable strict envelope permits intent/nullable-field combinations that application semantic validation rejects, while the frozen prompt omits several exact internal category and clarification identifiers. These are Track C1 contract candidates rather than C0 changes.
+    - Every unsupported/adversarial outcome still had simulator permission `false`; no rejected interpretation invoked the simulator, no financial result was fabricated, and all six explanation plans stayed within trusted facts.
+  - Stop and final status:
+    - The required stop condition fired after Terra's mandatory safety-gate failure.
+    - The provider returned to disabled/model unset. Luna and Sol received zero requests, so no Terra-versus-Luna recommendation is possible.
+    - Final status is `LIVE_PROVIDER ACCEPTANCE — FAILED`; no model is recommended.
+    - Final offline verification passes 270/270 Vitest tests across 30 files, TypeScript, application/test and Track C0 script ESLint, the runtime-secret-isolated production build, post-build secret scan, client dependency boundary and `git diff --check` with no skipped Vitest tests.
+    - Track C1 has not started and Track B Phase B2 remains paused.
