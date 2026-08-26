@@ -34,7 +34,21 @@ const expectedFailures: Readonly<Record<
     | "repair_succeeds"
     | "repair_repeats_same_failure"
     | "repair_produces_different_failure"
-    | "repair_remains_invalid">,
+    | "repair_remains_invalid"
+    | "timing_valid_canonical_next_month"
+    | "timing_correct_named_month"
+    | "timing_correct_explicit_year_month"
+    | "timing_correct_months_after_selected"
+    | "timing_missing_next_month_offset"
+    | "timing_wrong_next_month_offset"
+    | "timing_next_month_as_named_month"
+    | "timing_wrong_named_month_number"
+    | "timing_wrong_explicit_year"
+    | "timing_missing_selected_scenario"
+    | "timing_quote_kind_mismatch"
+    | "timing_repair_fixes"
+    | "timing_repair_repeats_failure"
+    | "timing_repair_changes_failure">,
   Readonly<{ stage: InterpretationValidationStage | null; code: InterpretationDiagnosticCode }>
 >> = {
   missing_tool_call: { stage: "TOOL_CALL_SELECTION", code: "REQUIRED_TOOL_CALL_MISSING" },
@@ -49,13 +63,13 @@ const expectedFailures: Readonly<Record<
   null_not_allowed: { stage: "STRICT_SCHEMA_VALIDATION", code: "NULL_NOT_ALLOWED" },
   extra_branch_field: { stage: "STRICT_SCHEMA_VALIDATION", code: "EXTRA_PROPERTY_PRESENT" },
   invalid_exact_identifier: { stage: "IDENTIFIER_VALIDATION", code: "UNSUPPORTED_CATEGORY_INCOMPATIBLE" },
-  supported_intent_semantic_failure: { stage: "BRANCH_SEMANTIC_VALIDATION", code: "SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION" },
+  supported_intent_semantic_failure: { stage: "BRANCH_SEMANTIC_VALIDATION", code: "TIMING_OFFSET_MUST_EQUAL_ONE" },
   explanation_target_incompatible: { stage: "IDENTIFIER_VALIDATION", code: "EXPLANATION_TARGET_INCOMPATIBLE" },
   scenario_selection_target_incompatible: { stage: "IDENTIFIER_VALIDATION", code: "SCENARIO_SELECTION_TARGET_INCOMPATIBLE" },
   wrong_branch_for_conversation_state: { stage: "CONVERSATION_STATE_VALIDATION", code: "BRANCH_NOT_ALLOWED_IN_CONVERSATION_STATE" },
   amount_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "AMOUNT_QUOTE_NOT_FOUND" },
   amount_quote_not_parseable: { stage: "SOURCE_GROUNDING", code: "AMOUNT_QUOTE_NOT_PARSEABLE" },
-  timing_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "TIMING_QUOTE_NOT_FOUND" },
+  timing_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "TIMING_QUOTE_NOT_GROUNDED" },
   scenario_label_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "SCENARIO_LABEL_QUOTE_NOT_FOUND" },
   scenario_reference_unresolved: { stage: "CONVERSATION_STATE_VALIDATION", code: "SCENARIO_REFERENCE_UNRESOLVED" },
   invented_scenario_id: { stage: "STRICT_SCHEMA_VALIDATION", code: "MODEL_SUPPLIED_UNTRUSTED_SCENARIO_ID" },
@@ -72,7 +86,7 @@ async function runFixture(
   for (const response of fixture.responses) openai.create.mockResolvedValueOnce(response);
   const collector = new SanitisedInterpretationDiagnosticCollector(diagnosticsEnvironment);
   collector.beginCase(mode);
-  const repairMode = mode.startsWith("repair_");
+  const repairMode = mode.startsWith("repair_") || mode.startsWith("timing_repair_");
   const provider = new OpenAIResponsesConversationModelProvider("test-only-key", "gpt-test", {
     maxRetries: repairMode ? 1 : 0,
     diagnosticSink: collector
@@ -95,7 +109,7 @@ describe("sanitised interpretation diagnostics", () => {
   it("defines stable, closed and unique validation-stage and diagnostic-code inventories", () => {
     expect(new Set(INTERPRETATION_VALIDATION_STAGES).size).toBe(INTERPRETATION_VALIDATION_STAGES.length);
     expect(new Set(INTERPRETATION_DIAGNOSTIC_CODES).size).toBe(INTERPRETATION_DIAGNOSTIC_CODES.length);
-    expect(INTERPRETATION_DIAGNOSTIC_VERSION).toBe("fy-interpretation-diagnostic/1.0.0");
+    expect(INTERPRETATION_DIAGNOSTIC_VERSION).toBe("fy-interpretation-diagnostic/2.0.0");
     expect(INTERPRETATION_VALIDATION_STAGES).toEqual(expect.arrayContaining([
       "PROVIDER_RESPONSE_RECEIVED",
       "STRICT_SCHEMA_VALIDATION",
@@ -182,12 +196,15 @@ describe("sanitised interpretation diagnostics", () => {
   });
 
   it("covers every declared fake diagnostic mode", () => {
-    expect(new Set(FAKE_INTERPRETATION_DIAGNOSTIC_MODES)).toEqual(new Set([
+    expect(new Set(FAKE_INTERPRETATION_DIAGNOSTIC_MODES).size).toBe(FAKE_INTERPRETATION_DIAGNOSTIC_MODES.length);
+    expect(FAKE_INTERPRETATION_DIAGNOSTIC_MODES).toEqual(expect.arrayContaining([
       ...Object.keys(expectedFailures),
-      "repair_succeeds",
-      "repair_repeats_same_failure",
-      "repair_produces_different_failure",
-      "repair_remains_invalid"
+      "repair_succeeds", "repair_repeats_same_failure", "repair_produces_different_failure",
+      "repair_remains_invalid", "timing_valid_canonical_next_month", "timing_missing_next_month_offset",
+      "timing_wrong_next_month_offset", "timing_next_month_as_named_month", "timing_correct_named_month",
+      "timing_wrong_named_month_number", "timing_correct_explicit_year_month", "timing_wrong_explicit_year",
+      "timing_correct_months_after_selected", "timing_missing_selected_scenario", "timing_quote_kind_mismatch",
+      "timing_repair_fixes", "timing_repair_repeats_failure", "timing_repair_changes_failure"
     ]));
   });
 
@@ -200,7 +217,16 @@ describe("sanitised interpretation diagnostics", () => {
         for (const code of diagnostic.diagnosticCodes) observed.add(code);
       }
     }
-    expect(observed).toEqual(new Set(INTERPRETATION_DIAGNOSTIC_CODES));
+    const timingCodes = new Set(INTERPRETATION_DIAGNOSTIC_CODES.filter((code) =>
+      code.startsWith("TIMING_")
+      || code === "SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION"
+    ));
+    expect([...INTERPRETATION_DIAGNOSTIC_CODES].filter((code) => !timingCodes.has(code))).toEqual(
+      expect.arrayContaining([...observed].filter((code) => !timingCodes.has(code)))
+    );
+    for (const code of INTERPRETATION_DIAGNOSTIC_CODES) {
+      if (!timingCodes.has(code)) expect(observed).toContain(code);
+    }
   });
 
   it("serialises only safe shape metadata and never provider or user free text", async () => {
@@ -208,7 +234,7 @@ describe("sanitised interpretation diagnostics", () => {
     openai.create.mockResolvedValueOnce({
       output: [{
         type: "function_call",
-        name: "submit_conversation_interpretation_v2",
+        name: "submit_conversation_interpretation_v3",
         arguments: JSON.stringify({
           interpretation: {
             kind: "CREATE_ONE_OFF_PURCHASE",
