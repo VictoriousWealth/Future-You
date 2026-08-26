@@ -1,6 +1,10 @@
 import type { TimingInterpretation } from "./contracts";
 import { ConversationApplicationError } from "./application-error";
 import { sourceContainsQuote } from "./exact-source-grounding";
+import {
+  completeTimingInterpretationSchema,
+  timingQuoteEquivalenceIssues
+} from "./timing-policy";
 
 export function trustedLondonDate(value: Date): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -26,6 +30,7 @@ export function resolvePaymentPeriod(input: Readonly<{
   trustedDate: string;
   selectedPaymentPeriod: string | null;
   allowedPriorTiming: TimingInterpretation | null;
+  enforceQuoteEquivalence?: boolean;
 }>): string {
   const timing = input.timing;
   if (timing.kind === "MISSING" || timing.kind === "AMBIGUOUS" || !timing.quote) {
@@ -37,6 +42,14 @@ export function resolvePaymentPeriod(input: Readonly<{
     throw new ConversationApplicationError(
       "AI_INTERPRETATION_INVALID",
       "The interpreted timing could not be traced to the user's message."
+    );
+  }
+  const completeTiming = completeTimingInterpretationSchema.safeParse(timing);
+  if (input.enforceQuoteEquivalence !== false
+    && (!completeTiming.success || timingQuoteEquivalenceIssues(completeTiming.data).length > 0)) {
+    throw new ConversationApplicationError(
+      "AI_INTERPRETATION_INVALID",
+      "The interpreted timing fields did not match the grounded timing expression."
     );
   }
   const [trustedYearText, trustedMonthText] = input.trustedDate.split("-");
