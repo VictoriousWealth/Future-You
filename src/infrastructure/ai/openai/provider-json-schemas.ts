@@ -5,6 +5,16 @@ import {
   SCENARIO_SELECTION_TARGET_IDS,
   UNSUPPORTED_CATEGORY_IDS
 } from "../../../application/conversation/interpretation-policy";
+import {
+  TIMING_KIND_POLICY,
+  TIMING_MONTH_MAX,
+  TIMING_MONTH_MIN,
+  TIMING_OFFSET_MAX,
+  TIMING_OFFSET_MIN,
+  TIMING_QUOTE_MAX_LENGTH,
+  TIMING_YEAR_MAX,
+  TIMING_YEAR_MIN
+} from "../../../application/conversation/timing-policy";
 
 type JsonSchema = Readonly<Record<string, unknown>>;
 
@@ -33,7 +43,7 @@ const amount = strictObject({
   currency: enumeration(["GBP", "UNSUPPORTED"])
 });
 
-const completeTiming = strictObject({
+const completeTimingV2 = strictObject({
   quote: { type: "string" },
   kind: enumeration(["NEXT_MONTH", "MONTHS_AFTER_SELECTED", "NAMED_MONTH", "EXPLICIT_YEAR_MONTH"]),
   monthNumber: nullableInteger,
@@ -41,7 +51,47 @@ const completeTiming = strictObject({
   offsetMonths: nullableInteger
 });
 
-const interpretationBranches: readonly JsonSchema[] = [
+const timingQuote = { type: "string", minLength: 1, maxLength: TIMING_QUOTE_MAX_LENGTH } as const;
+const timingMonth = { type: "integer", minimum: TIMING_MONTH_MIN, maximum: TIMING_MONTH_MAX } as const;
+const timingYear = { type: "integer", minimum: TIMING_YEAR_MIN, maximum: TIMING_YEAR_MAX } as const;
+const timingOffset = { type: "integer", minimum: TIMING_OFFSET_MIN, maximum: TIMING_OFFSET_MAX } as const;
+const nullValue = { type: "null" } as const;
+
+export const COMPLETE_TIMING_PARAMETERS_V3 = {
+  anyOf: [
+    strictObject({
+      quote: timingQuote,
+      kind: { ...literal("NEXT_MONTH"), description: TIMING_KIND_POLICY.NEXT_MONTH.description },
+      monthNumber: nullValue,
+      year: nullValue,
+      offsetMonths: { type: "integer", enum: [1], minimum: 1, maximum: 1 }
+    }),
+    strictObject({
+      quote: timingQuote,
+      kind: { ...literal("MONTHS_AFTER_SELECTED"), description: TIMING_KIND_POLICY.MONTHS_AFTER_SELECTED.description },
+      monthNumber: nullValue,
+      year: nullValue,
+      offsetMonths: timingOffset
+    }),
+    strictObject({
+      quote: timingQuote,
+      kind: { ...literal("NAMED_MONTH"), description: TIMING_KIND_POLICY.NAMED_MONTH.description },
+      monthNumber: timingMonth,
+      year: nullValue,
+      offsetMonths: nullValue
+    }),
+    strictObject({
+      quote: timingQuote,
+      kind: { ...literal("EXPLICIT_YEAR_MONTH"), description: TIMING_KIND_POLICY.EXPLICIT_YEAR_MONTH.description },
+      monthNumber: timingMonth,
+      year: timingYear,
+      offsetMonths: nullValue
+    })
+  ]
+} as const satisfies JsonSchema;
+
+function interpretationBranches(completeTiming: JsonSchema): readonly JsonSchema[] {
+  return [
   strictObject({ kind: literal("CREATE_ONE_OFF_PURCHASE"), amount, timing: completeTiming, purposeQuote: nullableString }),
   strictObject({
     kind: literal("CHANGE_PURCHASE_AMOUNT"),
@@ -92,11 +142,17 @@ const interpretationBranches: readonly JsonSchema[] = [
   strictObject({ kind: literal("GREETING") }),
   strictObject({ kind: literal("UNSUPPORTED"), category: enumeration(UNSUPPORTED_CATEGORY_IDS) }),
   strictObject({ kind: literal("AMBIGUOUS"), ambiguity: enumeration(AMBIGUITY_IDS) })
-];
+  ];
+}
 
 /** Root is deliberately an object; alternatives are nested under interpretation. */
 export const INTERPRETATION_PARAMETERS_V2 = strictObject({
-  interpretation: { anyOf: interpretationBranches }
+  interpretation: { anyOf: interpretationBranches(completeTimingV2) }
+});
+
+/** Active v3 provider contract with kind-specific nested timing alternatives. */
+export const INTERPRETATION_PARAMETERS_V3 = strictObject({
+  interpretation: { anyOf: interpretationBranches(COMPLETE_TIMING_PARAMETERS_V3) }
 });
 
 const unsupportedResolution = strictObject({
@@ -117,10 +173,17 @@ export const AMOUNT_CLARIFICATION_PARAMETERS = resolutionRoot(strictObject({
   amount
 }));
 
-export const MONTH_CLARIFICATION_PARAMETERS = resolutionRoot(strictObject({
+export const MONTH_CLARIFICATION_PARAMETERS_V1 = resolutionRoot(strictObject({
   kind: literal("RESOLVE_PURCHASE_MONTH"),
-  timing: completeTiming
+  timing: completeTimingV2
 }));
+
+export const MONTH_CLARIFICATION_PARAMETERS_V2 = resolutionRoot(strictObject({
+  kind: literal("RESOLVE_PURCHASE_MONTH"),
+  timing: COMPLETE_TIMING_PARAMETERS_V3
+}));
+
+export const MONTH_CLARIFICATION_PARAMETERS = MONTH_CLARIFICATION_PARAMETERS_V2;
 
 export const SCENARIO_CLARIFICATION_PARAMETERS = resolutionRoot(strictObject({
   kind: literal("RESOLVE_SCENARIO_REFERENCE"),
