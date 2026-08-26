@@ -357,10 +357,13 @@ Run the versioned 33-case interpretation corpus with:
 npm run test:evaluation
 ```
 
-An authorised live review is deliberately separate from CI. Set `OPENAI_API_KEY` and the explicitly
-approved `OPENAI_CONVERSATION_MODEL`, then run:
+An authorised live review is deliberately separate from CI. Track C0 now additionally requires
+`OPENAI_PROVIDER_ENABLED=true`, an explicitly approved `OPENAI_MODEL`, and the bounded reasoning,
+timeout and retry settings documented in `authorised-openai-and-ask-refinement-track-c.md`. Run the
+safe readiness check before the live harness:
 
 ```text
+npm run openai:readiness
 npm run test:evaluation:live
 ```
 
