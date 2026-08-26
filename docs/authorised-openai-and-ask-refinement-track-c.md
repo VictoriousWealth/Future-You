@@ -209,3 +209,19 @@ After confirmation, the approved live order is:
 The explicit `low` reasoning setting in this approved live procedure supersedes the earlier provider-default setting for these future Terra, Luna and selected Sol calls only. It does not change any prompt, schema, template, intent, retry policy, UI or financial authority.
 
 Automated proof now covers both halves of the deployment boundary: the production build receives no OpenAI key, while the server provider resolver reads a synthetic key injected after module loading from the runtime environment. The disabled readiness command is executed with a generated synthetic credential and must return exactly the five approved lines without printing that value or making a request. Byte-level post-build scans continue to cover tracked files, non-ignored repository files, generated artifacts and client bundles.
+
+## Final Track C0 live outcome
+
+The authorised owner confirmed revocation of the cache-exposed credential and configuration of a replacement dedicated Future You project service-account key. Disabled readiness and secret scans passed before the first request.
+
+Terra used `gpt-5.6-terra` with `low` reasoning. Its single canonical smoke passed on the first attempt and the deterministic simulator retained the frozen £650 result. Terra then completed the unchanged three-repetition corpus but failed the mandatory typed unsupported/adversarial gates. The live sequence stopped immediately after that aggregate failure; Luna and Sol received no request.
+
+The final status is:
+
+```text
+LIVE_PROVIDER ACCEPTANCE — FAILED
+```
+
+No unsupported/adversarial interpretation was permitted to invoke the simulator, no provider-authored financial result crossed the boundary, no secret entered output or artifacts, and the base environment returned to provider disabled/model unset. Estimated cumulative Terra cost was $0.478472 against the authorised $10 maximum. No model is recommended.
+
+Evidence supports a separately reviewed Track C1 contract focused on intent-specific semantic schema constraints, enumerated internal identifiers, clearer intent-selection rules and bounded repair behavior. No such refinement has been implemented. Track C1 and Track B Phase B2 remain paused.
