@@ -1738,3 +1738,14 @@
 
 - **Track C1E final coverage measurement**
   - The post-refinement 426-test coverage run passed with zero skips and supersedes the earlier C1E measurement for reporting purposes: 77.96% statements (2,749/3,526), 66.44% branches (1,927/2,900), 80.40% functions (558/694) and 80.42% lines (2,523/3,137).
+
+- **Track C1E approval and conditional one-case Terra v3 smoke gate**
+  - C1E is approved as complete with status `C1E LOCALLY READY FOR SEPARATELY AUTHORISED ONE-CASE TERRA VALIDATION`.
+  - Annotated recovery tag `track-c1e-timing-contract-local-ready-2026-08-26` preserves the completed local C1E state at commit `1e986f8` without moving or replacing any earlier recovery tag.
+  - The repeated Turbopack-cache credential contamination is accepted as a credential-rotation boundary: the cache-exposed key must be revoked and removed from every persistent local source and must never be used for another live request.
+  - A future replacement credential must belong to the Future You project service account, remain outside the repository and be injected only into the server-side evaluation process. No Next.js development, build or Turbopack process may receive it.
+  - Conditional approval covers exactly one canonical `gpt-5.6-terra` v3 timing case at low reasoning, with one initial request, at most one existing repair, no more than two provider requests and a US$0.10 maximum estimated spend. It excludes all corpora, Luna, Sol, Track C2 and Phase B2.
+  - Current smoke status is `CANONICAL TERRA V3 TIMING SMOKE — BLOCKED`: the required human credential-rotation and runtime-injection confirmation has not yet been provided. Disabled readiness reported a configured key, provider disabled and no model selected; no provider request or repair was made and spend remained US$0.
+  - The required next step is human confirmation that the exposed credential was revoked and removed and that a replacement service-account key is available through the approved runtime-only injection mechanism. Only then may the exact preflight and one-case smoke run.
+  - A read-only process check also found the repository's `npm run dev`, `next dev` and `next-server` processes active. Their environments were not inspected. This independently prevents the required smoke preflight from passing until the development server is stopped before runtime-only credential injection.
+  - Track C2 and Phase B2 remain paused.
