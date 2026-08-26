@@ -17,6 +17,10 @@ import {
   EXPLANATION_PROMPT,
   INTERPRETATION_PROMPT
 } from "../../../application/conversation/prompts";
+import {
+  OPENAI_BASELINE_MAX_OUTPUT_TOKENS,
+  type OpenAIReasoningEffort
+} from "./openai-runtime-configuration";
 
 const INTERPRET_TOOL = "submit_conversation_interpretation";
 const EXPLANATION_TOOL = "submit_explanation_plan";
@@ -174,13 +178,21 @@ function providerError(error: unknown): ConversationProviderError {
 
 export class OpenAIResponsesConversationModelProvider implements ConversationModelProvider {
   private readonly client: OpenAI;
+  private readonly reasoningEffort: OpenAIReasoningEffort | null;
+  private readonly maxRetries: number;
 
   constructor(
     apiKey: string,
     private readonly model: string,
-    timeoutMs = 12_000
+    options: Readonly<{
+      timeoutMs?: number;
+      maxRetries?: number;
+      reasoningEffort?: OpenAIReasoningEffort | null;
+    }> = {}
   ) {
-    this.client = new OpenAI({ apiKey, timeout: timeoutMs, maxRetries: 0 });
+    this.client = new OpenAI({ apiKey, timeout: options.timeoutMs ?? 12_000, maxRetries: 0 });
+    this.reasoningEffort = options.reasoningEffort ?? null;
+    this.maxRetries = options.maxRetries ?? 1;
   }
 
   private async forcedCall(
@@ -189,9 +201,20 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     input: unknown,
     parameters: typeof interpretationParameters | typeof explanationParameters,
     parse: (value: unknown) => ConversationInterpretation | ExplanationPlan
-  ): Promise<{ value: ConversationInterpretation | ExplanationPlan; attempts: number }> {
+  ): Promise<{
+    value: ConversationInterpretation | ExplanationPlan;
+    attempts: number;
+    latencyMs: number;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  }> {
     let lastError: ConversationProviderError | null = null;
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalTokens = 0;
+    const startedAt = performance.now();
+    for (let attempt = 1; attempt <= this.maxRetries + 1; attempt += 1) {
       try {
         const response = await this.client.responses.create({
           model: this.model,
@@ -207,8 +230,12 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           tool_choice: { type: "function", name: toolName },
           parallel_tool_calls: false,
           store: false,
-          max_output_tokens: 1200
+          max_output_tokens: OPENAI_BASELINE_MAX_OUTPUT_TOKENS,
+          ...(this.reasoningEffort ? { reasoning: { effort: this.reasoningEffort } } : {})
         });
+        inputTokens += response.usage?.input_tokens ?? 0;
+        outputTokens += response.usage?.output_tokens ?? 0;
+        totalTokens += response.usage?.total_tokens ?? 0;
         const calls = response.output.filter((item) => item.type === "function_call");
         if (calls.length !== 1) {
           throw new ConversationProviderError(
@@ -234,15 +261,28 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           if (error instanceof ConversationProviderError) throw error;
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider arguments failed runtime validation.");
         }
-        return { value: parsed, attempts: attempt };
+        return {
+          value: parsed,
+          attempts: attempt,
+          latencyMs: Math.round(performance.now() - startedAt),
+          inputTokens,
+          outputTokens,
+          totalTokens
+        };
       } catch (error) {
         lastError = providerError(error);
-        if (!lastError.retryable || attempt === 2) {
+        if (!lastError.retryable || attempt === this.maxRetries + 1) {
           throw new ConversationProviderError(
             lastError.category,
             lastError.retryable,
             lastError.message,
-            attempt
+            attempt,
+            {
+              latencyMs: Math.round(performance.now() - startedAt),
+              inputTokens,
+              outputTokens,
+              totalTokens
+            }
           );
         }
       }
@@ -258,7 +298,18 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       interpretationParameters,
       (value) => toInterpretation(envelopeSchema.parse(value))
     );
-    return { value: result.value as ConversationInterpretation, metadata: { provider: "openai", model: this.model, attempts: result.attempts } };
+    return {
+      value: result.value as ConversationInterpretation,
+      metadata: {
+        provider: "openai",
+        model: this.model,
+        attempts: result.attempts,
+        latencyMs: result.latencyMs,
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+        totalTokens: result.totalTokens
+      }
+    };
   }
 
   async planExplanation(request: ExplanationProviderRequest): Promise<ProviderResult<ExplanationPlan>> {
@@ -269,6 +320,17 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       explanationParameters,
       (value) => explanationPlanSchema.parse(value)
     );
-    return { value: result.value as ExplanationPlan, metadata: { provider: "openai", model: this.model, attempts: result.attempts } };
+    return {
+      value: result.value as ExplanationPlan,
+      metadata: {
+        provider: "openai",
+        model: this.model,
+        attempts: result.attempts,
+        latencyMs: result.latencyMs,
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+        totalTokens: result.totalTokens
+      }
+    };
   }
 }
