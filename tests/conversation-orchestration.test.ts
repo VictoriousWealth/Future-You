@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { conversationTestApplication } from "./helpers/conversation";
+import { conversationEvaluationCorpusV2 } from "./fixtures/conversation-evaluation-corpus-v2";
 
 async function newConversation() {
   const test = conversationTestApplication();
@@ -59,7 +60,7 @@ describe("Slice 5 constrained conversation orchestration", () => {
   });
 
   it("uses deterministic minimal clarifications for missing amount and timing", async () => {
-    const { application, id } = await newConversation();
+    const { application, provider, repository, id } = await newConversation();
     const amount = await application.send(id, { requestId: "clarify_amount", message: "Can I afford a trip next month?" });
     expect(amount.conversation.messages.at(-1)).toMatchObject({
       kind: "ASSISTANT_CLARIFICATION",
@@ -76,6 +77,100 @@ describe("Slice 5 constrained conversation orchestration", () => {
       text: "Which month do you expect to pay for it?",
       templateId: "PURCHASE_MONTH"
     });
+    expect(provider.observedClarificationRequests).toHaveLength(1);
+    expect(repository.turns.get(`${id}:clarify_amount`)?.beginCommand).toMatchObject({
+      interpretationPromptVersion: "fy-conversation-interpretation/2.0.0",
+      interpretationSchemaVersion: "fy-conversation-intent/2.0.0"
+    });
+    expect(repository.turns.get(`${id}:clarify_amount_answer`)?.beginCommand).toMatchObject({
+      interpretationPromptVersion: "fy-clarification-resolution-prompt/1.0.0",
+      interpretationSchemaVersion: "fy-clarification-resolution-schema/1.0.0"
+    });
+  });
+
+  it("resolves only the pending scenario reference and preserves the attempted amount change", async () => {
+    const { application, provider, id } = await newConversation();
+    await application.send(id, { requestId: "scenario_gap_1", message: "Can I afford a £650 trip next month?" });
+    await application.send(id, { requestId: "scenario_gap_2", message: "Show me my current path." });
+    const gap = await application.send(id, { requestId: "scenario_gap_3", message: "What about £500?" });
+    expect(gap.intent).toBe("CLARIFY_SCENARIO_REFERENCE");
+    expect(gap.conversation.messages.at(-1)).toMatchObject({
+      kind: "ASSISTANT_CLARIFICATION",
+      templateId: "SCENARIO_REFERENCE"
+    });
+    const resolved = await application.send(id, { requestId: "scenario_gap_4", message: "The £650 trip" });
+    expect(resolved.intent).toBe("CHANGE_PURCHASE_AMOUNT");
+    expect(resolved.conversation.selectedResult?.scenario.change.amount.minorUnits).toBe("50000");
+    expect(provider.observedClarificationRequests.at(-1)?.pendingClarification.type).toBe("SCENARIO_REFERENCE");
+  });
+
+  it("keeps a pending clarification fail-closed for unsupported and repeated ambiguous answers", async () => {
+    const { application, simulator, id } = await newConversation();
+    const simulation = vi.spyOn(simulator.simulateOneOffPurchase, "execute");
+    await application.send(id, { requestId: "pending_safe_1", message: "Can I afford a trip next month?" });
+    const ambiguous = await application.send(id, { requestId: "pending_safe_2", message: "about that much" });
+    expect(ambiguous.intent).toBe("AMBIGUOUS");
+    expect(ambiguous.conversation.conversation.hasPendingClarification).toBe(true);
+    const unsupported = await application.send(id, { requestId: "pending_safe_3", message: "Split it into four instalments" });
+    expect(unsupported.intent).toBe("UNSUPPORTED");
+    expect(unsupported.conversation.conversation.hasPendingClarification).toBe(true);
+    expect(simulation).not.toHaveBeenCalled();
+  });
+
+  it("rejects a schema-valid amount that is not grounded in the current message", async () => {
+    const { application, provider, simulator, id } = await newConversation();
+    vi.spyOn(provider, "interpret").mockResolvedValueOnce({
+      value: {
+        kind: "CREATE_ONE_OFF_PURCHASE",
+        amount: { quote: "£900", currency: "GBP" },
+        timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 1 },
+        purposeQuote: "trip"
+      },
+      metadata: { provider: "fake", model: "fake-conversation/2.0.0", attempts: 1 }
+    });
+    const simulation = vi.spyOn(simulator.simulateOneOffPurchase, "execute");
+    await expect(application.send(id, {
+      requestId: "ungrounded_amount",
+      message: "Can I afford a £650 trip next month?"
+    })).rejects.toMatchObject({ code: "AI_INTERPRETATION_INVALID" });
+    expect(simulation).not.toHaveBeenCalled();
+  });
+
+  it("rejects provider timing and scenario-label quotes not grounded in the current message", async () => {
+    const timingTest = await newConversation();
+    vi.spyOn(timingTest.provider, "interpret").mockResolvedValueOnce({
+      value: {
+        kind: "CREATE_ONE_OFF_PURCHASE",
+        amount: { quote: "£650", currency: "GBP" },
+        timing: { quote: "October", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null },
+        purposeQuote: "trip"
+      },
+      metadata: { provider: "fake", model: "fake-conversation/2.0.0", attempts: 1 }
+    });
+    const timingSimulation = vi.spyOn(timingTest.simulator.simulateOneOffPurchase, "execute");
+    await expect(timingTest.application.send(timingTest.id, {
+      requestId: "ungrounded_timing",
+      message: "Can I afford a £650 trip next month?"
+    })).rejects.toMatchObject({ code: "AI_INTERPRETATION_INVALID" });
+    expect(timingSimulation).not.toHaveBeenCalled();
+
+    const scenarioTest = await newConversation();
+    await scenarioTest.application.send(scenarioTest.id, {
+      requestId: "grounded_scenario_seed",
+      message: "Can I afford a £650 trip next month?"
+    });
+    vi.spyOn(scenarioTest.provider, "interpret").mockResolvedValueOnce({
+      value: {
+        kind: "SELECT_EXISTING_SCENARIO",
+        selectionTarget: "EXPLICIT_SCENARIO_LABEL",
+        scenarioLabelQuote: "£400 option"
+      },
+      metadata: { provider: "fake", model: "fake-conversation/2.0.0", attempts: 1 }
+    });
+    await expect(scenarioTest.application.send(scenarioTest.id, {
+      requestId: "ungrounded_scenario_label",
+      message: "Show that option"
+    })).rejects.toMatchObject({ code: "AI_INTERPRETATION_INVALID" });
   });
 
   it("never invokes the simulator for unsupported or adversarial requests", async () => {
@@ -91,6 +186,24 @@ describe("Slice 5 constrained conversation orchestration", () => {
       expect(turn.intent).toBe("UNSUPPORTED");
       expect(turn.conversation.messages.at(-1)?.kind).toBe("ASSISTANT_SCOPE");
     }
+    expect(simulation).not.toHaveBeenCalled();
+  });
+
+  it("keeps every v2 unsupported and adversarial interpretation away from the simulator", async () => {
+    const { application, simulator, id } = await newConversation();
+    const simulation = vi.spyOn(simulator.simulateOneOffPurchase, "execute");
+    const blocked = conversationEvaluationCorpusV2.filter((evaluation) =>
+      evaluation.providerMethod === "INTERPRET" && evaluation.expectedKind === "UNSUPPORTED"
+    );
+    for (const [index, evaluation] of blocked.entries()) {
+      const turn = await application.send(id, {
+        requestId: `all_blocked_${index}`,
+        message: evaluation.message
+      });
+      expect(turn.intent, evaluation.id).toBe("UNSUPPORTED");
+      expect(turn.conversation.messages.at(-1)?.kind, evaluation.id).toBe("ASSISTANT_SCOPE");
+    }
+    expect(blocked.length).toBeGreaterThanOrEqual(17);
     expect(simulation).not.toHaveBeenCalled();
   });
 
