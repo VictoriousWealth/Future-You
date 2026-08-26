@@ -1,12 +1,15 @@
 import type {
+  ClarificationResolution,
+  ClarificationResolutionProviderRequest,
+  CompleteTimingInterpretation,
   ConversationInterpretation,
   ConversationModelProvider,
   ExplanationPlan,
   ExplanationProviderRequest,
   InterpretationProviderRequest,
-  ProviderResult,
-  TimingInterpretation
+  ProviderResult
 } from "../../application/conversation/contracts";
+import type { UnsupportedCategoryId } from "../../application/conversation/interpretation-policy";
 import { ConversationProviderError } from "../../application/conversation/provider-error";
 
 export type FakeProviderMode =
@@ -25,18 +28,15 @@ const MONTHS = [
 ] as const;
 
 function metadata(attempts = 1) {
-  return { provider: "fake", model: "fake-conversation/1.0.0", attempts } as const;
+  return { provider: "fake", model: "fake-conversation/2.0.0", attempts } as const;
 }
 
 function amountFrom(message: string) {
   const match = message.match(/(?:£\s*)?\d+(?:\.\d{1,2})?(?:\s*(?:quid|pounds?))?/i);
-  return {
-    quote: match?.[0]?.trim() ?? null,
-    currency: match ? "GBP" as const : null
-  };
+  return match ? { quote: match[0].trim(), currency: "GBP" as const } : null;
 }
 
-function timingFrom(message: string): TimingInterpretation {
+function timingFrom(message: string): CompleteTimingInterpretation | null | "AMBIGUOUS" {
   const lower = message.toLowerCase();
   if (/next\s+month|nxt\s+month/.test(lower)) {
     const quote = message.match(/next\s+month|nxt\s+month/i)?.[0] ?? "next month";
@@ -44,168 +44,189 @@ function timingFrom(message: string): TimingInterpretation {
   }
   const explicit = message.match(/\b(20\d{2})-(0[1-9]|1[0-2])\b/);
   if (explicit) {
-    return {
-      quote: explicit[0], kind: "EXPLICIT_YEAR_MONTH",
-      year: Number(explicit[1]), monthNumber: Number(explicit[2]), offsetMonths: null
-    };
+    return { quote: explicit[0], kind: "EXPLICIT_YEAR_MONTH", year: Number(explicit[1]), monthNumber: Number(explicit[2]), offsetMonths: null };
   }
-  const namedMonths = MONTHS
-    .map((month, index) => ({ month, index }))
-    .filter(({ month }) => lower.includes(month));
-  if (namedMonths.length > 1) {
-    const quote = namedMonths
-      .map(({ month }) => message.match(new RegExp(month, "i"))?.[0] ?? month)
-      .join(" or ");
+  const namedMonths = MONTHS.map((month, index) => ({ month, index })).filter(({ month }) => lower.includes(month));
+  if (namedMonths.length > 1) return "AMBIGUOUS";
+  const named = namedMonths[0];
+  if (named) {
     return {
-      quote,
-      kind: "AMBIGUOUS",
-      monthNumber: null,
-      year: null,
-      offsetMonths: null
-    };
-  }
-  const namedIndex = namedMonths[0]?.index ?? -1;
-  if (namedIndex >= 0) {
-    return {
-      quote: message.match(new RegExp(MONTHS[namedIndex]!, "i"))?.[0] ?? MONTHS[namedIndex]!,
-      kind: "NAMED_MONTH", monthNumber: namedIndex + 1, year: null, offsetMonths: null
+      quote: message.match(new RegExp(named.month, "i"))?.[0] ?? named.month,
+      kind: "NAMED_MONTH", monthNumber: named.index + 1, year: null, offsetMonths: null
     };
   }
   const later = message.match(/(?:one|1)\s+month\s+later|wait\s+(?:one|1)\s+month/i);
-  if (later) {
-    return { quote: later[0], kind: "MONTHS_AFTER_SELECTED", monthNumber: null, year: null, offsetMonths: 1 };
-  }
-  return { quote: null, kind: "MISSING", monthNumber: null, year: null, offsetMonths: null };
+  if (later) return { quote: later[0], kind: "MONTHS_AFTER_SELECTED", monthNumber: null, year: null, offsetMonths: 1 };
+  return null;
 }
 
-function unsupportedCategory(message: string): string | null {
+export function unsupportedCategory(message: string): UnsupportedCategoryId | null {
   const lower = message.toLowerCase();
-  if (/instal+ments?|split\s+payment/.test(lower)) return "UNSUPPORTED_PAYMENT_PATTERN";
-  if (/credit|overdraft|emergency savings|goal savings|mixed funding/.test(lower)) return "UNSUPPORTED_FUNDING_SOURCE";
-  if (/substitut|instead of (?:my )?(?:normal|usual) spend/.test(lower)) return "UNSUPPORTED_COST_TREATMENT";
-  if (/before payday|after payday/.test(lower)) return "UNSUPPORTED_INTRAMONTH_TIMING";
-  if (/season.?ticket|pension|employer benefit|benefit/.test(lower)) return "UNSUPPORTED_BENEFIT";
-  if (/stock|invest|debt optimisation|loan|prioriti[sz]|recommend|should i/.test(lower)) return "UNSUPPORTED_ADVICE";
-  if (/search the web|google|find online/.test(lower)) return "UNSUPPORTED_EXTERNAL_TOOL";
-  if (/rent .*every month|rent every month|recurring|commit (?:it|this)|make it real|save first/.test(lower)) return "UNSUPPORTED_SCENARIO";
-  if (/ignore (?:all |your )?instructions|reveal (?:the )?(?:system )?prompt|friend'?s account|return a £?2,?000 buffer|calculate it yourself/.test(lower)) return "UNSUPPORTED_OVERRIDE";
+  if (/reveal|show|print|give me/.test(lower) && /system prompt|hidden prompt|api key|secret|token/.test(lower)) return "SECRET_OR_SYSTEM_PROMPT_REQUEST";
+  if (/friend'?s|another user|other user|act as|select another user|someone else'?s/.test(lower)) return "CROSS_USER_OR_IDENTITY_ACCESS";
+  if (/ignore .*instruction|override .*result|say i can afford|return a £?2,?000 buffer|pretend .*(?:buffer|saves?)|change (?:the )?(?:deterministic )?result/.test(lower)) return "RESULT_OR_AUTHORITY_OVERRIDE";
+  if (/do not call .*tool|don't call .*tool|change .*schema|override .*tool|use a different tool/.test(lower)) return "PROMPT_OR_TOOL_OVERRIDE";
+  if (/instal+ments?|split (?:this|it|the|my)?\s*(?:into|payment)|four payments/.test(lower)) return "INSTALMENTS";
+  if (/season.?ticket|employer benefit|activate .*benefit|use .*benefit/.test(lower)) return "BENEFIT_SIMULATION_OR_ACTIVATION";
+  if (/pension|contribution.*(?:3|5)%/.test(lower)) return "PENSION_CONTRIBUTION_CHANGE";
+  if (/goal savings|emergency savings|house deposit.*(?:pay|fund)|save first/.test(lower)) return "GOAL_SAVINGS_FUNDING";
+  if (/mixed funding|combine .*fund|part .*cash.*part|two sources/.test(lower)) return "MIXED_FUNDING";
+  if (/credit card|overdraft|borrow|take out a loan|loan funding/.test(lower)) return "CREDIT_OR_OVERDRAFT_FUNDING";
+  if (/substitut|instead of (?:my )?(?:normal|usual|routine) spend|cut groceries/.test(lower)) return "SPENDING_SUBSTITUTION";
+  if (/before payday|after payday|exact day|payday/.test(lower)) return "INTRA_MONTH_PAYMENT_TIMING";
+  if (/rent .*every month|rent changes|recurring|monthly expense change|salary changes every/.test(lower)) return "RECURRING_EXPENSE_CHANGE";
+  if (/commit (?:it|this)|make it real|change my real financial context|apply this scenario/.test(lower)) return "SCENARIO_COMMITMENT";
+  if (/stock|share should|invest|trading|crypto|fund should/.test(lower)) return "INVESTMENT_OR_TRADING_ADVICE";
+  if (/what should i prioritise|what should i prioritize|recommend|best choice|what should i do/.test(lower)) return "GENERAL_FINANCIAL_RECOMMENDATION";
+  if (/search the web|google|find online|upload|voice/.test(lower)) return "OTHER_OUT_OF_SCOPE";
   return null;
 }
 
 function purposeFrom(message: string): string | null {
-  const purpose = message.match(/\b(trip|holiday|laptop|phone|bike|festival|purchase|something)\b/i);
-  return purpose?.[0] ?? null;
+  return message.match(/\b(trip|holiday|laptop|phone|bike|festival|purchase|something)\b/i)?.[0] ?? null;
 }
 
-function normalInterpretation(request: InterpretationProviderRequest): ConversationInterpretation {
+function referenceStrategy(request: InterpretationProviderRequest, message: string) {
+  const explicit = request.availableScenarios.find((scenario) => message.toLowerCase().includes(scenario.label.toLowerCase()));
+  if (explicit) return { strategy: "EXPLICIT_SCENARIO_LABEL" as const, quote: explicit.label };
+  if (request.availableScenarios.some((scenario) => scenario.selected)) {
+    return { strategy: "SELECTED_SCENARIO" as const, quote: null };
+  }
+  return null;
+}
+
+export function interpretWithDeterministicFake(request: InterpretationProviderRequest): ConversationInterpretation {
   const message = request.userMessage.trim();
   const lower = message.toLowerCase();
   const unsupported = unsupportedCategory(message);
-  if (unsupported) return { kind: "UNSUPPORTED", category: unsupported, userGoalSummary: null };
-  if (/^(hi|hello|hey|good (?:morning|afternoon|evening))[!. ]*$/i.test(message)) return { kind: "GREETING" };
-  if (/what can you do|help me|^help[!. ]*$/i.test(message)) return { kind: "HELP" };
-  if (/show (?:me )?my current path|go back to (?:my )?current path|current path/i.test(lower)) {
-    return { kind: "SELECT_EXISTING_SCENARIO", scenarioReferenceQuote: "current path" };
+  if (unsupported) return { kind: "UNSUPPORTED", category: unsupported };
+
+  const currentPathSelection = /(?:show|open|return to|go back to|switch to)(?: me)? (?:my )?current path/i.test(message);
+  if (currentPathSelection) return { kind: "SELECT_EXISTING_SCENARIO", selectionTarget: "CURRENT_PATH", scenarioLabelQuote: null };
+
+  const explicitScenario = request.availableScenarios.find((scenario) => lower.includes(scenario.label.toLowerCase()));
+  if (/\b(?:show|open|return to|go back to|switch to)\b/i.test(message) && explicitScenario) {
+    return { kind: "SELECT_EXISTING_SCENARIO", selectionTarget: "EXPLICIT_SCENARIO_LABEL", scenarioLabelQuote: explicitScenario.label };
   }
-  if (/why|how did|explain/.test(lower)) {
-    const explanationTarget = /emergency|goal|deposit|holiday/.test(lower)
-      ? "GOAL_DELAY"
-      : /buffer/.test(lower)
-        ? "SAFETY_BUFFER"
-        : /bill/.test(lower)
-          ? "BILLS"
-          : /overdraft|borrow/.test(lower)
-            ? "BORROWING"
-            : "OVERALL_CLASSIFICATION";
-    return {
-      kind: "EXPLAIN_SELECTED_RESULT",
-      explanationTarget,
-      goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null
-    };
+  if (/\b(?:show|open|return to|go back to|switch to)\b/i.test(message) && /selected|this (?:option|scenario)/i.test(message)) {
+    return { kind: "SELECT_EXISTING_SCENARIO", selectionTarget: "SELECTED_SCENARIO", scenarioLabelQuote: null };
   }
 
-  if (request.pendingClarification?.type === "PURCHASE_AMOUNT") {
-    const amount = amountFrom(message);
-    return {
-      kind: "CREATE_ONE_OFF_PURCHASE",
-      amount,
-      timing: request.pendingClarification.partialTiming,
-      purposeQuote: request.pendingClarification.partialPurpose,
-      missingFields: amount.quote ? [] : ["purchaseAmount"],
-      unsupportedFeatures: []
+  if (/why|how did|what changed|what caused|explain/.test(lower)) {
+    const reference = referenceStrategy(request, message);
+    if (!reference) return {
+      kind: "CLARIFY_SCENARIO_REFERENCE",
+      attemptedOperation: {
+        kind: "EXPLAIN_SELECTED_RESULT",
+        explanationTarget: "OVERALL_CLASSIFICATION",
+        goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null
+      }
     };
-  }
-  if (request.pendingClarification?.type === "PURCHASE_MONTH") {
-    const timing = timingFrom(message);
+    const explanationTarget = /emergency|goal|deposit|holiday/.test(lower)
+      ? "GOAL_DELAY" as const
+      : /recover|restored/.test(lower)
+        ? "BUFFER_RECOVERY" as const
+        : /buffer/.test(lower)
+          ? "SAFETY_BUFFER" as const
+          : /bill/.test(lower)
+            ? "BILLS" as const
+            : /overdraft|borrow/.test(lower)
+              ? "BORROWING" as const
+              : /assumption/.test(lower)
+                ? "ASSUMPTIONS" as const
+                : /timing|wait|month/.test(lower)
+                  ? "TIMING_EFFECT" as const
+                  : "OVERALL_CLASSIFICATION" as const;
     return {
-      kind: "CREATE_ONE_OFF_PURCHASE",
-      amount: { quote: request.pendingClarification.amountQuote, currency: "GBP" },
-      timing,
-      purposeQuote: request.pendingClarification.partialPurpose,
-      missingFields: timing.kind === "MISSING" ? ["purchaseMonth"] : [],
-      unsupportedFeatures: []
+      kind: "EXPLAIN_SELECTED_RESULT", explanationTarget,
+      goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null,
+      scenarioReferenceStrategy: reference.strategy,
+      scenarioReferenceQuote: reference.quote
     };
   }
 
   const amount = amountFrom(message);
   const timing = timingFrom(message);
-  const hasSelected = request.availableScenarios.some((scenario) => scenario.selected);
-  if (/(?:what|wat) (?:about|abt)|only cost|cheaper|option/i.test(lower) && amount.quote) {
-    return {
-      kind: "CHANGE_PURCHASE_AMOUNT", amount, referencedScenarioLabel: null,
-      missingFields: hasSelected ? [] : ["scenarioReference"], unsupportedFeatures: []
-    };
+  const reference = referenceStrategy(request, message);
+  if (/(?:what|wat) (?:about|abt)|only cost|cheaper|option/i.test(lower) && amount) {
+    if (!reference) return { kind: "CLARIFY_SCENARIO_REFERENCE", attemptedOperation: { kind: "CHANGE_PURCHASE_AMOUNT", amount } };
+    return { kind: "CHANGE_PURCHASE_AMOUNT", amount, scenarioReferenceStrategy: reference.strategy, scenarioReferenceQuote: reference.quote };
   }
-  if (/what if i (?:wait|w8)|try it|month later|instead|go in/i.test(lower) && timing.kind !== "MISSING") {
-    return {
-      kind: "CHANGE_PURCHASE_MONTH", timing, referencedScenarioLabel: null,
-      missingFields: hasSelected ? [] : ["scenarioReference"], unsupportedFeatures: []
-    };
+  if (/what if i (?:wait|w8)|try it|month later|instead|go in/i.test(lower) && timing && timing !== "AMBIGUOUS") {
+    if (!reference) return { kind: "CLARIFY_SCENARIO_REFERENCE", attemptedOperation: { kind: "CHANGE_PURCHASE_MONTH", timing } };
+    return { kind: "CHANGE_PURCHASE_MONTH", timing, scenarioReferenceStrategy: reference.strategy, scenarioReferenceQuote: reference.quote };
   }
-  const explicitScenario = request.availableScenarios.find((scenario) =>
-    lower.includes(scenario.label.toLowerCase())
-  );
-  if (/show|open|go back/.test(lower) && explicitScenario) {
-    return { kind: "SELECT_EXISTING_SCENARIO", scenarioReferenceQuote: explicitScenario.label };
-  }
-  if (/show|open|go back/.test(lower) && amount.quote) {
-    return { kind: "SELECT_EXISTING_SCENARIO", scenarioReferenceQuote: amount.quote };
-  }
+
   if (/afford|spend|buy|cost|trip|holiday|laptop|would .* be okay/.test(lower)) {
-    const missingFields = [
-      ...(amount.quote ? [] : ["purchaseAmount"]),
-      ...(timing.kind === "MISSING" || timing.kind === "AMBIGUOUS" ? ["purchaseMonth"] : [])
-    ];
-    return {
-      kind: "CREATE_ONE_OFF_PURCHASE", amount, timing, purposeQuote: purposeFrom(message),
-      missingFields, unsupportedFeatures: []
-    };
+    if (!amount) return { kind: "CLARIFY_PURCHASE_AMOUNT", purposeQuote: purposeFrom(message), timing: timing === "AMBIGUOUS" ? null : timing };
+    if (!timing || timing === "AMBIGUOUS") return { kind: "CLARIFY_PURCHASE_MONTH", amount, purposeQuote: purposeFrom(message) };
+    return { kind: "CREATE_ONE_OFF_PURCHASE", amount, timing, purposeQuote: purposeFrom(message) };
   }
-  return { kind: "AMBIGUOUS", ambiguity: "The request did not identify a supported action.", clarificationKey: "SUPPORTED_ACTION" };
+
+  if (/^(hi|hello|hey|good (?:morning|afternoon|evening))[!. ]*$/i.test(message)) return { kind: "GREETING" };
+  if (/what can you do|help me|^help[!. ]*$/i.test(message)) return { kind: "HELP" };
+  return { kind: "AMBIGUOUS", ambiguity: "UNCLEAR_SUPPORTED_ACTION" };
+}
+
+function resolveWithDeterministicFake(request: ClarificationResolutionProviderRequest): ClarificationResolution {
+  const unsupported = unsupportedCategory(request.userMessage);
+  if (unsupported) return { kind: "UNSUPPORTED", category: unsupported };
+  if (request.pendingClarification.type === "PURCHASE_AMOUNT") {
+    const amount = amountFrom(request.userMessage);
+    return amount
+      ? { kind: "RESOLVE_PURCHASE_AMOUNT", amount }
+      : { kind: "AMBIGUOUS", ambiguity: "UNRECOGNISED_AMOUNT_EXPRESSION" };
+  }
+  if (request.pendingClarification.type === "PURCHASE_MONTH") {
+    const timing = timingFrom(request.userMessage);
+    return timing && timing !== "AMBIGUOUS"
+      ? { kind: "RESOLVE_PURCHASE_MONTH", timing }
+      : { kind: "AMBIGUOUS", ambiguity: "UNRECOGNISED_TIMING_EXPRESSION" };
+  }
+  if (/current path/i.test(request.userMessage)) {
+    return { kind: "RESOLVE_SCENARIO_REFERENCE", selectionTarget: "CURRENT_PATH", scenarioLabelQuote: null };
+  }
+  const scenario = request.availableScenarios.find((candidate) =>
+    request.userMessage.toLowerCase().includes(candidate.label.toLowerCase())
+  );
+  if (scenario) return { kind: "RESOLVE_SCENARIO_REFERENCE", selectionTarget: "EXPLICIT_SCENARIO_LABEL", scenarioLabelQuote: scenario.label };
+  if (/selected|this (?:one|option|scenario)/i.test(request.userMessage) && request.availableScenarios.some((candidate) => candidate.selected)) {
+    return { kind: "RESOLVE_SCENARIO_REFERENCE", selectionTarget: "SELECTED_SCENARIO", scenarioLabelQuote: null };
+  }
+  return { kind: "AMBIGUOUS", ambiguity: "UNRECOGNISED_SCENARIO_REFERENCE" };
 }
 
 export class FakeConversationModelProvider implements ConversationModelProvider {
   readonly observedInterpretationRequests: InterpretationProviderRequest[] = [];
+  readonly observedClarificationRequests: ClarificationResolutionProviderRequest[] = [];
   readonly observedExplanationRequests: ExplanationProviderRequest[] = [];
 
   constructor(private readonly mode: FakeProviderMode = "normal") {}
 
-  async interpret(request: InterpretationProviderRequest): Promise<ProviderResult<ConversationInterpretation>> {
-    this.observedInterpretationRequests.push(structuredClone(request));
+  private failIfConfigured(): void {
     if (this.mode === "timeout") throw new ConversationProviderError("TIMEOUT", true, "Fake timeout.");
     if (this.mode === "rate_limit") throw new ConversationProviderError("RATE_LIMIT", true, "Fake rate limit.");
     if (this.mode === "provider_failure") throw new ConversationProviderError("UNAVAILABLE", true, "Fake provider failure.");
     if (this.mode === "invalid_schema") throw new ConversationProviderError("INVALID_OUTPUT", true, "Fake invalid output.");
     if (this.mode === "unknown_tool") throw new ConversationProviderError("UNKNOWN_TOOL", false, "Fake unknown tool.");
     if (this.mode === "multiple_tool_calls") throw new ConversationProviderError("MULTIPLE_TOOL_CALLS", false, "Fake multiple calls.");
-    return { value: normalInterpretation(request), metadata: metadata() };
+  }
+
+  async interpret(request: InterpretationProviderRequest): Promise<ProviderResult<ConversationInterpretation>> {
+    this.observedInterpretationRequests.push(structuredClone(request));
+    this.failIfConfigured();
+    return { value: interpretWithDeterministicFake(request), metadata: metadata() };
+  }
+
+  async resolveClarification(request: ClarificationResolutionProviderRequest): Promise<ProviderResult<ClarificationResolution>> {
+    this.observedClarificationRequests.push(structuredClone(request));
+    this.failIfConfigured();
+    return { value: resolveWithDeterministicFake(request), metadata: metadata() };
   }
 
   async planExplanation(request: ExplanationProviderRequest): Promise<ProviderResult<ExplanationPlan>> {
     this.observedExplanationRequests.push(structuredClone(request));
-    if (this.mode === "explanation_failure") {
-      throw new ConversationProviderError("UNAVAILABLE", true, "Fake explanation failure.");
-    }
+    if (this.mode === "explanation_failure") throw new ConversationProviderError("UNAVAILABLE", true, "Fake explanation failure.");
     const preferred = request.explanationTarget === "GOAL_DELAY"
       ? "GOAL_DELAY_EXPLANATION"
       : request.explanationTarget === "SAFETY_BUFFER"
@@ -218,8 +239,7 @@ export class FakeConversationModelProvider implements ConversationModelProvider 
         : request.availableFactKeys[0] ?? "OVERALL_CLASSIFICATION";
     return {
       value: {
-        templateId: preferred,
-        primaryFactKey: primary,
+        templateId: preferred, primaryFactKey: primary,
         orderedFactKeys: request.availableFactKeys,
         caveatKeys: ["HYPOTHETICAL_ONLY", "ASSUMED_TIMING"],
         followUpActionKeys: ["TRY_LOWER_AMOUNT", "TRY_ANOTHER_MONTH", "VIEW_CURRENT_PATH"],
