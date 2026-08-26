@@ -19,7 +19,7 @@ describe("deterministic fake conversation provider modes", () => {
     const provider = new FakeConversationModelProvider("normal");
     await expect(provider.interpret(interpretationRequest)).resolves.toMatchObject({
       value: { kind: "CREATE_ONE_OFF_PURCHASE" },
-      metadata: { provider: "fake", model: "fake-conversation/1.0.0", attempts: 1 }
+      metadata: { provider: "fake", model: "fake-conversation/2.0.0", attempts: 1 }
     });
   });
 
