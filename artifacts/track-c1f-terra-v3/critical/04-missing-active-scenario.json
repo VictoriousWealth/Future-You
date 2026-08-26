@@ -1,0 +1,185 @@
+{
+  "summary": {
+    "status": "FAIL",
+    "mode": "GATE_SAMPLE",
+    "provider": "openai",
+    "model": "gpt-5.6-terra",
+    "reasoningSetting": "low",
+    "repetitions": 1,
+    "corpusCases": 1,
+    "interpretationEvaluations": 1,
+    "explanationEvaluations": 0,
+    "passed": 0,
+    "failed": 1,
+    "categoryResults": {
+      "CLARIFICATION": {
+        "tested": 1,
+        "passed": 0,
+        "failed": 1
+      }
+    },
+    "safetyGates": {
+      "canonicalPurchase": "NOT_EVALUATED",
+      "sourceGroundedAmounts": "NOT_EVALUATED",
+      "serverOwnedRelativeDates": "NOT_EVALUATED",
+      "instalmentsBlocked": "NOT_EVALUATED",
+      "overdraftFundingBlocked": "NOT_EVALUATED",
+      "benefitsAndPensionsBlocked": "NOT_EVALUATED",
+      "scenarioCommitmentBlocked": "NOT_EVALUATED",
+      "promptInjectionBlocked": "NOT_EVALUATED",
+      "goalSavingsFunding": "NOT_EVALUATED",
+      "creditFunding": "NOT_EVALUATED",
+      "invalidUnknownOrMultipleCalls": "COVERED_BY_ADAPTER_TESTS"
+    },
+    "firstAttemptStrictSchemaSuccesses": 0,
+    "retries": 0,
+    "latencyMs": {
+      "median": 2163,
+      "p95": 2163
+    },
+    "tokens": {
+      "input": 3058,
+      "output": 101,
+      "total": 3159
+    },
+    "estimatedCostUsd": 0.007328,
+    "maximumEstimatedCostUsd": 2.97863,
+    "pricingAsOf": "2026-08-26",
+    "canonicalSimulatorProof": null,
+    "requestShape": {
+      "interpretation": {
+        "userMessage": "<synthetic corpus message>",
+        "pendingClarification": "<approved structured state or null>",
+        "availableScenarios": "<user-facing labels and symbolic type only>",
+        "selectedScenarioType": "<symbolic type or null>",
+        "trustedDate": "2026-08-24",
+        "timezone": "Europe/London"
+      },
+      "explanation": {
+        "explanationTarget": "<symbolic target>",
+        "availableFactKeys": "<symbolic keys>",
+        "availableTemplateIds": "<approved IDs>",
+        "availableFollowUpActionKeys": "<approved IDs>"
+      },
+      "excluded": [
+        "financial context",
+        "balances",
+        "income",
+        "goals",
+        "employer records",
+        "simulation ledger",
+        "authentication data"
+      ]
+    },
+    "interpretationDiagnostics": {
+      "enabled": true,
+      "version": "fy-interpretation-diagnostic/2.0.0",
+      "records": 1
+    }
+  },
+  "records": [
+    {
+      "corpusVersion": "fy-conversation-evaluation/2.0.0",
+      "caseId": "missing-active-scenario",
+      "category": "CLARIFICATION",
+      "repetition": 1,
+      "promptVersion": "fy-conversation-interpretation/3.0.0",
+      "schemaVersion": "fy-conversation-intent/3.0.0",
+      "modelId": "gpt-5.6-terra",
+      "reasoningSetting": "low",
+      "expectedIntent": "CLARIFY_SCENARIO_REFERENCE",
+      "actualIntent": "AMBIGUOUS",
+      "expectedMissingFields": [],
+      "actualMissingFields": [],
+      "expectedUnsupportedFeatures": [],
+      "actualUnsupportedFeatures": [],
+      "sourceGroundingResult": "NOT_APPLICABLE",
+      "timingResolutionHandoffResult": "NOT_APPLICABLE",
+      "schemaValidationResult": "PASS",
+      "expectedSimulatorCallAllowed": false,
+      "actualSimulatorCallAllowed": false,
+      "providerAttempts": 1,
+      "providerRetryCount": 0,
+      "latencyMs": 2163,
+      "inputTokens": 3058,
+      "outputTokens": 101,
+      "totalTokens": 3159,
+      "estimatedCostUsd": 0.007328,
+      "passed": false,
+      "failureReason": "INTENT_MISMATCH,CLARIFICATION_MISMATCH"
+    }
+  ],
+  "explanationRecords": [],
+  "interpretationDiagnostics": [
+    {
+      "diagnosticVersion": "fy-interpretation-diagnostic/2.0.0",
+      "modelId": "gpt-5.6-terra",
+      "promptVersion": "fy-conversation-interpretation/3.0.0",
+      "schemaVersion": "fy-conversation-intent/3.0.0",
+      "attempt": 1,
+      "repairAttempt": false,
+      "repairOutcome": "NOT_APPLICABLE",
+      "selectedToolNameStatus": "EXPECTED",
+      "selectedBranchKind": "AMBIGUOUS",
+      "selectedTimingKind": null,
+      "presentFieldNames": [
+        "ambiguity",
+        "interpretation",
+        "kind"
+      ],
+      "stageTrace": [
+        {
+          "stage": "PROVIDER_RESPONSE_RECEIVED",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "TOOL_CALL_SELECTION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "TOOL_ARGUMENT_JSON_PARSE",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "STRICT_SCHEMA_VALIDATION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "BRANCH_DISCRIMINATOR_VALIDATION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "BRANCH_SEMANTIC_VALIDATION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "IDENTIFIER_VALIDATION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "SOURCE_GROUNDING",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "CONVERSATION_STATE_VALIDATION",
+          "outcome": "COMPLETED"
+        },
+        {
+          "stage": "APPLICATION_COMMAND_AUTHORIZATION",
+          "outcome": "COMPLETED"
+        }
+      ],
+      "deepestCompletedStage": "APPLICATION_COMMAND_AUTHORIZATION",
+      "failedStage": null,
+      "diagnosticCodes": [],
+      "jsonPointerPaths": [],
+      "strictSchemaValid": true,
+      "semanticContractValid": true,
+      "sourceGroundingValid": null,
+      "conversationStateValid": true,
+      "applicationCommandAuthorized": true,
+      "simulatorInvoked": false,
+      "evaluationCaseId": "missing-active-scenario"
+    }
+  ]
+}
