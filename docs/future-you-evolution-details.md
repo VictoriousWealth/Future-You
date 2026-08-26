@@ -1338,3 +1338,67 @@
     - The pre-correction B1 state is recoverable through annotated tag `mvp-rc-sarah-story-b1-2026-08-25`, which dereferences to commit `a554000`.
     - The Track A recovery point remains commit `ba5a83c` and tag `mvp-rc-employer-registration-2026-08-25`.
     - The correction is complete, but Track C has not started and requires separate approval. Track B Phase B2 remains paused.
+
+- **Sarah employer/Benefits correction approval — Corrected canonical state is independently recoverable**
+  - Approval:
+    - The canonical Sarah employer/Benefits correction was approved as complete before Track C began.
+    - Sarah's verified OniBank membership, claimed canonical provision, explicit employer offerings and owner-scoped opportunity states remain the approved narrow Option B implementation.
+    - Sarah's immutable financial context and every frozen scenario result remain unchanged.
+  - Recovery boundary:
+    - Annotated tag `mvp-rc-sarah-employer-benefits-2026-08-25` preserves the corrected state and dereferences to commit `ef40a0e`.
+    - Track A tag `mvp-rc-employer-registration-2026-08-25` and pre-correction B1 tag `mvp-rc-sarah-story-b1-2026-08-25` remain intact.
+
+- **Track C0 approval — Authorised OpenAI setup, frozen live baseline and Ask audit begin**
+  - Phase decision:
+    - Track C0 is limited to safe provider configuration, readiness, live-evaluation support, sanitised metrics, failure review and an audit of the existing Ask experience.
+    - It does not authorise prompt, schema, intent, template, financial-logic or Ask visual changes.
+    - Track C1 requires a separate approval after baseline evidence.
+    - Track B Phase B2 remains paused; everyday-companion and real-user human-context work has not started.
+  - Credential model:
+    - A human owner must create and authorise a dedicated Future You OpenAI Platform project, project-scoped service account and restricted service-account key.
+    - The key remains in an ignored server secret environment under `OPENAI_API_KEY` and must never be pasted, printed, logged, committed, documented or exposed to the browser.
+    - `OPENAI_PROVIDER_ENABLED=true` is the separate operational assertion that the configured key meets the approved project, ownership and billing conditions.
+    - A configured or working key alone is not treated as authorised.
+  - Candidate model roles:
+    - `gpt-5.6-terra` is the primary intelligence/cost candidate.
+    - `gpt-5.6-luna` is the lower-cost challenger.
+    - `gpt-5.6-sol` is reserved for selected diagnostic failures or representative quality-ceiling comparison rather than a full automatic repeated run.
+    - Terra and Luna must each run every frozen corpus case at least three times under identical configuration before a model recommendation.
+  - Frozen baseline:
+    - Interpretation prompt/schema remain `fy-conversation-interpretation/1.0.0` and `fy-conversation-intent/1.0.0`.
+    - Explanation prompt/schema remain `fy-conversation-explanation/1.0.0` and `fy-explanation-plan/1.0.0`.
+    - Reasoning remains provider-default/omitted, timeout remains 12 seconds and the application permits one bounded retry.
+    - The supported/unsupported intent set, clarification policy, source grounding, server date resolution, server templates, result cards and failure states remain unchanged for the baseline.
+  - Authority and data:
+    - The provider remains limited to typed interpretation and symbolic explanation planning.
+    - Exact financial values, dates, classifications, scenario outcomes, stored runs and employer/Benefits state remain under deterministic application authority.
+    - Live evaluation is synthetic-data-only and excludes real user data, full contexts, ledgers, auth/registration data and Sarah's complete financial or employer record.
+    - Every request retains `store: false`, one forced strict function, no built-in tools, no provider Conversation and no authoritative provider-side response chain.
+    - `store: false` is not represented as a zero-retention guarantee.
+
+- **Track C0 implementation and audit outcome — Safe infrastructure passes; live acceptance is blocked**
+  - Evaluation infrastructure:
+    - The repository harness now supports fake and configured OpenAI candidates, at least three repetitions, per-case symbolic outcomes, source/date handoff checks, retries, latency, tokens, estimated cost, sanitised failures and trusted-fact explanation probes.
+    - The repeated fake baseline passed 99 interpretation and six explanation evaluations with zero failures and zero retries.
+    - The frozen corpus exposes two future live-evaluation gaps: dedicated credit-funding and goal-savings-funding cases. These require an approved corpus revision rather than a silent Track C0 change.
+  - Credential safety:
+    - Safe readiness reports only key configured, provider enabled, selected model, provider reachable and model accessible.
+    - The local secret file is ignored, the configured key is absent from tracked files and client chunks, and no live request was made while provider enablement/model selection were absent.
+    - A direct Next/Turbopack build was found to cache the loaded server key inside ignored `.next` cache artifacts.
+    - The contaminated generated cache was removed, and `npm run build` now withholds the runtime-only OpenAI key during compilation.
+    - A clean rebuild and byte-level secret-boundary check prove the key is absent from tracked files, generated artifacts and client output.
+  - Ask audit:
+    - The existing synthetic experience retains clear decision-first prompts, deterministic result cards, minimal clarification, safe unsupported/error states, view-only scenario selection, persistence, stale-context handling and accessibility announcements.
+    - Live review is still needed to assess real latency, template repetition, the combined interpretation/calculation status, technical fallback wording, long-input editing and mobile-keyboard behaviour.
+    - No Ask UI, template or conversation behaviour was changed during the audit.
+  - Honest provider status:
+    - Final status is `LIVE_PROVIDER ACCEPTANCE — BLOCKED` because the project-owned enablement and model selection were not configured.
+    - Terra, Luna and Sol received zero requests; live accuracy, latency, token, cost, model-access and human-review results remain unavailable rather than being inferred.
+    - No model is recommended and Track C1 has not begun.
+  - Regression outcome:
+    - 267/267 Vitest tests, 20/20 Supabase integration tests, 273/273 pgTAP assertions, 34/34 frozen corpus tests, 8/8 fake-provider mode tests, 105/105 repeated fake-harness evaluations and 31/31 Playwright tests pass with zero skipped.
+    - TypeScript, ESLint, production build, coverage, generated database-artifact drift, client dependency boundary, secret boundary and `git diff --check` pass.
+    - No simulator, Sarah, RLS, ownership, exact-money, immutable-run, employer/Benefits or visual expectation was weakened.
+  - Stop boundary:
+    - Track C0 stops with documentation and blocked live evidence.
+    - Track C1 refinement implementation and Track B Phase B2 remain paused pending explicit approval and genuine Terra/Luna evidence.
