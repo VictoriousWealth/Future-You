@@ -1612,3 +1612,40 @@
     - A future diagnostic smoke requires separate explicit approval. The proposed limit is one canonical Terra request plus at most the existing one repair, low reasoning and a US$0.10 maximum estimated spend.
     - The proposed smoke must capture only sanitised stage/code/path/approved-shape metadata, repair outcome, tokens, latency and estimated cost; it must stop after the one canonical case and may not run a corpus or change the prompt/schema.
     - Track C2 remains paused and Phase B2 remains paused.
+
+- **Track C1C completion approval and canonical Terra diagnostic authorisation**
+  - Local completion approval:
+    - C1C is approved as complete with 13 versioned stages, 33 closed codes, evaluation-only default-disabled diagnostics, safe field/path metadata and 30 deterministic fake modes.
+    - The bounded repair remains limited to one attempt, raw provider and user content remains unpersisted, and the v2 prompt/schema/validator/product behaviour remain unchanged.
+    - Local evidence remains 380/380 Vitest, 150/150 fake evaluation, 20/20 Supabase integration, 273/273 pgTAP and 31/31 Playwright with no skips, plus passing type, lint, build, drift, secret, client and formatting boundaries.
+  - Recovery point:
+    - Annotated tag `track-c1c-sanitised-diagnostics-ready-2026-08-26` preserves the completed C1C state at commit `f6d215ae032c1068fe89511571b4480654d2b981` before the live request.
+    - No prior recovery tag was moved or overwritten.
+  - Live authorisation:
+    - Exactly one canonical Terra diagnostic case was authorised using `gpt-5.6-terra`, low reasoning, one initial request, at most one existing repair and a US$0.10 cumulative estimated-cost ceiling.
+    - The authorisation excluded every corpus, explanation case, Luna, Sol, Track C2 and all prompt/schema/validator/UI/simulator changes.
+    - Preflight proved provider disabled/model unset, no Next.js server/build process, key absent from `.env.local`, tracked/repository/generated/`.next`/client artifacts clean and client dependency boundaries intact.
+
+- **Canonical Terra diagnostic outcome — Timing semantic invariant fails identically after repair**
+  - Final status:
+    - The one-case result is `CANONICAL TERRA DIAGNOSTIC — FAILED`.
+    - This does not change overall Track C live-provider acceptance, which remains failed; Terra is neither approved nor recommended.
+  - Validation evidence:
+    - Both attempts selected the forced tool and approved `CREATE_ONE_OFF_PURCHASE` branch, parsed as JSON and passed strict structural validation.
+    - Both attempts failed `BRANCH_SEMANTIC_VALIDATION` at safe path `/interpretation/timing` with `SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION`.
+    - The repair failure was classified `REPAIR_OUTPUT_IDENTICAL_FAILURE`, `REPAIR_OUTPUT_INVALID` and `REPAIR_EXHAUSTED`.
+    - Source grounding, conversation-state validation and application-command authorisation were not reached; simulator calls and financial-authority violations remained zero.
+  - Operational evidence:
+    - Two provider requests used 4,695 input, 596 output and 5,291 total tokens with 11,406 ms aggregate latency.
+    - Estimated spend was US$0.016542 against the US$0.10 ceiling.
+    - Per-attempt latency, tokens, cost and provider request IDs were not retained by the existing aggregate telemetry and are reported unavailable rather than inferred.
+  - Privacy and containment:
+    - The live diagnostic artifact retains the approved stage/code/path/shape metadata and aggregate telemetry only.
+    - Automated inspection confirms it contains no original message, quotes, raw provider output, financial/employer/account data, key bytes, headers, prompts, hidden instructions or provider reasoning.
+    - The raw timing values remain intentionally unretained, so the evidence does not guess which member of the frozen timing invariant was wrong.
+    - The provider and diagnostics returned to disabled, the model was cleared, the evaluation process ended, no Next.js process retained the key, and post-run tracked/repository/generated/`.next`/client scans passed.
+    - A keyless production build, client dependency boundary and formatting check passed. The replacement key was not revoked because no unintended artifact contained it.
+  - Required next review:
+    - The single recommendation is a separately approved local-only timing-contract diagnostic review before any further live request.
+    - That review should add specific non-sensitive timing-invariant subcodes and per-attempt operational telemetry, reproduce each timing failure class deterministically and propose the smallest evidence-based prompt/schema/repair change without applying it automatically.
+    - No additional Terra case or corpus is authorised. Track C2 and Phase B2 remain paused.
