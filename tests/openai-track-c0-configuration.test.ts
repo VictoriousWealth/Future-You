@@ -148,4 +148,51 @@ describe("Track C0 OpenAI configuration and readiness boundary", () => {
     ].join("\n"));
     expect(result.stdout).not.toContain(runtimeOnlyKey);
   });
+
+  it("runs one canonical smoke interpretation and proves the frozen simulator result", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--conditions=react-server",
+        "--import",
+        "tsx",
+        "scripts/run-live-conversation-evaluation.ts",
+        "--provider=fake",
+        "--smoke"
+      ],
+      { cwd: process.cwd(), encoding: "utf8", env: { ...process.env } }
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const report = JSON.parse(result.stdout) as {
+      mode: string;
+      repetitions: number;
+      corpusCases: number;
+      interpretationEvaluations: number;
+      explanationEvaluations: number;
+      canonicalSimulatorProof: {
+        passed: boolean;
+        classification: string;
+        safetyBufferBefore: string;
+        safetyBufferAfter: string;
+        emergencyFundCompletion: string;
+      };
+    };
+    expect(report).toMatchObject({
+      status: "PASS",
+      mode: "SMOKE",
+      repetitions: 1,
+      corpusCases: 1,
+      interpretationEvaluations: 1,
+      explanationEvaluations: 0,
+      canonicalSimulatorProof: {
+        passed: true,
+        classification: "AFFORDABLE_SIGNIFICANT_TRADE_OFF",
+        safetyBufferBefore: "£900",
+        safetyBufferAfter: "£250",
+        emergencyFundCompletion: "February 2027"
+      }
+    });
+  });
 });
