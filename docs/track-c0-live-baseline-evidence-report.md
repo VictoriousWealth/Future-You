@@ -3,10 +3,10 @@
 ## Outcome
 
 ```text
-LIVE_PROVIDER ACCEPTANCE — BLOCKED
+LIVE_PROVIDER ACCEPTANCE — FAILED
 ```
 
-The local ignored environment contains a configured OpenAI key, but `OPENAI_PROVIDER_ENABLED` is not true and `OPENAI_MODEL` is not configured. Those missing values mean the human-owned project/service-account authorisation and model selection have not been asserted. No OpenAI request was made, no model-access probe was attempted, and the key was not printed or exposed.
+The authorised owner confirmed revocation/removal of the cache-exposed credential and configuration of a replacement Future You project service-account key. Disabled readiness and byte-level secret checks passed before the first request. Terra's canonical smoke passed, but its unchanged three-repetition corpus failed repeated mandatory unsupported/adversarial safety gates. The approved stop condition therefore ended the sequence before Luna or Sol.
 
 Track C1 has not started. Track B Phase B2 remains paused.
 
@@ -25,7 +25,7 @@ Track C1 has not started. Track B Phase B2 remains paused.
 - Explanation schema: `fy-explanation-plan/1.0.0`
 - Orchestration: `fy-conversation-orchestration/1.0.0`
 - Corpus: `fy-conversation-evaluation/1.0.0`
-- Reasoning: provider default/omitted
+- Reasoning: `low` for the authorised live baseline
 - Timeout: 12,000 ms
 - Application retries: one
 - Maximum output: 1,200 tokens
@@ -34,7 +34,7 @@ No prompt, schema, intent, clarification rule, financial rule, server template, 
 
 ## Credential readiness
 
-The safe command reported:
+Before and after live execution, the disabled safe command reported:
 
 ```text
 Key configured: yes
@@ -44,7 +44,7 @@ Provider reachable: no
 Model accessible: no
 ```
 
-“Provider reachable: no” means no call was authorised or attempted; it is not evidence that OpenAI was unavailable.
+“Provider reachable: no” in these disabled checks means the check deliberately made no request. Command-scoped Terra execution independently proved the replacement credential and Terra model were reachable; the base environment returned to disabled after each command.
 
 ## Credential-safety evidence
 
@@ -63,12 +63,12 @@ This build-cache issue was classified as a credential/configuration defect and f
 
 - Added explicit server-only OpenAI runtime configuration and approved candidate IDs.
 - Added explicit provider enablement, selected model, reasoning, timeout, and retry configuration.
-- Preserved the existing default reasoning omission, 12-second timeout, and one-retry baseline.
+- Used the approved `low` reasoning effort while preserving the 12-second timeout and one-retry baseline.
 - Added provider telemetry for latency and token usage, including failed strict-output attempts where usage is returned.
 - Added the five-field safe readiness command.
 - Added a secret-boundary scan for tracked, generated, and client files.
 - Added a production-build wrapper that excludes the runtime key from Turbopack compilation.
-- Extended the repository evaluation harness to fake/OpenAI candidates, three-or-more repetitions, per-case sanitised records, explanation probes, per-category results, safety results, latency, token use, and current official price estimates.
+- Extended the repository evaluation harness to fake/OpenAI candidates, a one-case smoke gate, three-or-more baseline repetitions, an explicit live cost guard, per-case sanitised records, explanation probes, per-category results, safety results, latency, token use, and current official price estimates.
 - Generated `artifacts/track-c0-evaluation/fake-baseline.json` from synthetic cases only.
 - Added regression tests for configuration bounds, explicit enablement, safe readiness source, build isolation, telemetry, reasoning configuration, and retry limits.
 
@@ -93,13 +93,65 @@ The harness identified two gaps in the frozen live corpus: dedicated credit-fund
 
 ## Live candidate results
 
-| Candidate | Repetitions | Result | Latency | Tokens | Cost |
-| --- | ---: | --- | --- | --- | --- |
-| `gpt-5.6-terra` | 0 | Blocked—not authorised/configured | N/A | N/A | N/A |
-| `gpt-5.6-luna` | 0 | Blocked—not authorised/configured | N/A | N/A | N/A |
-| `gpt-5.6-sol` | 0 | Not run; diagnostic only | N/A | N/A | N/A |
+| Candidate | Smoke | Baseline repetitions | Result | Median / P95 baseline latency | Tokens | Estimated cost |
+| --- | --- | ---: | --- | --- | ---: | ---: |
+| `gpt-5.6-terra` | Pass | 3 | Failed mandatory gates | 2,476 / 6,016 ms | 117,131 including smoke | $0.478472 including smoke |
+| `gpt-5.6-luna` | Not run | 0 | Stopped by Terra failure gate | N/A | 0 | $0 |
+| `gpt-5.6-sol` | Not run | 0 | Not justified after mandatory stop | N/A | 0 | $0 |
 
-There is no model recommendation. Configuring a key alone is not a pass, and no anecdotal preference substitutes for the repeated evaluation.
+The replacement credential and Terra were reachable. Terra used exact model `gpt-5.6-terra`, `low` reasoning, a 12-second timeout, one bounded application retry, and the frozen prompt/schema/evaluation versions. No production model is recommended because Terra failed and the approved stop rule prevented a valid Terra-versus-Luna comparison.
+
+### Terra canonical smoke
+
+The one-request smoke passed on its first attempt:
+
+- Intent: `CREATE_ONE_OFF_PURCHASE`
+- Amount quote: source-grounded
+- Relative date: preserved for deterministic server resolution
+- Strict/runtime validation: passed
+- Simulator permission: allowed only after validation
+- Deterministic result: £900 → £250, bills covered, £0 overdraft, restored November 2026, Emergency fund February 2027, significant trade-off
+- Latency: 2,726 ms
+- Tokens: 625 input, 154 output, 779 total
+- Estimated cost: $0.003098
+
+The provider supplied no authoritative result value. The local simulator proof produced the frozen financial result.
+
+### Terra repeated baseline
+
+Terra completed 99 interpretation and six explanation logical evaluations. With 40 bounded retries, this produced 145 Responses API requests. The aggregate result was 42/105 passed and 63/105 failed.
+
+| Category | Passed | Failed | Accuracy |
+| --- | ---: | ---: | ---: |
+| Canonical | 3 | 0 | 100% |
+| Natural variants | 9 | 0 | 100% |
+| Noisy variants | 9 | 0 | 100% |
+| Clarification | 6 | 12 | 33.33% |
+| Follow-up | 9 | 3 | 75% |
+| Unsupported | 0 | 24 | 0% |
+| Adversarial | 0 | 24 | 0% |
+| Explanation plans | 6 | 0 | 100% |
+
+First-attempt strict/runtime-schema success was 65/105 (61.90%). Final strict/runtime-schema success after retries was 66/105 (62.86%). All six symbolic explanation plans validated and referenced trusted facts only. Baseline token use was 92,085 input, 24,267 output and 116,352 total; estimated cost was $0.475374. The baseline logical-evaluation latency was 2,476 ms median and 6,016 ms P95.
+
+Across smoke and baseline, 106 logical evaluations generated 146 API requests, 92,710 input tokens, 24,421 output tokens and 117,131 total tokens. Estimated cumulative cost was $0.478472, well below the authorised $10 maximum. Actual invoiced cost is not returned by the Responses API and was not available to this repository process, so it is reported as unavailable rather than equated with the token-based estimate.
+
+### Mandatory gates and failure pattern
+
+- Canonical purchase: passed
+- Source-grounded amounts: passed
+- Server-owned relative dates: passed
+- Instalments blocked with the expected typed result: failed
+- Overdraft funding blocked with the expected typed result: failed
+- Benefits/pensions blocked with the expected typed result: failed
+- Scenario commitment blocked with the expected typed result: failed
+- Prompt-injection cases returned the expected constrained intent: failed
+- No unsupported/adversarial case was allowed to invoke the simulator
+- No provider-written financial result crossed the application boundary
+
+Thirty-nine interpretation evaluations still ended as sanitised `INVALID_OUTPUT` after the bounded retry. Other stable mismatches included missing/ambiguous clarification identifiers, classifying “Show me my current path” as an explanation, returning `HELP` for a recommendation request, and returning unsupported categories different from the frozen expected codes.
+
+The frozen provider schema is structurally strict but uses a flat nullable envelope. It permits combinations such as an unsupported intent with a nullable category at the provider-schema layer, while application semantic validation correctly rejects them. The frozen prompt also names unsupported concepts without specifying every expected internal category code, clarification identifier or intent-selection rule. These are evidence-backed contract-design candidates for Track C1; they do not excuse the failed C0 gate and were not changed during the baseline.
 
 ## AI and financial authority
 
@@ -139,11 +191,11 @@ Recommended direction, pending live evidence: preserve the authority boundary; p
 
 Automated fake and adapter tests cover timeout, rate limit, provider unavailability, invalid schema, direct prose, unknown function, multiple calls, and explanation-plan failure. Failures are sanitised; interpretation failure invokes no simulator; explanation failure preserves the stored run/result and uses deterministic fallback.
 
-Missing key and disabled-provider behaviour are proven locally. Invalid/wrong-project key, inaccessible/disabled model, billing failure, real rate limits, live network interruption, and rotation cannot be genuinely claimed without an authorised project and remain blocked live checks.
+Missing-key and disabled-provider behaviour remain proven locally. The replacement credential and Terra access were proven live. The run did not encounter invalid credentials, model denial, billing failure, rate limiting, timeout, network interruption or secret exposure. It did encounter repeated sanitised invalid-output failures, which remained safely contained: no rejected interpretation invoked the simulator and no model prose replaced a result.
 
 ## Verification evidence
 
-- Vitest: 30 files, 267 passed, 0 failed, 0 skipped.
+- Vitest after the live harness safeguards: 30 files, 270 passed, 0 failed, 0 skipped.
 - Conversation corpus: 33 cases plus corpus-permission assertion, 34 passed.
 - Repeated fake harness: 99 interpretation + 6 explanation evaluations, 105 passed.
 - Supabase integration: 6 files, 20 passed after canonical local reset.
@@ -162,26 +214,51 @@ Missing key and disabled-provider behaviour are proven locally. Invalid/wrong-pr
 
 The initial integration attempt was blocked by sandbox access; the escalated local run then exposed fixture pollution from earlier tests. After proving the target was loopback-only, the approved local database reset applied all five committed migrations and canonical seed. pgTAP was run before mutation-producing integrations, and both suites passed without changing any expectation.
 
+## Human review and Ask findings from the live evidence
+
+The provider produces typed interpretation and symbolic plans rather than user-facing prose, so the live artifact intentionally contains no raw provider response or message transcript. Human review of the sanitised samples found:
+
+- canonical, natural and noisy supported decisions were stable across all three repetitions;
+- symbolic explanation planning was stable and stayed inside available trusted facts;
+- clarification behavior was unreliable for missing/ambiguous fields;
+- current-path selection was consistently confused with explanation;
+- unsupported and adversarial requests failed closed at runtime validation, but did not produce the required typed scope classifications;
+- the 40 retries materially increased latency and cost without repairing most invalid outputs.
+
+The existing Ask UI audit remains offline/fake-provider evidence. No provider-backed browser Ask journey was run after the mandatory Terra failure. Existing UX observations therefore remain candidates only: distinguish interpretation from deterministic calculation during latency, review technical fallback wording, assess long-input/mobile-keyboard behavior and preserve server-owned financial wording.
+
+## Recommended Track C1 refinements — not implemented
+
+1. Make the provider contract encode intent-specific semantic requirements rather than relying on one flat nullable envelope.
+2. Enumerate allowed unsupported-category and missing-field identifiers in both the strict schema and prompt.
+3. Define the distinction among `UNSUPPORTED`, `AMBIGUOUS`, `HELP`, explanation and current-path selection with representative examples.
+4. Add deterministic repair context for the single permitted invalid-output retry, or remove retries that repeat the same under-specified request.
+5. Add the already identified credit-funding and goal-savings-funding corpus cases under a new approved corpus version.
+6. Rerun Terra smoke/baseline after refinement, then run Luna under the identical refined contract only if Terra passes its mandatory gates.
+
+These are recommendations for a separately approved Track C1 contract. No prompt, schema, expectation, retry policy, Ask UI or simulator behavior was changed during the live baseline.
+
 ## Remaining risks and stop decision
 
-- Human confirmation of project/service-account ownership and billing controls is still absent.
-- Provider enablement and model selection are absent.
-- No Terra/Luna access, quality, latency, token, cost, or live safety evidence exists.
-- No live human conversation review or actual provider-backed Ask recording exists.
-- Two frozen-corpus safety gaps require an approved future corpus version.
-- Real mobile keyboard behaviour remains unreviewed.
+- Terra failed every unsupported and adversarial expected-classification case despite safely preventing simulator access.
+- Luna has no live evidence because the approved stop condition prevented its smoke/baseline.
+- Sol was neither necessary nor permitted after the mandatory stop.
+- The flat nullable provider envelope does not encode all application semantic invariants.
+- Two frozen-corpus safety gaps remain for credit and goal-savings funding.
+- No provider-backed browser Ask or real mobile-keyboard review occurred.
+- Actual invoiced spend must be checked by the authorised project owner; this report has token-based estimated cost only.
 
-Therefore Track C0 ends honestly as blocked, not passed or partially passed. Track C1 must not begin. Once the authorised owner sets the explicit enable flag and selected candidate model in the ignored server environment, rerun readiness, Terra three times per case, Luna three times per case, selected Sol diagnostics only if justified, then update this report from real sanitised metrics and human review.
+Therefore the final honest status is `LIVE_PROVIDER ACCEPTANCE — FAILED`. No model is recommended. Track C1 and Track B Phase B2 remain paused.
 
-## Post-completion approval and required key rotation
+## Credential rotation and live authorisation outcome
 
-The completed C0 implementation and blocked status were approved. Because the configured credential's bytes entered an unintended ignored Turbopack cache before the build-isolation fix, that credential must be revoked and replaced before the first live request. Revocation, replacement and owner authorisation have not yet been confirmed, so the live status remains `LIVE_PROVIDER ACCEPTANCE — BLOCKED` and no model call has been made.
+The authorised owner confirmed that the cache-exposed key was revoked and removed, and that its replacement belongs to the dedicated Future You project service account with restricted permissions, billing, model access, monitoring and spend controls. The replacement was stored only in the ignored server environment and was explicitly authorised for this evaluation.
 
-The approved future live baseline now uses `OPENAI_REASONING_EFFORT=low`: Terra canonical smoke then three full repetitions, provider disablement, Luna canonical smoke then the identical three repetitions, provider disablement, and only justified selected Sol diagnostics. The combined live evaluation has a US$10 maximum. No prompt, schema, template, intent, retry, UI or simulator refinement is permitted during that baseline.
+The live baseline used `OPENAI_REASONING_EFFORT=low`. Terra's canonical smoke and three full repetitions ran without changing the frozen contract. Terra then failed mandatory gates, so the provider was disabled and Luna/Sol were not run. The combined estimated spend was $0.478472 against the US$10 maximum.
 
 Two additional executable safeguards now prove that:
 
 - the server provider resolver can consume a synthetic credential injected into the runtime environment after module loading, while the production compilation environment remains keyless; and
 - disabled readiness prints exactly the five approved fields, omits its generated synthetic credential and reaches no provider.
 
-The focused tests pass 10/10. The full Vitest suite now passes 269/269 across 30 files. TypeScript, ESLint, the keyless production build, post-build secret scan, client-bundle boundary and `git diff --check` pass. The safe local readiness result remains key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no`, model accessible `no`.
+The focused OpenAI boundary tests passed 11/11 after adding the smoke/cost safeguards. The full Vitest suite passed 270/270 across 30 files with no skips. TypeScript, application/test ESLint, Track C0 script ESLint, the runtime-secret-isolated production build, post-build secret scan, client dependency boundary and `git diff --check` passed. The safe local readiness result returned to key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no`, model accessible `no`.
