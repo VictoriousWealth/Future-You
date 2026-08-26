@@ -1522,3 +1522,23 @@
     - Proposed C1B order is Terra schema/canonical/category gates, frozen corpus three times and expanded v2 once; Luna only after a complete Terra pass; Sol only for justified diagnostics.
     - A proposed cumulative C1B guard is US$5, subject to separate explicit human authorisation and honest token-derived reporting.
     - Track C2 remains deferred and Phase B2 remains paused.
+
+- **Track C1A completion approval and C1B conditional authorisation — Recovery point preserved; live execution awaits credential confirmation**
+  - Approval and recovery:
+    - C1A is approved as complete with status `C1A LOCALLY READY FOR SEPARATELY AUTHORISED C1B`.
+    - Annotated tag `track-c1a-local-ready-2026-08-26` preserves the committed C1A state at commit `26bcf99` before any C1B live request.
+    - The failed C0 baseline remains independently recoverable through `track-c0-terra-failed-baseline-2026-08-26` at commit `61c22df`; that tag was not moved or overwritten.
+  - C1B authorisation boundary:
+    - C1B live re-evaluation has a separately authorised maximum cumulative estimated provider spend of US$5.
+    - The spend authorisation is conditional and does not by itself permit a live request: the human owner must separately confirm revocation of the key whose bytes entered `.next`, removal of that key from `.env.local`, creation and authorisation of a replacement project service-account key, and runtime-only secret injection outside the repository.
+    - The replacement key must not be available to Next.js development or build processes. The evaluation harness may receive it only through its own process environment.
+    - The earlier repeated `.next` cache-contamination discovery remains the reason for this stricter runtime-only boundary and the additional credential rotation.
+  - Pre-confirmation safety state:
+    - A disabled readiness check reported key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no` and model accessible `no`; it made no provider request.
+    - The configured key bytes were absent from tracked files, repository files, generated artifacts and client bundles, and `.env.local` remained ignored.
+    - The client dependency-boundary check passed, and no Next.js development or production server was running at the time of inspection.
+    - Because the required human credential-rotation and runtime-injection confirmation has not yet been supplied, no Terra, Luna or Sol C1B request was made and no C1B outcome is claimed.
+  - Stop boundary:
+    - C1B is paused at the credential-confirmation gate; its final live status remains pending rather than inferred.
+    - No v2 prompt, schema, validator, clarification contract, supported scope, explanation plan, renderer, Ask UI, simulator or evaluation expectation was changed.
+    - Track C2 and Phase B2 remain paused.
