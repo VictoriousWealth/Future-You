@@ -23,6 +23,12 @@ import {
 } from "../src/application/conversation/schemas";
 import { validateExplanationPlan } from "../src/application/conversation/server-renderer";
 import { resolvePaymentPeriod } from "../src/application/conversation/time-resolution";
+import { SimulateOneOffPurchaseUseCase } from "../src/application/use-cases/simulate-one-off-purchase";
+import { SLICE_1_RULES } from "../src/domain/simulator/engine";
+import {
+  ENGLAND_WALES_CALENDAR_METADATA,
+  ENGLAND_WALES_WORKING_DAY_CALENDAR
+} from "../src/fixtures/calendar/england-wales-bank-holidays";
 import { FakeConversationModelProvider } from "../src/infrastructure/ai/fake-conversation-model-provider";
 import { OpenAIResponsesConversationModelProvider } from "../src/infrastructure/ai/openai/openai-responses-conversation-provider";
 import {
@@ -30,6 +36,9 @@ import {
   readOpenAIRuntimeConfiguration,
   requireEnabledOpenAIRuntimeConfiguration
 } from "../src/infrastructure/ai/openai/openai-runtime-configuration";
+import { SarahV1ContextSource } from "../src/infrastructure/context/sarah-v1-context-source";
+import { InMemorySimulationRunStore } from "../src/infrastructure/runs/in-memory-simulation-run-store";
+import { SARAH_V1_BROWSER_PROOF_COMMAND } from "../src/server/sarah-v1-demo-command";
 import {
   conversationEvaluationCorpus,
   type ConversationEvaluationCase
@@ -40,7 +49,7 @@ nextEnvironment.loadEnvConfig(process.cwd());
 const CORPUS_VERSION = "fy-conversation-evaluation/1.0.0";
 const TRUSTED_DATE = "2026-08-24";
 const TIMEZONE = "Europe/London" as const;
-const PRICING_AS_OF = "2026-08-25";
+const PRICING_AS_OF = "2026-08-26";
 const PRICING_USD_PER_MILLION = {
   "gpt-5.6-terra": { input: 2, output: 12 },
   "gpt-5.6-luna": { input: 0.2, output: 1.2 },
@@ -49,6 +58,13 @@ const PRICING_USD_PER_MILLION = {
 
 type ProviderKind = "fake" | "openai";
 type CheckResult = "PASS" | "FAIL" | "NOT_APPLICABLE";
+
+class EvaluationBudgetError extends Error {
+  constructor() {
+    super("The approved estimated evaluation-cost guard was reached.");
+    this.name = "EvaluationBudgetError";
+  }
+}
 
 interface EvaluationRecord {
   readonly corpusVersion: string;
@@ -106,11 +122,24 @@ function argument(name: string): string | null {
   return process.argv.find((value) => value.startsWith(prefix))?.slice(prefix.length) ?? null;
 }
 
+function hasFlag(name: string): boolean {
+  return process.argv.includes(`--${name}`);
+}
+
 function boundedInteger(value: string | null, fallback: number, minimum: number, maximum: number): number {
   if (!value) return fallback;
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
     throw new Error("The requested repetition count is outside the supported evaluation range.");
+  }
+  return parsed;
+}
+
+function boundedCost(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 10) {
+    throw new Error("The requested estimated evaluation-cost limit is outside the approved range.");
   }
   return parsed;
 }
@@ -197,9 +226,78 @@ function estimatedCost(modelId: string, metadata: ProviderInvocationMetadata): n
 }
 
 function sanitisedFailure(error: unknown): string {
+  if (error instanceof EvaluationBudgetError) return "EVALUATION_BUDGET_GUARD";
   if (error instanceof ConversationProviderError) return error.category;
   if (error instanceof Error && /schema|parse|validation/i.test(error.message)) return "SCHEMA_VALIDATION";
   return "EVALUATION_FAILURE";
+}
+
+function accumulatedEstimatedCost(
+  records: readonly (EvaluationRecord | ExplanationEvaluationRecord)[]
+): number {
+  return records.reduce((total, record) => total + (record.estimatedCostUsd ?? 0), 0);
+}
+
+function enforceEstimatedCostGuard(
+  records: readonly (EvaluationRecord | ExplanationEvaluationRecord)[],
+  maximumUsd: number | null
+): void {
+  if (maximumUsd !== null && accumulatedEstimatedCost(records) >= maximumUsd * 0.9) {
+    throw new EvaluationBudgetError();
+  }
+}
+
+async function verifyCanonicalSimulatorResult(): Promise<Readonly<{
+  passed: boolean;
+  classification: string | null;
+  safetyBufferBefore: string | null;
+  safetyBufferAfter: string | null;
+  bills: string | null;
+  borrowing: string | null;
+  recovery: string | null;
+  emergencyFundCompletion: string | null;
+}>> {
+  const result = await new SimulateOneOffPurchaseUseCase({
+    contextSource: new SarahV1ContextSource(),
+    rules: SLICE_1_RULES,
+    calendar: ENGLAND_WALES_WORKING_DAY_CALENDAR,
+    calendarMetadata: ENGLAND_WALES_CALENDAR_METADATA,
+    runStore: new InMemorySimulationRunStore()
+  }).execute(SARAH_V1_BROWSER_PROOF_COMMAND);
+  if (!result.ok) {
+    return {
+      passed: false,
+      classification: null,
+      safetyBufferBefore: null,
+      safetyBufferAfter: null,
+      bills: null,
+      borrowing: null,
+      recovery: null,
+      emergencyFundCompletion: null
+    };
+  }
+  const presentation = result.value.presentation;
+  const emergencyFund = presentation.goalImpacts.find((goal) => goal.label === "Emergency fund");
+  const proof = {
+    classification: result.value.result.comparison.classification.code,
+    safetyBufferBefore: presentation.immediateImpact.safetyBufferBefore,
+    safetyBufferAfter: presentation.immediateImpact.safetyBufferAfter,
+    bills: presentation.immediateImpact.requiredPayments,
+    borrowing: presentation.immediateImpact.borrowing,
+    recovery: presentation.immediateImpact.recovery,
+    emergencyFundCompletion: emergencyFund?.scenarioCompletion ?? null
+  };
+  return {
+    passed:
+      proof.classification === "AFFORDABLE_SIGNIFICANT_TRADE_OFF" &&
+      proof.safetyBufferBefore === "£900" &&
+      proof.safetyBufferAfter === "£250" &&
+      proof.bills === "Bills covered" &&
+      proof.borrowing === "£0 overdraft" &&
+      proof.recovery === "Restored in November 2026" &&
+      proof.emergencyFundCompletion === "February 2027",
+    ...proof
+  };
 }
 
 async function evaluateInterpretation(
@@ -444,9 +542,15 @@ function safetyGateSummary(records: readonly EvaluationRecord[]) {
 async function main(): Promise<void> {
   const providerKind = (argument("provider") ?? "openai") as ProviderKind;
   if (providerKind !== "fake" && providerKind !== "openai") throw new Error("Provider must be fake or openai.");
-  const repetitions = boundedInteger(argument("repetitions"), 3, 3, 20);
-  const selectedCase = argument("case");
+  const smoke = hasFlag("smoke");
+  const requestedCase = argument("case");
+  if (smoke && requestedCase && requestedCase !== "canonical-trip-650") {
+    throw new Error("Smoke mode is restricted to the canonical £650 case.");
+  }
+  const repetitions = smoke ? 1 : boundedInteger(argument("repetitions"), 3, 3, 20);
+  const selectedCase = smoke ? "canonical-trip-650" : requestedCase;
   const outputPath = argument("output");
+  const maximumEstimatedCostUsd = boundedCost(argument("max-estimated-cost-usd"));
   const runtime = readOpenAIRuntimeConfiguration();
   let provider: ConversationModelProvider;
   let modelId: string;
@@ -483,6 +587,18 @@ async function main(): Promise<void> {
       process.exitCode = 2;
       return;
     }
+    if (maximumEstimatedCostUsd === null) {
+      process.stdout.write(JSON.stringify({
+        status: "BLOCKED",
+        provider: "openai",
+        keyConfigured: true,
+        providerEnabled: true,
+        model: modelId,
+        reason: "A bounded --max-estimated-cost-usd value is required for live evaluation."
+      }, null, 2) + "\n");
+      process.exitCode = 2;
+      return;
+    }
     let enabledRuntime;
     try {
       enabledRuntime = requireEnabledOpenAIRuntimeConfiguration();
@@ -515,16 +631,26 @@ async function main(): Promise<void> {
   for (let repetition = 1; repetition <= repetitions; repetition += 1) {
     for (const evaluation of corpus) {
       records.push(await evaluateInterpretation(provider, evaluation, repetition, modelId, reasoningSetting));
+      enforceEstimatedCostGuard([...records, ...explanationRecords], maximumEstimatedCostUsd);
     }
-    for (const explanation of EXPLANATION_CASES) {
-      explanationRecords.push(await evaluateExplanation(provider, explanation, repetition, modelId, reasoningSetting));
+    if (!smoke) {
+      for (const explanation of EXPLANATION_CASES) {
+        explanationRecords.push(await evaluateExplanation(provider, explanation, repetition, modelId, reasoningSetting));
+        enforceEstimatedCostGuard([...records, ...explanationRecords], maximumEstimatedCostUsd);
+      }
     }
   }
 
   const allRecords = [...records, ...explanationRecords];
+  const simulatorProof = smoke && allRecords.every((record) => record.passed)
+    ? await verifyCanonicalSimulatorResult()
+    : null;
   const costs = allRecords.map((record) => record.estimatedCostUsd).filter((cost): cost is number => cost !== null);
   const summary = {
-    status: allRecords.every((record) => record.passed) ? "PASS" : "FAIL",
+    status: allRecords.every((record) => record.passed) && (!smoke || simulatorProof?.passed === true)
+      ? "PASS"
+      : "FAIL",
+    mode: smoke ? "SMOKE" : "BASELINE",
     provider: providerKind,
     model: modelId,
     reasoningSetting,
@@ -548,7 +674,9 @@ async function main(): Promise<void> {
       total: allRecords.reduce((sum, record) => sum + record.totalTokens, 0)
     },
     estimatedCostUsd: costs.length === allRecords.length ? costs.reduce((sum, cost) => sum + cost, 0) : null,
+    maximumEstimatedCostUsd,
     pricingAsOf: PRICING_AS_OF,
+    canonicalSimulatorProof: simulatorProof,
     requestShape: {
       interpretation: {
         userMessage: "<synthetic corpus message>",
