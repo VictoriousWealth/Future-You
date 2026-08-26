@@ -22,6 +22,324 @@ export type FakeProviderMode =
   | "multiple_tool_calls"
   | "explanation_failure";
 
+export type FakeInterpretationDiagnosticMode =
+  | "missing_tool_call"
+  | "wrong_tool_name"
+  | "multiple_tool_calls"
+  | "invalid_json"
+  | "root_envelope_invalid"
+  | "missing_root_interpretation"
+  | "unknown_branch"
+  | "missing_branch_field"
+  | "field_type_invalid"
+  | "null_not_allowed"
+  | "extra_branch_field"
+  | "invalid_exact_identifier"
+  | "supported_intent_semantic_failure"
+  | "explanation_target_incompatible"
+  | "scenario_selection_target_incompatible"
+  | "wrong_branch_for_conversation_state"
+  | "amount_quote_not_grounded"
+  | "amount_quote_not_parseable"
+  | "timing_quote_not_grounded"
+  | "scenario_label_quote_not_grounded"
+  | "scenario_reference_unresolved"
+  | "invented_scenario_id"
+  | "unsupported_branch_with_command_data"
+  | "cross_user_reference_rejected"
+  | "unsupported_operation_rejected"
+  | "invalid_clarification_kind"
+  | "repair_succeeds"
+  | "repair_repeats_same_failure"
+  | "repair_produces_different_failure"
+  | "repair_remains_invalid";
+
+export const FAKE_INTERPRETATION_DIAGNOSTIC_MODES = [
+  "missing_tool_call",
+  "wrong_tool_name",
+  "multiple_tool_calls",
+  "invalid_json",
+  "root_envelope_invalid",
+  "missing_root_interpretation",
+  "unknown_branch",
+  "missing_branch_field",
+  "field_type_invalid",
+  "null_not_allowed",
+  "extra_branch_field",
+  "invalid_exact_identifier",
+  "supported_intent_semantic_failure",
+  "explanation_target_incompatible",
+  "scenario_selection_target_incompatible",
+  "wrong_branch_for_conversation_state",
+  "amount_quote_not_grounded",
+  "amount_quote_not_parseable",
+  "timing_quote_not_grounded",
+  "scenario_label_quote_not_grounded",
+  "scenario_reference_unresolved",
+  "invented_scenario_id",
+  "unsupported_branch_with_command_data",
+  "cross_user_reference_rejected",
+  "unsupported_operation_rejected",
+  "invalid_clarification_kind",
+  "repair_succeeds",
+  "repair_repeats_same_failure",
+  "repair_produces_different_failure",
+  "repair_remains_invalid"
+] as const satisfies readonly FakeInterpretationDiagnosticMode[];
+
+export interface FakeInterpretationDiagnosticFixture {
+  readonly method: "INTERPRET" | "RESOLVE_AMOUNT_CLARIFICATION";
+  readonly request: InterpretationProviderRequest | ClarificationResolutionProviderRequest;
+  readonly responses: readonly Readonly<{
+    output: readonly unknown[];
+    usage?: Readonly<{ input_tokens: number; output_tokens: number; total_tokens: number }>;
+  }>[];
+}
+
+const DIAGNOSTIC_INTERPRET_TOOL = "submit_conversation_interpretation_v2";
+const DIAGNOSTIC_CLARIFICATION_TOOL = "submit_clarification_resolution";
+
+function diagnosticEnvelope(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    interpretation: {
+      kind: "CREATE_ONE_OFF_PURCHASE",
+      amount: { quote: "£650", currency: "GBP" },
+      timing: {
+        quote: "next month",
+        kind: "NEXT_MONTH",
+        monthNumber: null,
+        year: null,
+        offsetMonths: 1
+      },
+      purposeQuote: "trip",
+      ...overrides
+    }
+  };
+}
+
+function diagnosticCall(
+  value: unknown,
+  name = DIAGNOSTIC_INTERPRET_TOOL
+): Readonly<{ type: "function_call"; name: string; arguments: string }> {
+  return { type: "function_call", name, arguments: JSON.stringify(value) };
+}
+
+const diagnosticRequest: InterpretationProviderRequest = {
+  userMessage: "Can I afford a £650 trip next month?",
+  pendingClarification: null,
+  availableScenarios: [],
+  selectedScenarioType: null,
+  trustedDate: "2026-08-24",
+  timezone: "Europe/London"
+};
+
+/**
+ * Low-level deterministic provider fixtures for the evaluation-only diagnostic boundary.
+ * Invalid values exist only in test process memory and are never suitable conversation results.
+ */
+export function fakeInterpretationDiagnosticFixture(
+  mode: FakeInterpretationDiagnosticMode
+): FakeInterpretationDiagnosticFixture {
+  const response = (output: readonly unknown[]) => ({
+    output,
+    usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 }
+  });
+  const valid = response([diagnosticCall(diagnosticEnvelope())]);
+  const missingAmount = response([diagnosticCall(diagnosticEnvelope({ amount: undefined }))]);
+  const extraField = response([diagnosticCall(diagnosticEnvelope({ extraDecision: "untrusted" }))]);
+
+  switch (mode) {
+    case "missing_tool_call":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([])] };
+    case "wrong_tool_name":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope(), "untrusted_tool")])] };
+    case "multiple_tool_calls":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope()), diagnosticCall(diagnosticEnvelope())])] };
+    case "invalid_json":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([{ type: "function_call", name: DIAGNOSTIC_INTERPRET_TOOL, arguments: "{" }])]
+      };
+    case "root_envelope_invalid":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall([])])] };
+    case "missing_root_interpretation":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall({})])] };
+    case "unknown_branch":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall({ interpretation: { kind: "UNTRUSTED_KIND" } })])] };
+    case "missing_branch_field":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [missingAmount] };
+    case "field_type_invalid":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({ amount: { quote: 650, currency: "GBP" } }))])] };
+    case "null_not_allowed":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({ amount: null }))])] };
+    case "extra_branch_field":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [extraField] };
+    case "invalid_exact_identifier":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall({ interpretation: { kind: "UNSUPPORTED", category: "UNTRUSTED_CATEGORY" } })])]
+      };
+    case "supported_intent_semantic_failure":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 2 }
+        }))])]
+      };
+    case "explanation_target_incompatible":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Why did this change?", availableScenarios: [{ label: "£650 trip", scenarioType: "one_off_purchase", selected: true }], selectedScenarioType: "one_off_purchase" },
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "EXPLAIN_SELECTED_RESULT",
+            explanationTarget: "UNTRUSTED_TARGET",
+            goalReferenceQuote: null,
+            scenarioReferenceStrategy: "SELECTED_SCENARIO",
+            scenarioReferenceQuote: null
+          }
+        })])]
+      };
+    case "scenario_selection_target_incompatible":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "SELECT_EXISTING_SCENARIO",
+            selectionTarget: "UNTRUSTED_TARGET",
+            scenarioLabelQuote: null
+          }
+        })])]
+      };
+    case "wrong_branch_for_conversation_state":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "CHANGE_PURCHASE_AMOUNT",
+            amount: { quote: "£650", currency: "GBP" },
+            scenarioReferenceStrategy: "SELECTED_SCENARIO",
+            scenarioReferenceQuote: null
+          }
+        })])]
+      };
+    case "amount_quote_not_grounded":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({ amount: { quote: "£999", currency: "GBP" } }))])] };
+    case "amount_quote_not_parseable":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Can I afford six hundred pounds next month?" },
+        responses: [response([diagnosticCall(diagnosticEnvelope({ amount: { quote: "six hundred pounds", currency: "GBP" } }))])]
+      };
+    case "timing_quote_not_grounded":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall(diagnosticEnvelope({
+          timing: { quote: "October", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null }
+        }))])]
+      };
+    case "scenario_label_quote_not_grounded":
+      return {
+        method: "INTERPRET",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "Show that option.",
+          availableScenarios: [{ label: "£650 trip", scenarioType: "one_off_purchase", selected: false }]
+        },
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "SELECT_EXISTING_SCENARIO",
+            selectionTarget: "EXPLICIT_SCENARIO_LABEL",
+            scenarioLabelQuote: "£650 trip"
+          }
+        })])]
+      };
+    case "scenario_reference_unresolved":
+      return {
+        method: "INTERPRET",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "Open the £500 trip.",
+          availableScenarios: [{ label: "£650 trip", scenarioType: "one_off_purchase", selected: false }]
+        },
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "SELECT_EXISTING_SCENARIO",
+            selectionTarget: "EXPLICIT_SCENARIO_LABEL",
+            scenarioLabelQuote: "£500 trip"
+          }
+        })])]
+      };
+    case "invented_scenario_id":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({ runId: "untrusted-run" }))])] };
+    case "unsupported_branch_with_command_data":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "UNSUPPORTED",
+            category: "INSTALMENTS",
+            amount: { quote: "£650", currency: "GBP" }
+          }
+        })])]
+      };
+    case "cross_user_reference_rejected":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Use my friend's account." },
+        responses: [response([diagnosticCall({ interpretation: { kind: "UNSUPPORTED", category: "CROSS_USER_OR_IDENTITY_ACCESS" } })])]
+      };
+    case "unsupported_operation_rejected":
+      return {
+        method: "INTERPRET",
+        request: { ...diagnosticRequest, userMessage: "Split this into four instalments." },
+        responses: [response([diagnosticCall({ interpretation: { kind: "UNSUPPORTED", category: "INSTALMENTS" } })])]
+      };
+    case "invalid_clarification_kind":
+      return {
+        method: "RESOLVE_AMOUNT_CLARIFICATION",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "£650",
+          pendingClarification: {
+            type: "PURCHASE_AMOUNT",
+            originalMessageId: "diagnostic-original",
+            partialPurpose: "trip",
+            partialTiming: { quote: "next month", kind: "NEXT_MONTH", monthNumber: null, year: null, offsetMonths: 1 }
+          }
+        },
+        responses: [response([diagnosticCall({
+          resolution: {
+            kind: "RESOLVE_PURCHASE_MONTH",
+            timing: { quote: "October", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null }
+          }
+        }, DIAGNOSTIC_CLARIFICATION_TOOL)])]
+      };
+    case "repair_succeeds":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [missingAmount, valid] };
+    case "repair_repeats_same_failure":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [missingAmount, missingAmount] };
+    case "repair_produces_different_failure":
+      return { method: "INTERPRET", request: diagnosticRequest, responses: [missingAmount, extraField] };
+    case "repair_remains_invalid":
+      return {
+        method: "INTERPRET",
+        request: diagnosticRequest,
+        responses: [
+          response([{ type: "function_call", name: DIAGNOSTIC_INTERPRET_TOOL, arguments: "{" }]),
+          response([diagnosticCall({})])
+        ]
+      };
+  }
+}
+
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",
   "july", "august", "september", "october", "november", "december"

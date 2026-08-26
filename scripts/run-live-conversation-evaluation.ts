@@ -36,6 +36,11 @@ import {
 import { FakeConversationModelProvider } from "../src/infrastructure/ai/fake-conversation-model-provider";
 import { OpenAIResponsesConversationModelProvider } from "../src/infrastructure/ai/openai/openai-responses-conversation-provider";
 import {
+  INTERPRETATION_DIAGNOSTIC_VERSION,
+  SanitisedInterpretationDiagnosticCollector,
+  evaluationDiagnosticsEnabled
+} from "../src/infrastructure/ai/openai/interpretation-diagnostics";
+import {
   OPENAI_TRACK_C_CANDIDATE_MODELS,
   readOpenAIRuntimeConfiguration,
   requireEnabledOpenAIRuntimeConfiguration
@@ -555,6 +560,10 @@ async function main(): Promise<void> {
   let provider: ConversationModelProvider;
   let modelId: string;
   let reasoningSetting: string;
+  const diagnosticsEnabled = evaluationDiagnosticsEnabled();
+  const diagnosticCollector = providerKind === "openai" && diagnosticsEnabled
+    ? new SanitisedInterpretationDiagnosticCollector()
+    : null;
 
   if (providerKind === "fake") {
     provider = new FakeConversationModelProvider("normal");
@@ -617,7 +626,8 @@ async function main(): Promise<void> {
     provider = new OpenAIResponsesConversationModelProvider(enabledRuntime.apiKey, enabledRuntime.model, {
       timeoutMs: enabledRuntime.timeoutMs,
       maxRetries: enabledRuntime.maxRetries,
-      reasoningEffort: enabledRuntime.reasoningEffort
+      reasoningEffort: enabledRuntime.reasoningEffort,
+      diagnosticSink: diagnosticCollector
     });
   }
 
@@ -630,6 +640,7 @@ async function main(): Promise<void> {
   const explanationRecords: ExplanationEvaluationRecord[] = [];
   for (let repetition = 1; repetition <= repetitions; repetition += 1) {
     for (const evaluation of corpus) {
+      diagnosticCollector?.beginCase(evaluation.id);
       records.push(await evaluateInterpretation(provider, evaluation, repetition, modelId, reasoningSetting));
       enforceEstimatedCostGuard([...records, ...explanationRecords], maximumEstimatedCostUsd);
     }
@@ -695,7 +706,23 @@ async function main(): Promise<void> {
       excluded: ["financial context", "balances", "income", "goals", "employer records", "simulation ledger", "authentication data"]
     }
   };
-  const report = { summary, records, explanationRecords };
+  const report = {
+    summary: {
+      ...summary,
+      ...(diagnosticCollector
+        ? {
+            interpretationDiagnostics: {
+              enabled: true,
+              version: INTERPRETATION_DIAGNOSTIC_VERSION,
+              records: diagnosticCollector.records().length
+            }
+          }
+        : {})
+    },
+    records,
+    explanationRecords,
+    ...(diagnosticCollector ? { interpretationDiagnostics: diagnosticCollector.records() } : {})
+  };
 
   if (outputPath) {
     const absolutePath = resolve(process.cwd(), outputPath);

@@ -12,6 +12,12 @@ import type {
   ProviderResult
 } from "../../../application/conversation/contracts";
 import {
+  CLARIFICATION_RESOLUTION_PROMPT_VERSION,
+  CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
+  INTERPRETATION_PROMPT_VERSION,
+  INTERPRETATION_SCHEMA_VERSION
+} from "../../../application/conversation/contracts";
+import {
   amountClarificationResolutionSchema,
   conversationInterpretationEnvelopeV2Schema,
   explanationPlanSchema,
@@ -41,6 +47,21 @@ import {
   OPENAI_BASELINE_MAX_OUTPUT_TOKENS,
   type OpenAIReasoningEffort
 } from "./openai-runtime-configuration";
+import {
+  jsonArgumentsDiagnostic,
+  markFinalFailure,
+  markRepairFailed,
+  markRepairRequested,
+  markRepairSucceeded,
+  repairValidationErrors,
+  runtimeValidationDiagnostic,
+  successfulInterpretationDiagnostic,
+  toolSelectionDiagnostic,
+  type ApprovedDiagnosticBranchKind,
+  type InterpretationDiagnosticMetadata,
+  type InterpretationDiagnosticSink,
+  type SanitisedInterpretationDiagnosticDraft
+} from "./interpretation-diagnostics";
 
 export const INTERPRET_TOOL = "submit_conversation_interpretation_v2";
 export const CLARIFICATION_TOOL = "submit_clarification_resolution";
@@ -71,7 +92,7 @@ function providerError(error: unknown): ConversationProviderError {
   return new ConversationProviderError("UNAVAILABLE", true, "The provider request failed.");
 }
 
-function validationIssueCodes(error: unknown): readonly Readonly<{ path: string; code: string }>[] {
+function legacyValidationIssueCodes(error: unknown): readonly Readonly<{ path: string; code: string }>[] {
   if (!(error instanceof z.ZodError)) return [{ path: "", code: "INVALID_PROVIDER_OUTPUT" }];
   const issues = error.issues.slice(0, 12).map((issue) => ({
     path: issue.path.map(String).join("."),
@@ -111,6 +132,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
   private readonly client: OpenAI;
   private readonly reasoningEffort: OpenAIReasoningEffort | null;
   private readonly maxRetries: number;
+  private readonly diagnosticSink: InterpretationDiagnosticSink | null;
 
   constructor(
     apiKey: string,
@@ -119,11 +141,13 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       timeoutMs?: number;
       maxRetries?: number;
       reasoningEffort?: OpenAIReasoningEffort | null;
+      diagnosticSink?: InterpretationDiagnosticSink | null;
     }> = {}
   ) {
     this.client = new OpenAI({ apiKey, timeout: options.timeoutMs ?? 12_000, maxRetries: 0 });
     this.reasoningEffort = options.reasoningEffort ?? null;
     this.maxRetries = options.maxRetries ?? 1;
+    this.diagnosticSink = options.diagnosticSink ?? null;
     assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V2);
   }
 
@@ -134,6 +158,12 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     parameters: JsonSchema;
     parse: (value: unknown) => T;
     allowValidationRepair: boolean;
+    diagnostic?: Readonly<{
+      promptVersion: string;
+      schemaVersion: string;
+      rootField: "interpretation" | "resolution";
+      allowedBranchKinds: readonly ApprovedDiagnosticBranchKind[];
+    }>;
   }>): Promise<ForcedCallResult<T>> {
     let lastError: ConversationProviderError | null = null;
     let inputTokens = 0;
@@ -141,10 +171,23 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     let totalTokens = 0;
     let nextInput = input.request;
     let repairUsed = false;
+    let firstFailureDiagnostic: SanitisedInterpretationDiagnosticDraft | null = null;
     const startedAt = performance.now();
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt += 1) {
       let invalidOutput: unknown = null;
       let issueCodes: readonly unknown[] = [];
+      let attemptDiagnostic: SanitisedInterpretationDiagnosticDraft | null = null;
+      const diagnosticMetadata: InterpretationDiagnosticMetadata | null = input.diagnostic
+        ? {
+            modelId: this.model,
+            promptVersion: input.diagnostic.promptVersion,
+            schemaVersion: input.diagnostic.schemaVersion,
+            attempt,
+            repairAttempt: repairUsed,
+            rootField: input.diagnostic.rootField,
+            allowedBranchKinds: input.diagnostic.allowedBranchKinds
+          }
+        : null;
       try {
         const response = await this.client.responses.create({
           model: this.model,
@@ -168,10 +211,18 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
         totalTokens += response.usage?.total_tokens ?? 0;
         const calls = response.output.filter((item) => item.type === "function_call");
         if (calls.length !== 1) {
-          issueCodes = [{
-            path: "",
-            code: calls.length > 1 ? "MULTIPLE_FUNCTION_CALLS" : "MISSING_FUNCTION_CALL"
-          }];
+          if (diagnosticMetadata) {
+            attemptDiagnostic = toolSelectionDiagnostic(
+              diagnosticMetadata,
+              calls.length > 1 ? "MULTIPLE" : "MISSING"
+            );
+            issueCodes = repairValidationErrors(attemptDiagnostic);
+          } else {
+            issueCodes = [{
+              path: "",
+              code: calls.length > 1 ? "MULTIPLE_FUNCTION_CALLS" : "MISSING_FUNCTION_CALL"
+            }];
+          }
           throw new ConversationProviderError(
             calls.length > 1 ? "MULTIPLE_TOOL_CALLS" : "INVALID_OUTPUT",
             calls.length === 0,
@@ -180,16 +231,33 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
         }
         const call = calls[0]!;
         if (call.name !== input.toolName) {
+          if (diagnosticMetadata) {
+            attemptDiagnostic = toolSelectionDiagnostic(diagnosticMetadata, "UNEXPECTED");
+          }
           throw new ConversationProviderError("UNKNOWN_TOOL", false, "The provider returned an unknown tool.");
         }
         try {
           invalidOutput = JSON.parse(call.arguments);
         } catch {
-          issueCodes = [{ path: "", code: "INVALID_JSON_ARGUMENTS" }];
+          if (diagnosticMetadata) {
+            attemptDiagnostic = jsonArgumentsDiagnostic(diagnosticMetadata);
+            issueCodes = repairValidationErrors(attemptDiagnostic);
+          } else {
+            issueCodes = [{ path: "", code: "INVALID_JSON_ARGUMENTS" }];
+          }
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider returned invalid JSON arguments.");
         }
         try {
           const parsed = input.parse(invalidOutput);
+          if (diagnosticMetadata) {
+            attemptDiagnostic = successfulInterpretationDiagnostic(
+              diagnosticMetadata,
+              parsed as ConversationInterpretation | ClarificationResolution,
+              input.request as InterpretationProviderRequest | ClarificationResolutionProviderRequest
+            );
+            if (repairUsed) attemptDiagnostic = markRepairSucceeded(attemptDiagnostic);
+            this.diagnosticSink?.record(attemptDiagnostic);
+          }
           return {
             value: parsed,
             attempts: attempt,
@@ -199,12 +267,28 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
             totalTokens
           };
         } catch (error) {
-          issueCodes = validationIssueCodes(error);
+          if (diagnosticMetadata) {
+            attemptDiagnostic = runtimeValidationDiagnostic(diagnosticMetadata, invalidOutput, error);
+            issueCodes = repairValidationErrors(attemptDiagnostic);
+          } else {
+            issueCodes = legacyValidationIssueCodes(error);
+          }
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider arguments failed runtime validation.");
         }
       } catch (error) {
         lastError = providerError(error);
         const canRepair = input.allowValidationRepair && !repairUsed && lastError.category === "INVALID_OUTPUT";
+        if (attemptDiagnostic) {
+          if (canRepair && attempt < this.maxRetries + 1) {
+            attemptDiagnostic = markRepairRequested(attemptDiagnostic);
+            firstFailureDiagnostic = attemptDiagnostic;
+          } else if (repairUsed && firstFailureDiagnostic) {
+            attemptDiagnostic = markRepairFailed(attemptDiagnostic, firstFailureDiagnostic);
+          } else {
+            attemptDiagnostic = markFinalFailure(attemptDiagnostic);
+          }
+          this.diagnosticSink?.record(attemptDiagnostic);
+        }
         if (canRepair && attempt < this.maxRetries + 1) {
           repairUsed = true;
           nextInput = repairInput(input.request, invalidOutput, issueCodes);
@@ -239,7 +323,13 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       request,
       parameters: INTERPRETATION_PARAMETERS_V2,
       parse: (value) => conversationInterpretationEnvelopeV2Schema.parse(value).interpretation,
-      allowValidationRepair: true
+      allowValidationRepair: true,
+      diagnostic: {
+        promptVersion: INTERPRETATION_PROMPT_VERSION,
+        schemaVersion: INTERPRETATION_SCHEMA_VERSION,
+        rootField: "interpretation",
+        allowedBranchKinds: INTERPRETATION_INTENT_IDS
+      }
     });
     return { value: result.value, metadata: this.metadata(result) };
   }
@@ -266,7 +356,17 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       request,
       parameters,
       parse,
-      allowValidationRepair: true
+      allowValidationRepair: true,
+      diagnostic: {
+        promptVersion: CLARIFICATION_RESOLUTION_PROMPT_VERSION,
+        schemaVersion: CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
+        rootField: "resolution",
+        allowedBranchKinds: pending === "PURCHASE_AMOUNT"
+          ? ["RESOLVE_PURCHASE_AMOUNT", "UNSUPPORTED", "AMBIGUOUS"]
+          : pending === "PURCHASE_MONTH"
+            ? ["RESOLVE_PURCHASE_MONTH", "UNSUPPORTED", "AMBIGUOUS"]
+            : ["RESOLVE_SCENARIO_REFERENCE", "UNSUPPORTED", "AMBIGUOUS"]
+      }
     });
     return { value: result.value, metadata: this.metadata(result) };
   }

@@ -8,6 +8,23 @@ Track C2: **NOT STARTED**
 
 Track B Phase B2: **PAUSED**
 
+## Accepted terminology clarification
+
+The original sanitised artifact and the evidence below remain unchanged. Where the original report labels the stopped run as a failed “schema-access” gate, read that label as the **first live interpretation and application-validation gate**. The provider did not reject the schema.
+
+```text
+Model accessible: Yes
+Provider schema accepted: Yes
+Forced function accepted: Yes
+Provider response received: Yes
+Application-valid interpretation: No
+Repair application-valid interpretation: No
+Simulator invoked: No
+Financial-authority violation: No
+```
+
+Provider/model/schema compatibility therefore passed. The application-valid interpretation gate failed. C1B did not capture a precise internal application-validation code because raw provider output was intentionally not retained and sanitised validation-stage diagnostics had not yet been implemented. No missing code is inferred retroactively.
+
 ## Executive outcome
 
 The authorised C1B sequence stopped at its first live mandatory gate. The OpenAI Responses API accepted the `gpt-5.6-terra` request, model, forced v2 function and nested strict schema, but Terra did not return a runtime-valid canonical interpretation on either the first attempt or the one permitted repair attempt. The harness reported the sanitised failure category `INVALID_OUTPUT`.

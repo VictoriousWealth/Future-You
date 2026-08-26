@@ -1567,3 +1567,48 @@
     - Vitest passes 345/345 across 32 files with zero skips; TypeScript, ESLint, production build, client dependency boundary and formatting checks pass.
     - No prompt, schema, validator, repair rule, expectation, explanation plan, renderer, Ask UI, simulator or supported-scope change was made during C1B.
     - Track C2 has not begun. A separately approved narrow diagnostic/refinement phase is required before another live attempt, and Phase B2 remains paused.
+
+- **Track C1C approval — Preserve raw-output non-retention and add local sanitised diagnostics**
+  - Accepted C1B interpretation:
+    - C1B remains complete with final status `LIVE_PROVIDER ACCEPTANCE — FAILED`; no model is approved or recommended.
+    - The provider accepted `gpt-5.6-terra`, low reasoning, the Responses API request, the forced function, the nested strict schema, `parallel_tool_calls: false` and `store: false`.
+    - The failed gate is correctly named the first live interpretation and application-validation gate, not provider schema rejection.
+    - Neither the original response nor the one permitted repair produced an application-valid interpretation; the simulator received zero calls and no financial-authority violation occurred.
+  - Recovery and evidence decision:
+    - Annotated tag `track-c1b-terra-v2-invalid-output-2026-08-26` preserves the failed C1B state at commit `96ee269`.
+    - Existing C0, C1A, MVP, Track A, Track B1 and Sarah-correction recovery points remain unchanged.
+    - The original sanitised C1B artifact remains unchanged. A clarification note was appended to the C1B evidence report without inventing a historical failure code.
+  - Observability and privacy decision:
+    - The exact C1B validation code was not captured because raw provider output was intentionally not retained and stage-level sanitised diagnostics did not yet exist.
+    - Non-retention remains mandatory: raw tool arguments, raw model output, user text, financial values, quotes, prompts, credentials, authentication data and provider reasoning must not be logged or persisted.
+    - C1C was approved for local implementation only. It adds a closed, versioned stage/code observer without changing public application errors, model decisions or financial authority.
+  - Diagnostic contract:
+    - Diagnostic version `fy-interpretation-diagnostic/1.0.0` defines 13 stable stages from provider-response receipt through tool/JSON/schema/branch/identifier/grounding/state/application checks to repair and final failure.
+    - Thirty-three closed codes cover tool selection, strict shape, identifiers, branch semantics, source grounding, application rejection and bounded-repair outcomes.
+    - Records retain only a safe synthetic case ID, approved enum values, allowlisted property names, safe JSON-pointer paths, stage/code identifiers, boolean outcomes and version/attempt metadata.
+    - Unknown enum strings, unknown property names and all free-text values are discarded; no free-text fingerprint is produced.
+  - Evaluation-only and repair boundary:
+    - Diagnostics require `OPENAI_EVALUATION_DIAGNOSTICS_ENABLED=true` plus explicit construction of a server-only evaluation collector; they remain disabled by default and cannot be enabled by a browser request.
+    - Ordinary application turns gain no raw-output logging or diagnostic persistence.
+    - The existing repair remains at most one attempt with the same model and frozen v2 schema. Only its machine-readable validation errors change to closed diagnostic codes and safe paths.
+    - The v2 prompt, v2 schema, clarification contracts, identifier inventory, semantic rules, explanation plan, server renderer, Ask UI, simulator, supported scope and evaluation expectations remain unchanged until an exact live failure is observed.
+
+- **Track C1C implementation outcome — Local sanitised diagnostics complete; live smoke remains separately gated**
+  - Local implementation:
+    - The OpenAI adapter now emits sanitised diagnostics only to an explicitly supplied evaluation sink, and the live-evaluation harness includes them only when the evaluation-only flag is enabled.
+    - Thirty deterministic fake modes cover every required failure class plus successful, identical-failure, new-failure and exhausted-repair outcomes.
+    - Automated security tests prove the artifact excludes user/provider text, financial data, employer/account identifiers, secrets, headers, prompts, reasoning and arbitrary unknown values.
+    - Tests prove every one of the 33 diagnostic codes is independently reachable, paths are JSON-safe and no diagnostic authorises or reports a simulator call.
+  - Regression outcome:
+    - Full Vitest passes 380/380 across 33 files with zero skips; focused diagnostics/provider tests pass 42/42 and the wider interpretation/orchestration/corpus set passes 139/139.
+    - Repeated fake evaluation passes 144/144 interpretation/clarification and 6/6 explanation evaluations. Canonical, natural, noisy, clarification, follow-up, unsupported and adversarial gates all pass.
+    - Clean-state Supabase integration passes 20/20 across six files, pgTAP passes 273/273 across six files and mobile Chromium Playwright passes 31/31 with zero skips.
+    - Coverage is 76.13% statements, 63.09% branches, 79.42% functions and 78.57% lines.
+    - TypeScript, ESLint, keyless production build, generated database artifacts, secret boundary, client dependency boundary and `git diff --check` pass.
+    - Local fixture pollution was distinguished from implementation failure and resolved only through verified loopback-only resets using committed migrations and seed; no manual SQL/dashboard step or weakened expectation was used.
+    - Verification-generated PNG changes were discarded because C1C makes no visual change.
+  - Live and roadmap boundary:
+    - C1C made zero live OpenAI requests and incurred zero live cost. Disabled readiness ended with no key configured, provider disabled and model unset.
+    - A future diagnostic smoke requires separate explicit approval. The proposed limit is one canonical Terra request plus at most the existing one repair, low reasoning and a US$0.10 maximum estimated spend.
+    - The proposed smoke must capture only sanitised stage/code/path/approved-shape metadata, repair outcome, tokens, latency and estimated cost; it must stop after the one canonical case and may not run a corpus or change the prompt/schema.
+    - Track C2 remains paused and Phase B2 remains paused.
