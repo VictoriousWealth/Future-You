@@ -12,14 +12,19 @@ import type {
   ScenarioSelectionTargetId,
   UnsupportedCategoryId
 } from "./interpretation-policy";
+import type { CompleteTimingInterpretation } from "./timing-policy";
 
 export const CONVERSATION_ORCHESTRATION_VERSION = "fy-conversation-orchestration/1.0.0" as const;
 export const INTERPRETATION_PROMPT_VERSION_V1 = "fy-conversation-interpretation/1.0.0" as const;
 export const INTERPRETATION_SCHEMA_VERSION_V1 = "fy-conversation-intent/1.0.0" as const;
-export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/2.0.0" as const;
-export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/2.0.0" as const;
-export const CLARIFICATION_RESOLUTION_PROMPT_VERSION = "fy-clarification-resolution-prompt/1.0.0" as const;
-export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION = "fy-clarification-resolution-schema/1.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION_V2 = "fy-conversation-interpretation/2.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION_V2 = "fy-conversation-intent/2.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/3.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/3.0.0" as const;
+export const CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1 = "fy-clarification-resolution-prompt/1.0.0" as const;
+export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1 = "fy-clarification-resolution-schema/1.0.0" as const;
+export const CLARIFICATION_RESOLUTION_PROMPT_VERSION = "fy-clarification-resolution-prompt/2.0.0" as const;
+export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION = "fy-clarification-resolution-schema/2.0.0" as const;
 export const EXPLANATION_PROMPT_VERSION = "fy-conversation-explanation/1.0.0" as const;
 export const EXPLANATION_SCHEMA_VERSION = "fy-explanation-plan/1.0.0" as const;
 export const CONVERSATION_RESPONSE_SCHEMA = "conversation/1.0.0" as const;
@@ -59,13 +64,7 @@ export type ExplanationTarget =
   | "TIMING_EFFECT"
   | "OTHER_SUPPORTED_EXPLANATION";
 
-export type CompleteTimingInterpretation = Readonly<{
-  quote: string;
-  kind: "NEXT_MONTH" | "MONTHS_AFTER_SELECTED" | "NAMED_MONTH" | "EXPLICIT_YEAR_MONTH";
-  monthNumber: number | null;
-  year: number | null;
-  offsetMonths: number | null;
-}>;
+export type { CompleteTimingInterpretation } from "./timing-policy";
 
 export type ConversationInterpretation =
   | Readonly<{
@@ -116,7 +115,8 @@ export type ConversationInterpretation =
         | Readonly<{ kind: "EXPLAIN_SELECTED_RESULT"; explanationTarget: ExplanationTargetId; goalReferenceQuote: string | null }>
         | Readonly<{ kind: "SELECT_EXISTING_SCENARIO" }>;
     }>
-  | Readonly<{ kind: "HELP" | "GREETING" }>
+  | Readonly<{ kind: "HELP" }>
+  | Readonly<{ kind: "GREETING" }>
   | Readonly<{
       kind: "UNSUPPORTED";
       category: UnsupportedCategoryId;
