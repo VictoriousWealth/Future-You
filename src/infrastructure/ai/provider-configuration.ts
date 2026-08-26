@@ -29,7 +29,7 @@ export function resolveConversationProvider(): ResolvedConversationProvider {
     return {
       provider: new FakeConversationModelProvider(mode),
       providerIdentifier: "fake",
-      modelIdentifier: "fake-conversation/1.0.0"
+      modelIdentifier: "fake-conversation/2.0.0"
     };
   }
   if (configured === "openai") {
