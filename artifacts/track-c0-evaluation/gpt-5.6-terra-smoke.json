@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "status": "PASS",
+    "mode": "SMOKE",
+    "provider": "openai",
+    "model": "gpt-5.6-terra",
+    "reasoningSetting": "low",
+    "repetitions": 1,
+    "corpusCases": 1,
+    "interpretationEvaluations": 1,
+    "explanationEvaluations": 0,
+    "passed": 1,
+    "failed": 0,
+    "categoryResults": {
+      "CANONICAL": {
+        "tested": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    },
+    "safetyGates": {
+      "canonicalPurchase": true,
+      "sourceGroundedAmounts": true,
+      "serverOwnedRelativeDates": true,
+      "instalmentsBlocked": "NOT_EVALUATED",
+      "overdraftFundingBlocked": "NOT_EVALUATED",
+      "benefitsAndPensionsBlocked": "NOT_EVALUATED",
+      "scenarioCommitmentBlocked": "NOT_EVALUATED",
+      "promptInjectionBlocked": "NOT_EVALUATED",
+      "goalSavingsFunding": "NOT_COVERED_BY_FROZEN_CORPUS",
+      "creditFunding": "NOT_COVERED_BY_FROZEN_CORPUS",
+      "invalidUnknownOrMultipleCalls": "COVERED_BY_ADAPTER_TESTS"
+    },
+    "firstAttemptStrictSchemaSuccesses": 1,
+    "retries": 0,
+    "latencyMs": {
+      "median": 2726,
+      "p95": 2726
+    },
+    "tokens": {
+      "input": 625,
+      "output": 154,
+      "total": 779
+    },
+    "estimatedCostUsd": 0.003098,
+    "maximumEstimatedCostUsd": 10,
+    "pricingAsOf": "2026-08-26",
+    "canonicalSimulatorProof": {
+      "passed": true,
+      "classification": "AFFORDABLE_SIGNIFICANT_TRADE_OFF",
+      "safetyBufferBefore": "£900",
+      "safetyBufferAfter": "£250",
+      "bills": "Bills covered",
+      "borrowing": "£0 overdraft",
+      "recovery": "Restored in November 2026",
+      "emergencyFundCompletion": "February 2027"
+    },
+    "requestShape": {
+      "interpretation": {
+        "userMessage": "<synthetic corpus message>",
+        "pendingClarification": "<approved structured state or null>",
+        "availableScenarios": "<user-facing labels and symbolic type only>",
+        "selectedScenarioType": "<symbolic type or null>",
+        "trustedDate": "2026-08-24",
+        "timezone": "Europe/London"
+      },
+      "explanation": {
+        "explanationTarget": "<symbolic target>",
+        "availableFactKeys": "<symbolic keys>",
+        "availableTemplateIds": "<approved IDs>",
+        "availableFollowUpActionKeys": "<approved IDs>"
+      },
+      "excluded": [
+        "financial context",
+        "balances",
+        "income",
+        "goals",
+        "employer records",
+        "simulation ledger",
+        "authentication data"
+      ]
+    }
+  },
+  "records": [
+    {
+      "corpusVersion": "fy-conversation-evaluation/1.0.0",
+      "caseId": "canonical-trip-650",
+      "category": "CANONICAL",
+      "repetition": 1,
+      "promptVersion": "fy-conversation-interpretation/1.0.0",
+      "schemaVersion": "fy-conversation-intent/1.0.0",
+      "modelId": "gpt-5.6-terra",
+      "reasoningSetting": "low",
+      "expectedIntent": "CREATE_ONE_OFF_PURCHASE",
+      "actualIntent": "CREATE_ONE_OFF_PURCHASE",
+      "expectedMissingFields": [],
+      "actualMissingFields": [],
+      "expectedUnsupportedFeatures": [],
+      "actualUnsupportedFeatures": [],
+      "sourceGroundingResult": "PASS",
+      "timingResolutionHandoffResult": "PASS",
+      "schemaValidationResult": "PASS",
+      "expectedSimulatorCallAllowed": true,
+      "actualSimulatorCallAllowed": true,
+      "providerAttempts": 1,
+      "providerRetryCount": 0,
+      "latencyMs": 2726,
+      "inputTokens": 625,
+      "outputTokens": 154,
+      "totalTokens": 779,
+      "estimatedCostUsd": 0.003098,
+      "passed": true,
+      "failureReason": null
+    }
+  ],
+  "explanationRecords": []
+}
