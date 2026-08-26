@@ -172,3 +172,16 @@ The initial integration attempt was blocked by sandbox access; the escalated loc
 - Real mobile keyboard behaviour remains unreviewed.
 
 Therefore Track C0 ends honestly as blocked, not passed or partially passed. Track C1 must not begin. Once the authorised owner sets the explicit enable flag and selected candidate model in the ignored server environment, rerun readiness, Terra three times per case, Luna three times per case, selected Sol diagnostics only if justified, then update this report from real sanitised metrics and human review.
+
+## Post-completion approval and required key rotation
+
+The completed C0 implementation and blocked status were approved. Because the configured credential's bytes entered an unintended ignored Turbopack cache before the build-isolation fix, that credential must be revoked and replaced before the first live request. Revocation, replacement and owner authorisation have not yet been confirmed, so the live status remains `LIVE_PROVIDER ACCEPTANCE — BLOCKED` and no model call has been made.
+
+The approved future live baseline now uses `OPENAI_REASONING_EFFORT=low`: Terra canonical smoke then three full repetitions, provider disablement, Luna canonical smoke then the identical three repetitions, provider disablement, and only justified selected Sol diagnostics. The combined live evaluation has a US$10 maximum. No prompt, schema, template, intent, retry, UI or simulator refinement is permitted during that baseline.
+
+Two additional executable safeguards now prove that:
+
+- the server provider resolver can consume a synthetic credential injected into the runtime environment after module loading, while the production compilation environment remains keyless; and
+- disabled readiness prints exactly the five approved fields, omits its generated synthetic credential and reaches no provider.
+
+The focused tests pass 10/10. The full Vitest suite now passes 269/269 across 30 files. TypeScript, ESLint, the keyless production build, post-build secret scan, client-bundle boundary and `git diff --check` pass. The safe local readiness result remains key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no`, model accessible `no`.
