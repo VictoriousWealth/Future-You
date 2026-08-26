@@ -1649,3 +1649,33 @@
     - The single recommendation is a separately approved local-only timing-contract diagnostic review before any further live request.
     - That review should add specific non-sensitive timing-invariant subcodes and per-attempt operational telemetry, reproduce each timing failure class deterministically and propose the smallest evidence-based prompt/schema/repair change without applying it automatically.
     - No additional Terra case or corpus is authorised. Track C2 and Phase B2 remain paused.
+
+- **Track C1D approval and outcome — Local timing-contract diagnostic review**
+  - Accepted live finding and scope:
+    - The canonical Terra result remains `FAILED`: both attempts selected the correct forced function and `CREATE_ONE_OFF_PURCHASE`, passed strict provider structure, then failed `BRANCH_SEMANTIC_VALIDATION` at `/interpretation/timing` with `SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION`.
+    - The repair retained the sanitised `IDENTICAL_FAILURE` classification; provider requests remain two, simulator calls remain zero, financial-authority violations remain zero and the accepted estimated cost remains US$0.016542.
+    - The raw timing object, exact offending field and per-attempt operational telemetry remain intentionally unavailable and were not reconstructed.
+    - C1D was approved only for local tests, test-only timing enumeration, documentation and append-only history. It made no live provider request and changed no production prompt, schema, semantic validator, resolver, repair behavior, intent, clarification, corpus expectation, simulator or UI.
+  - Exact timing contract:
+    - The canonical `next month` representation is a source-grounded `quote`, `kind: NEXT_MONTH`, null `monthNumber`, null `year` and `offsetMonths: 1`; the trusted server resolves the 24 August 2026 reference to payment period `2026-09`.
+    - The provider JSON Schema requires all five properties but allows any string and every null/integer combination. The runtime accepts only kind-specific combinations for `NEXT_MONTH`, `MONTHS_AFTER_SELECTED`, `NAMED_MONTH` and `EXPLICIT_YEAR_MONTH`.
+    - `MISSING` and `AMBIGUOUS` remain legacy/pending partial kinds and are not accepted in a complete v2 command.
+  - Enumeration and validator findings:
+    - A test-only analytic classifier and 3,024 boundary/equivalence representatives cover every one of the 32 provider nullability patterns plus quote and numeric range classes.
+    - Thirty-two representatives satisfy runtime timing semantics; sixteen then fail canonical source grounding, three grounded relative-to-selected shapes fail initial-conversation state, and thirteen reach current initial-create eligibility.
+    - Only one eligible representative carries canonical meaning. Twelve expose a separate deterministic quote/kind gap: current grounding proves that `next month` appears in the message but does not reject a contradictory runtime-valid timing kind.
+    - The evaluation diagnostic can also authorise `MONTHS_AFTER_SELECTED` for an initial create before the application resolver correctly rejects the missing selected scenario. This is an observer-completeness gap, not a simulator escape.
+    - These deterministic validator/observer gaps are documented and regression-tested but deliberately not fixed in C1D.
+  - Semantic and repair diagnosis:
+    - Four timing `superRefine` predicates and other supported-branch refinements share the broad `SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION` mapping. `/interpretation/timing` reveals no required, forbidden or incompatible field name.
+    - The bounded repair sees its transient invalid object, the same under-constrained provider schema, the same prompt and only the broad safe path/code. Neither schema nor prompt states the exact kind-specific invariant, explaining why a sanitised identical failure can recur.
+    - Local fixtures prove missing quote, null/wrong offset, incompatible month/year, wrong kind, ungrounded quote, valid timing, identical invalid repair, different invalid repair and successful repair behavior with no simulator call.
+  - Recommendation and version boundary:
+    - The smallest coherent future correction is a separately approved local Track C1E combining kind-specific provider timing schemas, deterministic quote/kind compatibility, precise repair diagnostics and one concise timing-shape description. Schema-only correction would leave the proven wrong-kind acceptance gap; prompt-only or repair-only changes remain insufficient.
+    - Current prompt/schema/clarification/diagnostic versions remain frozen. A future provider-only narrowing may use a 2.1 schema version, while the new quote/kind rejection should be treated as a 3.0 semantic-contract change; repair diagnostics require their own versioned revision.
+    - A future live retest remains separately gated to one canonical Terra case, low reasoning, one initial request plus at most one existing repair and a proposed US$0.10 maximum estimated spend. No corpus is automatically authorised.
+  - Verification and roadmap:
+    - Focused timing/provider/diagnostic/corpus tests pass 161/161; full Vitest passes 397/397 across 34 files; repeated fake evaluation passes 144/144 interpretation/clarification and 6/6 explanation evaluations.
+    - Clean-state Supabase integration passes 20/20, pgTAP passes 273/273 and mobile Chromium Playwright passes 31/31, all with zero skips. Coverage is 76.75% statements, 64.18% branches, 79.79% functions and 79.27% lines.
+    - TypeScript, ESLint, keyless production builds, generated database artifacts, secret boundary, client dependency boundary and formatting checks pass. Test-created database pollution was resolved only through verified loopback-only resets using committed migrations and seed; no hosted database, manual SQL or weakened expectation was used.
+    - Track C1D is complete as a diagnostic review only. Track C2 and Phase B2 remain paused.
