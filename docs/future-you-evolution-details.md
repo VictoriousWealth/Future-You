@@ -1459,3 +1459,66 @@
     - Final status is `LIVE_PROVIDER ACCEPTANCE — FAILED`; no model is recommended.
     - Final offline verification passes 270/270 Vitest tests across 30 files, TypeScript, application/test and Track C0 script ESLint, the runtime-secret-isolated production build, post-build secret scan, client dependency boundary and `git diff --check` with no skipped Vitest tests.
     - Track C1 has not started and Track B Phase B2 remains paused.
+
+- **Track C1A approval — Local interpretation-contract repair begins**
+  - Phase and recovery decision:
+    - Track C0 remains complete with `LIVE_PROVIDER ACCEPTANCE — FAILED`; Terra passed the canonical smoke but did not pass the frozen v1 contract, and no model is approved or recommended.
+    - Track C1 is split into C1A local repair and separately authorised C1B live re-evaluation.
+    - C1A is approved without any live OpenAI request; C1B is not approved, Track C2 is not started and Phase B2 remains paused.
+    - Annotated tag `track-c0-terra-failed-baseline-2026-08-26` preserves the original frozen interpretation contract and failed Terra evidence at commit `61c22df` before C1 changes.
+    - Earlier MVP, Track A, Track B1 and Sarah-correction recovery points remain intact.
+  - Diagnosis and boundaries:
+    - The v1 flat nullable envelope allows structurally valid but semantically impossible combinations and does not communicate all exact clarification/category identifiers.
+    - Pending clarifications are too broad when passed back through the full interpretation contract, and the v1 repair repeats an under-specified request.
+    - C1A may repair interpretation schemas/prompts/runtime validation, bounded repair, versioning, clarification resolution, provider tests, the evaluation corpus and documentation only.
+    - Simulator mathematics, Sarah context/results, scenario types, persistence ownership/RLS, exact-money and date authority, explanation planning, final financial rendering, Ask UI/copy, provider permissions, data minimisation and `store: false` remain unchanged.
+  - Versioning decision:
+    - New interpretation prompt/schema are `fy-conversation-interpretation/2.0.0` and `fy-conversation-intent/2.0.0`.
+    - Narrow clarification prompt/schema are `fy-clarification-resolution-prompt/1.0.0` and `fy-clarification-resolution-schema/1.0.0`.
+    - V1 prompt/schema identifiers, runtime/provider schemas, frozen corpus and historical evidence remain available and are not relabelled.
+    - Explanation remains `fy-conversation-explanation/1.0.0` and `fy-explanation-plan/1.0.0`.
+  - Contract decisions:
+    - V2 uses one strict object root with one required `interpretation` property and branch alternatives nested beneath it; the root is not `anyOf`.
+    - Every provider object rejects additional properties, every declared property is required, and null is limited to genuinely optional branch data.
+    - Exact clarification identifiers are limited to `PURCHASE_AMOUNT`, `PURCHASE_MONTH` and `SCENARIO_REFERENCE`.
+    - Exact unsupported identifiers distinguish instalments, credit/overdraft, goal savings, mixed funding, substitution, intra-month timing, benefits, pensions, commitment, recurring changes, investment advice, general recommendations, cross-user access, result override, prompt/tool override, secret requests and other out-of-scope behaviour.
+    - One application-owned interpretation-policy module supplies identifiers and descriptions to prompts, strict schemas, runtime mappings, renderer mappings and evaluation coverage.
+    - Prompt precedence is security/unsupported, explicit selection, explanation, amount follow-up, month follow-up, initial purchase, then help/greeting, with a small contrastive example set rather than corpus answer patches.
+  - Clarification and authority decisions:
+    - Pending amount, month and scenario gaps use separate narrow provider schemas rather than full-intent reinterpretation.
+    - Scenario clarification preserves a nested attempted supported operation so resolving a label cannot change what the user was doing.
+    - Exact amount, timing and scenario-label quotes remain server-grounded; the exact GBP parser, trusted `Europe/London` date resolution and application-owned scenario selection remain authoritative.
+    - A strict provider result is not automatically an authorised simulator command; state, grounding and product-scope checks still run before simulation.
+    - Unsupported or repeatedly ambiguous clarification answers remain fail-closed and create no run.
+  - Repair and provider decisions:
+    - One bounded invalid-output repair uses the same model/configuration and v2 schema.
+    - Repair receives only the original message, minimal symbolic state, invalid structured output, sanitised validation codes and exact permitted identifiers.
+    - It excludes expected evaluation answers, financial context, simulator results, full history and secrets; it cannot create duplicate messages or runs.
+    - Responses API, one forced strict function, `parallel_tool_calls: false`, no built-in tools, `store: false`, server-owned state and runtime validation remain mandatory.
+    - No corpus case IDs or exact-message production patches are introduced.
+
+- **Track C1A implementation outcome — Locally ready; live C1B remains unauthorised**
+  - Contract and corpus outcome:
+    - The flat nullable envelope is no longer active for new turns; v2 branch schemas and narrow clarification resolution are implemented.
+    - All exact policy identifiers are covered by prompt/schema/mapping drift tests.
+    - The original 33 interpretation cases plus two explanation probes remain the frozen 35-case C0 comparison set.
+    - The expanded v2 corpus retains all 33 messages and adds 15 genuine gaps for 48 interpretation/clarification cases; all 17 unsupported categories are represented.
+    - The deterministic fake harness passes 144/144 interpretation/clarification evaluations plus 6/6 unchanged explanation evaluations across three repetitions.
+  - Behaviour and regression outcome:
+    - Canonical £650, £500, £400 and October outcomes remain unchanged; missing-field and scenario clarifications resume safely.
+    - Every expanded unsupported/adversarial application case reaches no simulator, and non-grounded amount, timing and scenario-label mutations fail before simulation.
+    - Vitest passes 345/345 across 32 files with zero skips; coverage is 74.61% statements, 60.43% branches, 78.35% functions and 77.00% lines.
+    - Clean-state pgTAP passes 273/273 across six files, Supabase integration passes 20/20 across six files, and mobile Chromium Playwright passes 31/31 with zero skips.
+    - TypeScript, ESLint, production build, generated database artifacts, client dependency boundary, secret boundary and `git diff --check` pass.
+    - A polluted local test database was correctly distinguished from implementation failure; the approved loopback-only reset reapplied all five migrations and canonical seed without manual SQL/dashboard work. A second reset restored the canonical fixture after mutation-producing integrations and before browser tests.
+    - Verification-generated visual artifact diffs were discarded because C1A makes no approved UI or baseline change.
+  - Secret and operational outcome:
+    - Disabled readiness reports key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no` and model accessible `no`; C1A makes zero live requests.
+    - A long-running local Next development process had recreated an ignored `.next` artifact containing configured-key bytes. The boundary test caught it; the process was stopped, only the reproducible `.next` directory was removed, and a secret-isolated rebuild passed tracked/repository/generated/client scans.
+    - Plain local `next dev` with a runtime provider key remains an operational cache risk; this does not authorise a C1A dev-script or provider-policy change.
+  - Stop and next decision:
+    - Final status is `C1A LOCALLY READY FOR SEPARATELY AUTHORISED C1B`.
+    - No C1B request was sent and the prior Track C0 spend authorisation was not reused.
+    - Proposed C1B order is Terra schema/canonical/category gates, frozen corpus three times and expanded v2 once; Luna only after a complete Terra pass; Sol only for justified diagnostics.
+    - A proposed cumulative C1B guard is US$5, subject to separate explicit human authorisation and honest token-derived reporting.
+    - Track C2 remains deferred and Phase B2 remains paused.
