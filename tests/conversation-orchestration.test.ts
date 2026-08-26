@@ -79,12 +79,12 @@ describe("Slice 5 constrained conversation orchestration", () => {
     });
     expect(provider.observedClarificationRequests).toHaveLength(1);
     expect(repository.turns.get(`${id}:clarify_amount`)?.beginCommand).toMatchObject({
-      interpretationPromptVersion: "fy-conversation-interpretation/2.0.0",
-      interpretationSchemaVersion: "fy-conversation-intent/2.0.0"
+      interpretationPromptVersion: "fy-conversation-interpretation/3.0.0",
+      interpretationSchemaVersion: "fy-conversation-intent/3.0.0"
     });
     expect(repository.turns.get(`${id}:clarify_amount_answer`)?.beginCommand).toMatchObject({
-      interpretationPromptVersion: "fy-clarification-resolution-prompt/1.0.0",
-      interpretationSchemaVersion: "fy-clarification-resolution-schema/1.0.0"
+      interpretationPromptVersion: "fy-clarification-resolution-prompt/2.0.0",
+      interpretationSchemaVersion: "fy-clarification-resolution-schema/2.0.0"
     });
   });
 
