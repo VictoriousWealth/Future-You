@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   CLARIFICATION_RESOLUTION_PROMPT_VERSION,
+  CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1,
   CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
+  CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1,
   EXPLANATION_PROMPT_VERSION,
   EXPLANATION_SCHEMA_VERSION,
   INTERPRETATION_PROMPT_VERSION,
   INTERPRETATION_PROMPT_VERSION_V1,
+  INTERPRETATION_PROMPT_VERSION_V2,
   INTERPRETATION_SCHEMA_VERSION,
-  INTERPRETATION_SCHEMA_VERSION_V1
+  INTERPRETATION_SCHEMA_VERSION_V1,
+  INTERPRETATION_SCHEMA_VERSION_V2
 } from "../src/application/conversation/contracts";
 import {
   CLARIFICATION_ID_BY_BRANCH,
@@ -21,10 +25,10 @@ import {
 } from "../src/application/conversation/interpretation-policy";
 import {
   conversationInterpretationEnvelopeV2Schema,
-  conversationInterpretationSchema,
+  conversationInterpretationSchemaV2,
   conversationInterpretationV1Schema
 } from "../src/application/conversation/schemas";
-import { INTERPRETATION_PROMPT } from "../src/application/conversation/prompts";
+import { INTERPRETATION_PROMPT, INTERPRETATION_PROMPT_V2 } from "../src/application/conversation/prompts";
 import {
   INTERPRETATION_PARAMETERS_V1,
   INTERPRETATION_PARAMETERS_V2,
@@ -83,24 +87,24 @@ describe("Track C1A interpretation contract v2", () => {
 
   for (const branch of branches) {
     it(`accepts only the fields for ${branch.kind}`, () => {
-      expect(conversationInterpretationSchema.safeParse(branch).success).toBe(true);
-      expect(conversationInterpretationSchema.safeParse({ ...branch, unrelated: null }).success).toBe(false);
+      expect(conversationInterpretationSchemaV2.safeParse(branch).success).toBe(true);
+      expect(conversationInterpretationSchemaV2.safeParse({ ...branch, unrelated: null }).success).toBe(false);
       const keys = Object.keys(branch).filter((key) => key !== "kind");
       if (keys[0]) {
         const missing = { ...branch } as Record<string, unknown>;
         delete missing[keys[0]];
-        expect(conversationInterpretationSchema.safeParse(missing).success).toBe(false);
+        expect(conversationInterpretationSchemaV2.safeParse(missing).success).toBe(false);
       }
     });
   }
 
   it("rejects semantic cross-branch mutations and invalid identifiers", () => {
-    expect(conversationInterpretationSchema.safeParse({ ...branches[0], amount: null }).success).toBe(false);
-    expect(conversationInterpretationSchema.safeParse({ ...branches[0], category: "INSTALMENTS" }).success).toBe(false);
-    expect(conversationInterpretationSchema.safeParse({ ...branches[4], explanationTarget: "GOAL_DELAY" }).success).toBe(false);
-    expect(conversationInterpretationSchema.safeParse({ kind: "UNSUPPORTED", category: "UNSUPPORTED_ADVICE" }).success).toBe(false);
-    expect(conversationInterpretationSchema.safeParse({ kind: "AMBIGUOUS", ambiguity: "anything" }).success).toBe(false);
-    expect(conversationInterpretationSchema.safeParse({
+    expect(conversationInterpretationSchemaV2.safeParse({ ...branches[0], amount: null }).success).toBe(false);
+    expect(conversationInterpretationSchemaV2.safeParse({ ...branches[0], category: "INSTALMENTS" }).success).toBe(false);
+    expect(conversationInterpretationSchemaV2.safeParse({ ...branches[4], explanationTarget: "GOAL_DELAY" }).success).toBe(false);
+    expect(conversationInterpretationSchemaV2.safeParse({ kind: "UNSUPPORTED", category: "UNSUPPORTED_ADVICE" }).success).toBe(false);
+    expect(conversationInterpretationSchemaV2.safeParse({ kind: "AMBIGUOUS", ambiguity: "anything" }).success).toBe(false);
+    expect(conversationInterpretationSchemaV2.safeParse({
       kind: "CHANGE_PURCHASE_AMOUNT", amount,
       scenarioReferenceStrategy: "EXPLICIT_SCENARIO_LABEL", scenarioReferenceQuote: null
     }).success).toBe(false);
@@ -119,13 +123,18 @@ describe("Track C1A interpretation contract v2", () => {
     }).success).toBe(true);
     expect(INTERPRETATION_PROMPT_VERSION_V1).toBe("fy-conversation-interpretation/1.0.0");
     expect(INTERPRETATION_SCHEMA_VERSION_V1).toBe("fy-conversation-intent/1.0.0");
-    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/2.0.0");
-    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/2.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION_V2).toBe("fy-conversation-interpretation/2.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION_V2).toBe("fy-conversation-intent/2.0.0");
+    expect(INTERPRETATION_PROMPT_V2).toContain(INTERPRETATION_PROMPT_VERSION_V2);
+    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/3.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/3.0.0");
   });
 
   it("keeps clarification independently versioned and explanation unchanged", () => {
-    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION).toBe("fy-clarification-resolution-prompt/1.0.0");
-    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION).toBe("fy-clarification-resolution-schema/1.0.0");
+    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1).toBe("fy-clarification-resolution-prompt/1.0.0");
+    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1).toBe("fy-clarification-resolution-schema/1.0.0");
+    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION).toBe("fy-clarification-resolution-prompt/2.0.0");
+    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION).toBe("fy-clarification-resolution-schema/2.0.0");
     expect(EXPLANATION_PROMPT_VERSION).toBe("fy-conversation-explanation/1.0.0");
     expect(EXPLANATION_SCHEMA_VERSION).toBe("fy-explanation-plan/1.0.0");
   });
