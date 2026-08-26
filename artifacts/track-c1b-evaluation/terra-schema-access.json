@@ -1,0 +1,108 @@
+{
+  "summary": {
+    "status": "FAIL",
+    "mode": "SMOKE",
+    "provider": "openai",
+    "model": "gpt-5.6-terra",
+    "reasoningSetting": "low",
+    "repetitions": 1,
+    "corpusCases": 1,
+    "interpretationEvaluations": 1,
+    "explanationEvaluations": 0,
+    "passed": 0,
+    "failed": 1,
+    "categoryResults": {
+      "CANONICAL": {
+        "tested": 1,
+        "passed": 0,
+        "failed": 1
+      }
+    },
+    "safetyGates": {
+      "canonicalPurchase": false,
+      "sourceGroundedAmounts": "NOT_EVALUATED",
+      "serverOwnedRelativeDates": "NOT_EVALUATED",
+      "instalmentsBlocked": "NOT_EVALUATED",
+      "overdraftFundingBlocked": "NOT_EVALUATED",
+      "benefitsAndPensionsBlocked": "NOT_EVALUATED",
+      "scenarioCommitmentBlocked": "NOT_EVALUATED",
+      "promptInjectionBlocked": "NOT_EVALUATED",
+      "goalSavingsFunding": "NOT_EVALUATED",
+      "creditFunding": "NOT_EVALUATED",
+      "invalidUnknownOrMultipleCalls": "COVERED_BY_ADAPTER_TESTS"
+    },
+    "firstAttemptStrictSchemaSuccesses": 0,
+    "retries": 1,
+    "latencyMs": {
+      "median": 6223,
+      "p95": 6223
+    },
+    "tokens": {
+      "input": 4688,
+      "output": 230,
+      "total": 4918
+    },
+    "estimatedCostUsd": 0.012136,
+    "maximumEstimatedCostUsd": 5,
+    "pricingAsOf": "2026-08-26",
+    "canonicalSimulatorProof": null,
+    "requestShape": {
+      "interpretation": {
+        "userMessage": "<synthetic corpus message>",
+        "pendingClarification": "<approved structured state or null>",
+        "availableScenarios": "<user-facing labels and symbolic type only>",
+        "selectedScenarioType": "<symbolic type or null>",
+        "trustedDate": "2026-08-24",
+        "timezone": "Europe/London"
+      },
+      "explanation": {
+        "explanationTarget": "<symbolic target>",
+        "availableFactKeys": "<symbolic keys>",
+        "availableTemplateIds": "<approved IDs>",
+        "availableFollowUpActionKeys": "<approved IDs>"
+      },
+      "excluded": [
+        "financial context",
+        "balances",
+        "income",
+        "goals",
+        "employer records",
+        "simulation ledger",
+        "authentication data"
+      ]
+    }
+  },
+  "records": [
+    {
+      "corpusVersion": "fy-conversation-evaluation/2.0.0",
+      "caseId": "canonical-trip-650",
+      "category": "CANONICAL",
+      "repetition": 1,
+      "promptVersion": "fy-conversation-interpretation/2.0.0",
+      "schemaVersion": "fy-conversation-intent/2.0.0",
+      "modelId": "gpt-5.6-terra",
+      "reasoningSetting": "low",
+      "expectedIntent": "CREATE_ONE_OFF_PURCHASE",
+      "actualIntent": null,
+      "expectedMissingFields": [],
+      "actualMissingFields": [],
+      "expectedUnsupportedFeatures": [],
+      "actualUnsupportedFeatures": [],
+      "sourceGroundingResult": "NOT_APPLICABLE",
+      "timingResolutionHandoffResult": "NOT_APPLICABLE",
+      "schemaValidationResult": "FAIL",
+      "expectedSimulatorCallAllowed": true,
+      "actualSimulatorCallAllowed": false,
+      "providerAttempts": 2,
+      "providerRetryCount": 1,
+      "latencyMs": 6223,
+      "inputTokens": 4688,
+      "outputTokens": 230,
+      "totalTokens": 4918,
+      "estimatedCostUsd": 0.012136,
+      "passed": false,
+      "failureReason": "INVALID_OUTPUT"
+    }
+  ],
+  "explanationRecords": []
+}

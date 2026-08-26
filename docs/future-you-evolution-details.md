@@ -1542,3 +1542,28 @@
     - C1B is paused at the credential-confirmation gate; its final live status remains pending rather than inferred.
     - No v2 prompt, schema, validator, clarification contract, supported scope, explanation plan, renderer, Ask UI, simulator or evaluation expectation was changed.
     - Track C2 and Phase B2 remain paused.
+
+- **Track C1B credential rotation confirmation and live outcome — Terra fails the first mandatory gate**
+  - Credential and execution authorisation:
+    - The human owner confirmed revocation of the key whose bytes entered the ignored `.next` cache, removal of that key from `.env.local` and the ordinary local shell, and creation of a replacement key for the dedicated Future You project service account.
+    - The owner confirmed that the replacement is non-personal, stored outside the repository, injected through the approved runtime secret mechanism, unavailable to Next.js development/build processes, and protected by configured billing, model-access, monitoring and spend controls.
+    - C1B live evaluation was explicitly authorised with a cumulative estimated-provider-spend ceiling of US$5.
+  - Pre-live boundary:
+    - Disabled readiness reported key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no` and model accessible `no`, making no provider request.
+    - `.env.local` contained no configured OpenAI key. Key-byte scans passed for tracked files, non-ignored repository files, generated artifacts and client bundles; the client dependency boundary passed and no Next.js server was running.
+    - The C1A recovery tag remains `track-c1a-local-ready-2026-08-26` at commit `26bcf99`; the C0 failed-baseline tag remains unchanged at commit `61c22df`.
+  - Terra first-gate result:
+    - `gpt-5.6-terra` ran with `low` reasoning, the v2 interpretation prompt/schema, 12-second timeout, one bounded repair, one forced strict function, `parallel_tool_calls: false`, no built-in tools and `store: false`.
+    - The Responses API accepted the model/tool/schema request, but neither the first attempt nor the one repair produced a runtime-valid canonical interpretation. The trusted failure category was `INVALID_OUTPUT`.
+    - One logical schema-access case failed after two provider requests. Usage was 4,688 input tokens, 230 output tokens and 4,918 total tokens; latency was 6,223 ms and estimated cost was US$0.012136.
+    - No interpretation was accepted, simulator permission remained false, no canonical simulator proof ran, and no financial result, scenario, run or context was created or changed.
+  - Mandatory stop and final status:
+    - The required stop condition fired at the first live gate. Terra's separate canonical behavioural smoke, repaired-category sample, frozen corpus and expanded corpus were not run.
+    - Luna and Sol received zero requests. No model comparison or production recommendation is possible.
+    - Total C1B estimated spend is US$0.012136 against the US$5 ceiling; final invoiced cost is not inferred.
+    - Final status is `LIVE_PROVIDER ACCEPTANCE — FAILED`.
+  - Post-run containment and phase boundary:
+    - Provider state returned to disabled with no model selected. The live process ended, post-run secret scans passed, and the production build ran with `OPENAI_API_KEY` removed from its environment.
+    - Vitest passes 345/345 across 32 files with zero skips; TypeScript, ESLint, production build, client dependency boundary and formatting checks pass.
+    - No prompt, schema, validator, repair rule, expectation, explanation plan, renderer, Ask UI, simulator or supported-scope change was made during C1B.
+    - Track C2 has not begun. A separately approved narrow diagnostic/refinement phase is required before another live attempt, and Phase B2 remains paused.
