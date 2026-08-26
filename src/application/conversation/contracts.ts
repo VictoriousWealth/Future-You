@@ -235,6 +235,10 @@ export interface ProviderInvocationMetadata {
   readonly provider: string;
   readonly model: string;
   readonly attempts: number;
+  readonly latencyMs?: number;
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+  readonly totalTokens?: number;
 }
 
 export interface AvailableScenarioReference {
