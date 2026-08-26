@@ -10,16 +10,23 @@ vi.mock("openai", () => ({
 
 import {
   CLARIFICATION_RESOLUTION_PROMPT_VERSION,
+  CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1,
   CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
+  CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1,
   INTERPRETATION_PROMPT_VERSION,
-  INTERPRETATION_SCHEMA_VERSION
+  INTERPRETATION_PROMPT_VERSION_V2,
+  INTERPRETATION_SCHEMA_VERSION,
+  INTERPRETATION_SCHEMA_VERSION_V2
 } from "../src/application/conversation/contracts";
 import {
-  completeTimingInterpretationSchema,
+  completeTimingInterpretationSchemaV2,
   legacyTimingInterpretationSchema,
-  monthClarificationResolutionSchema
+  monthClarificationResolutionSchemaV1
 } from "../src/application/conversation/schemas";
-import { INTERPRETATION_PROMPT, CLARIFICATION_RESOLUTION_PROMPT } from "../src/application/conversation/prompts";
+import {
+  CLARIFICATION_RESOLUTION_PROMPT_V1,
+  INTERPRETATION_PROMPT_V2
+} from "../src/application/conversation/prompts";
 import {
   SanitisedInterpretationDiagnosticCollector
 } from "../src/infrastructure/ai/openai/interpretation-diagnostics";
@@ -62,7 +69,7 @@ function providerResponse(timing: SyntheticTimingShape) {
   return {
     output: [{
       type: "function_call",
-      name: "submit_conversation_interpretation_v2",
+      name: "submit_conversation_interpretation_v3",
       arguments: JSON.stringify({
         interpretation: {
           kind: "CREATE_ONE_OFF_PURCHASE",
@@ -119,7 +126,7 @@ describe("Track C1D local timing-contract diagnostic", () => {
       { quote: "October", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null },
       { quote: "2027-10", kind: "EXPLICIT_YEAR_MONTH", monthNumber: 10, year: 2027, offsetMonths: null }
     ] as const;
-    expect(valid.map((timing) => completeTimingInterpretationSchema.safeParse(timing).success)).toEqual([true, true, true, true]);
+    expect(valid.map((timing) => completeTimingInterpretationSchemaV2.safeParse(timing).success)).toEqual([true, true, true, true]);
     expect(COMPLETE_TIMING_KINDS).toEqual(valid.map((timing) => timing.kind));
 
     const invalid = [
@@ -133,11 +140,11 @@ describe("Track C1D local timing-contract diagnostic", () => {
       { ...valid[3], year: null },
       { ...valid[3], offsetMonths: 1 }
     ];
-    expect(invalid.every((timing) => !completeTimingInterpretationSchema.safeParse(timing).success)).toBe(true);
+    expect(invalid.every((timing) => !completeTimingInterpretationSchemaV2.safeParse(timing).success)).toBe(true);
     for (const kind of ["MISSING", "AMBIGUOUS"] as const) {
       const partial = { quote: null, kind, monthNumber: null, year: null, offsetMonths: null };
       expect(legacyTimingInterpretationSchema.safeParse(partial).success).toBe(true);
-      expect(completeTimingInterpretationSchema.safeParse(partial).success).toBe(false);
+      expect(completeTimingInterpretationSchemaV2.safeParse(partial).success).toBe(false);
     }
   });
 
@@ -230,20 +237,24 @@ describe("Track C1D local timing-contract diagnostic", () => {
   });
 
   it("uses the identical complete-timing contract for initial purchase, month clarification, and timing follow-up", () => {
-    expect(monthClarificationResolutionSchema.safeParse({ kind: "RESOLVE_PURCHASE_MONTH", timing: validNextMonth }).success).toBe(true);
-    expect(monthClarificationResolutionSchema.safeParse({ kind: "RESOLVE_PURCHASE_MONTH", timing: { ...validNextMonth, offsetMonths: null } }).success).toBe(false);
-    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION).toBe("fy-clarification-resolution-schema/1.0.0");
-    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION).toBe("fy-clarification-resolution-prompt/1.0.0");
+    expect(monthClarificationResolutionSchemaV1.safeParse({ kind: "RESOLVE_PURCHASE_MONTH", timing: validNextMonth }).success).toBe(true);
+    expect(monthClarificationResolutionSchemaV1.safeParse({ kind: "RESOLVE_PURCHASE_MONTH", timing: { ...validNextMonth, offsetMonths: null } }).success).toBe(false);
+    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1).toBe("fy-clarification-resolution-schema/1.0.0");
+    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1).toBe("fy-clarification-resolution-prompt/1.0.0");
+    expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION).toBe("fy-clarification-resolution-schema/2.0.0");
+    expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION).toBe("fy-clarification-resolution-prompt/2.0.0");
   });
 
   it("shows that current prompts require semantic timing but do not state the five kind-specific field invariants", () => {
-    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/2.0.0");
-    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/2.0.0");
-    expect(INTERPRETATION_PROMPT).toContain("Preserve exact amount, timing");
-    expect(INTERPRETATION_PROMPT).toContain("resolves relative dates");
-    expect(INTERPRETATION_PROMPT).not.toContain("offsetMonths=1");
-    expect(INTERPRETATION_PROMPT).not.toContain("monthNumber must be null");
-    expect(CLARIFICATION_RESOLUTION_PROMPT).not.toContain("offsetMonths=1");
+    expect(INTERPRETATION_PROMPT_VERSION_V2).toBe("fy-conversation-interpretation/2.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION_V2).toBe("fy-conversation-intent/2.0.0");
+    expect(INTERPRETATION_PROMPT_V2).toContain("Preserve exact amount, timing");
+    expect(INTERPRETATION_PROMPT_V2).toContain("resolves relative dates");
+    expect(INTERPRETATION_PROMPT_V2).not.toContain("offsetMonths=1");
+    expect(INTERPRETATION_PROMPT_V2).not.toContain("monthNumber must be null");
+    expect(CLARIFICATION_RESOLUTION_PROMPT_V1).not.toContain("offsetMonths=1");
+    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/3.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/3.0.0");
   });
 
   it("audits every current corpus timing path without changing its expectation", async () => {
@@ -280,7 +291,7 @@ describe("Track C1D local timing-contract diagnostic", () => {
           ? output.attemptedOperation.timing
           : null;
       expect(timing?.kind).toBe(expectedTimingKind);
-      expect(timing ? completeTimingInterpretationSchema.safeParse(timing).success : false).toBe(true);
+      expect(timing ? completeTimingInterpretationSchemaV2.safeParse(timing).success : false).toBe(true);
     }
 
     expect(conversationEvaluationCorpusV2.some((item) => item.message.includes("2027-10"))).toBe(false);
@@ -290,7 +301,7 @@ describe("Track C1D local timing-contract diagnostic", () => {
     expect(conversationEvaluationCorpusV2.find((item) => item.id === "unsupported-intr_month")?.expectedKind).toBe("UNSUPPORTED");
   });
 
-  it("shows identical invalid timing repair receives only a broad path and broad semantic code", async () => {
+  it("retains the C1D repair case while the active v3 repair now receives a precise rule", async () => {
     const invalid = { ...validNextMonth, offsetMonths: 2 };
     const result = await runRepair(invalid, invalid);
     expect(result.resolved).toBe(false);
@@ -298,10 +309,11 @@ describe("Track C1D local timing-contract diagnostic", () => {
     expect(result.diagnostics[1]).toMatchObject({ repairOutcome: "IDENTICAL_FAILURE", simulatorInvoked: false });
     const repairInput = JSON.parse(result.calls[1]![0].input);
     expect(repairInput.validationErrors).toEqual([{
-      path: "/interpretation/timing",
-      code: "SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION"
+      path: "/interpretation/timing/offsetMonths",
+      code: "TIMING_OFFSET_MUST_EQUAL_ONE",
+      rule: "For NEXT_MONTH, offsetMonths must equal 1; monthNumber and year must be null."
     }]);
-    expect(JSON.stringify(repairInput.validationErrors)).not.toMatch(/offsetMonths|NEXT_MONTH|monthNumber|year|quote/);
+    expect(repairInput).not.toHaveProperty("invalidInterpretation");
   });
 
   it("distinguishes a different invalid timing repair signature", async () => {
