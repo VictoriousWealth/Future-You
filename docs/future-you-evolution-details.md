@@ -1679,3 +1679,62 @@
     - Clean-state Supabase integration passes 20/20, pgTAP passes 273/273 and mobile Chromium Playwright passes 31/31, all with zero skips. Coverage is 76.75% statements, 64.18% branches, 79.79% functions and 79.27% lines.
     - TypeScript, ESLint, keyless production builds, generated database artifacts, secret boundary, client dependency boundary and formatting checks pass. Test-created database pollution was resolved only through verified loopback-only resets using committed migrations and seed; no hosted database, manual SQL or weakened expectation was used.
     - Track C1D is complete as a diagnostic review only. Track C2 and Phase B2 remain paused.
+
+- **Track C1E approval — Local timing-contract correction replaces the active v2 interpretation contract**
+  - Approval and recovery:
+    - The C1D conclusion was approved: provider/runtime timing-shape mismatch and quote/kind authority mismatch require one coherent local correction rather than a prompt-only, schema-only or repair-only patch.
+    - C1E was authorised for local implementation and full regression only; it authorised no live OpenAI request, no model evaluation and no provider spend.
+    - Annotated tag `track-c1d-timing-diagnostic-complete-2026-08-26` preserves the independently recoverable pre-correction state at commit `e42c03aab85959f2d104efdf721a76f92f8fcd5f`.
+    - Existing C0, C1A, C1B and C1C recovery points and evidence remain unchanged.
+  - Version decisions:
+    - New turns use `fy-conversation-interpretation/3.0.0` and `fy-conversation-intent/3.0.0`.
+    - The canonical timing policy is `fy-conversation-timing-policy/1.0.0`.
+    - The materially aligned month clarification uses `fy-clarification-resolution-prompt/2.0.0` and `fy-clarification-resolution-schema/2.0.0`.
+    - Precise timing diagnostics use `fy-interpretation-diagnostic/2.0.0`.
+    - V1/v2 interpretation, v1 clarification and v1 diagnostic identifiers/artifacts remain historically available. Explanation prompt/schema remain unchanged at `1.0.0`.
+  - Canonical policy and provider schema:
+    - One server-owned timing-policy module now defines complete kinds, bounds, null/value matrices, state allowances, deterministic parsing, quote equivalence, runtime validation, prompt guidance and safe repair rules.
+    - The active provider root remains a strict object without root `anyOf`; timing alternatives are nested and kind-specific, with every field required and every object rejecting additional properties.
+    - `NEXT_MONTH` fixes offset to one and forbids month/year; `MONTHS_AFTER_SELECTED` requires a bounded positive offset and selected month-change state; `NAMED_MONTH` requires only month number; `EXPLICIT_YEAR_MONTH` requires month and approved year.
+    - The active interpretation provider-schema fingerprint is `93022ec341abe8706f8e59e08e6058d96119ef28c5121a8e95e58f3e645960b5`.
+  - Deterministic source equivalence and authority:
+    - Timing quotes must still be grounded in the current message or explicitly permitted prior field, and their bounded deterministic meaning must now agree with kind, month, year and offset.
+    - The parser recognises only approved next-month/noisy-next-month, English month, named-month-plus-year, existing `YYYY-MM`, numeric bounded months-later/after and existing word-one/wait-one-month forms.
+    - Unknown and ambiguous timing cannot create a complete command. A new purchase cannot use `MONTHS_AFTER_SELECTED`; selected scenario state is required for that month-change kind.
+    - Trusted timestamp, `Europe/London`, selected scenario month and calendar rules remain server authoritative. The provider never supplies an authoritative relative `YYYY-MM`.
+  - Diagnostics and bounded repair:
+    - Nineteen timing-specific closed codes now distinguish missing, forbidden, fixed, mismatched, ungrounded, unrecognised, ambiguous and state-incompatible timing.
+    - Diagnostics retain safe stage/code/path/approved-kind metadata only; timing quotes and provider/user values are not persisted.
+    - Exactly one repair remains. It receives only safe path, closed code and fixed timing-contract rule plus previously approved minimal request state.
+    - The repair no longer receives the raw or invalid structured provider response and never receives an evaluation answer, resolved month, simulator output, financial context, hidden prompt or financial output.
+  - Corpus and exhaustive outcome:
+    - The original C0 and expanded v2 corpora remain unchanged. A versioned 18-case v3 timing corpus covers canonical, structural, semantic, grounding, state, noisy, ambiguous, clarification, follow-up and unsupported timing.
+    - Repeating C1D's 3,024 representative grid yields 32 provider-valid and 32 runtime-valid shapes, with no provider-valid/runtime-invalid gap.
+    - Two shapes in that deliberately small quote grid are source-equivalent; every source-equivalent accepted shape has one unambiguous meaning and no contradictory kind reaches command authority.
+    - Quote equivalence and selected-scenario checks intentionally remain runtime controls because they depend on user text and authenticated application state.
+
+- **Track C1E implementation outcome — Local correction complete; live validation remains separately gated**
+  - Functional outcome:
+    - Canonical `next month` now has one authorised provider representation: grounded quote, `NEXT_MONTH`, null month/year and offset one.
+    - The server still resolves trusted August 2026 to `2026-09`; no resolved calendar answer is hard-coded in prompt/parser.
+    - Initial, clarification and follow-up timing share the same semantic object, with state-only distinctions for relative-to-selected changes.
+    - Frozen Sarah £650, £500, £400 and October outcomes remain unchanged. No new simulator scenario, financial behavior, Ask capability, explanation behavior or UI change was introduced.
+  - Verification outcome:
+    - Full Vitest passes 426/426 across 35 files with zero skips. Coverage is 77.94% statements, 66.39% branches, 80.37% functions and 80.41% lines.
+    - Frozen C0 + expanded v2 + v3 timing evaluation tests pass 112/112; repeated fake evaluation passes 144/144 interpretation/clarification and 6/6 explanation evaluations.
+    - Clean-state Supabase integration passes 20/20 across six files, pgTAP passes 273/273 across six files and the authoritative mobile Chromium rerun passes 31/31 with zero skips.
+    - TypeScript, ESLint, two keyless production builds, generated database artifacts, secret boundary, client dependency boundary and `git diff --check` pass.
+    - The first sandboxed database run could not access loopback/Docker. The first authorised local run then exposed prior test state; verified local-only resets reapplied all five migrations and canonical seed before the authoritative integration, pgTAP and browser runs. No hosted database, manual SQL/dashboard step or weakened expectation was used.
+    - The first browser run had one transient Benefits loading timeout after 28 passes and left two tests unrun. After canonical local reset, the unchanged complete suite passed 31/31. No timeout or visual assertion was weakened, and verification-generated PNG rewrites were restored because C1E has no visual change.
+  - Provider and roadmap boundary:
+    - Provider remained disabled and model selection unset. C1E made zero live OpenAI requests, created no live artifact and incurred US$0 provider spend.
+    - The proposed next gate is separately authorised only: one canonical `gpt-5.6-terra` case, low reasoning, one initial request plus at most the existing repair and a maximum estimated spend of US$0.10.
+    - That Terra request was not made. Track C2 and Phase B2 remain paused.
+
+- **Track C1E final secret-boundary verification — Ignored development cache remediated**
+  - The final security scan detected configured-key bytes in exactly two ignored Turbopack development-cache files; it reported only the cache paths and did not print any key bytes.
+  - The two disposable cache files were deleted without changing source, tests, database state or user data. The repeated scan then proved the configured key absent from tracked files, non-ignored repository files, generated artifacts and client bundles.
+  - Provider remained disabled, model selection remained unset and no live OpenAI request occurred. This remediation does not authorise the proposed Terra smoke or change the continued pause of Track C2 and Phase B2.
+
+- **Track C1E final coverage measurement**
+  - The post-refinement 426-test coverage run passed with zero skips and supersedes the earlier C1E measurement for reporting purposes: 77.96% statements (2,749/3,526), 66.44% branches (1,927/2,900), 80.40% functions (558/694) and 80.42% lines (2,523/3,137).
