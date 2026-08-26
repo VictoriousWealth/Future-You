@@ -1402,3 +1402,28 @@
   - Stop boundary:
     - Track C0 stops with documentation and blocked live evidence.
     - Track C1 refinement implementation and Track B Phase B2 remain paused pending explicit approval and genuine Terra/Luna evidence.
+
+- **Track C0 completion approval — Pre-live credential rotation is mandatory**
+  - Approval and status:
+    - The completed Track C0 configuration, fake baseline, Ask audit, Turbopack finding, remediation and regression evidence are approved.
+    - Live provider acceptance remains `BLOCKED` because no authorised live request has occurred, provider enablement is false and no model is selected.
+    - No live accuracy, latency, token, cost or quality result is inferred from the offline evidence.
+  - Rotation gate:
+    - The credential whose bytes entered the unintended ignored Turbopack build cache must be revoked and replaced before the first live evaluation request.
+    - The replacement must be a newly authorised Future You project-scoped evaluation service-account key, stored only in the ignored server environment with billing, usage monitoring and appropriate model access configured.
+    - Credential presence alone is insufficient; an authorised human owner must explicitly confirm the complete rotation and authorisation statement without disclosing the key.
+    - Rotation, revocation and owner confirmation have not yet been reported, so the provider remains disabled and the model remains unset.
+  - Preserved secret boundary:
+    - The safe build wrapper continues to remove `OPENAI_API_KEY` from the compilation environment, while runtime server configuration remains capable of receiving the key after deployment/startup.
+    - Executable tests now prove runtime-only provider resolution after module loading and exact five-field disabled-readiness output without credential disclosure or a provider call.
+    - Post-build byte scans continue proving the configured key is absent from tracked files, non-ignored repository files, generated artifacts and client bundles, and the secret file remains ignored.
+  - Approved future live sequence:
+    - After owner confirmation, Terra uses `low` reasoning for one canonical £650 smoke test and then three unchanged corpus repetitions only if the smoke passes.
+    - The provider is disabled before Luna is selected; Luna then uses the identical `low` reasoning, prompt, schema, timeout, retry, trusted date and evaluation expectations for its smoke and three repetitions.
+    - Sol remains limited to shared failures or a small representative diagnostic at the same initial reasoning effort.
+    - Total approved live evaluation spend is capped at US$10, no baseline refinement is allowed during execution, and the provider must be disabled again before reporting.
+  - Current verification and phase boundary:
+    - Safe readiness reports key configured `yes`, provider enabled `no`, model `not configured`, provider reachable `no` and model accessible `no`; it made no billable request.
+    - The focused OpenAI boundary tests pass 10/10 and the full Vitest suite passes 269/269 across 30 files.
+    - TypeScript, ESLint, the runtime-secret-isolated production build, secret-boundary scan and client dependency boundary pass.
+    - Track C1 has not started and Track B Phase B2 remains paused.
