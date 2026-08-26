@@ -3,10 +3,23 @@ import type {
   OneOffPurchaseResponseDTO,
   ScenarioPresentationDTO
 } from "../dto/contracts";
+import type {
+  AmbiguityId,
+  ExplanationTargetId,
+  InterpretationIntentId,
+  ScenarioFollowUpId,
+  ScenarioReferenceStrategyId,
+  ScenarioSelectionTargetId,
+  UnsupportedCategoryId
+} from "./interpretation-policy";
 
 export const CONVERSATION_ORCHESTRATION_VERSION = "fy-conversation-orchestration/1.0.0" as const;
-export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/1.0.0" as const;
-export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/1.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION_V1 = "fy-conversation-interpretation/1.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION_V1 = "fy-conversation-intent/1.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/2.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/2.0.0" as const;
+export const CLARIFICATION_RESOLUTION_PROMPT_VERSION = "fy-clarification-resolution-prompt/1.0.0" as const;
+export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION = "fy-clarification-resolution-schema/1.0.0" as const;
 export const EXPLANATION_PROMPT_VERSION = "fy-conversation-explanation/1.0.0" as const;
 export const EXPLANATION_SCHEMA_VERSION = "fy-explanation-plan/1.0.0" as const;
 export const CONVERSATION_RESPONSE_SCHEMA = "conversation/1.0.0" as const;
@@ -14,20 +27,11 @@ export const CONVERSATION_LIST_RESPONSE_SCHEMA = "conversation-list/1.0.0" as co
 export const CONVERSATION_TURN_RESPONSE_SCHEMA = "conversation-turn/1.0.0" as const;
 export const CONVERSATION_TIMEZONE = "Europe/London" as const;
 
-export type ConversationIntentKind =
-  | "CREATE_ONE_OFF_PURCHASE"
-  | "CHANGE_PURCHASE_AMOUNT"
-  | "CHANGE_PURCHASE_MONTH"
-  | "EXPLAIN_SELECTED_RESULT"
-  | "SELECT_EXISTING_SCENARIO"
-  | "HELP"
-  | "GREETING"
-  | "UNSUPPORTED"
-  | "AMBIGUOUS";
+export type ConversationIntentKind = InterpretationIntentId;
 
 export interface AmountInterpretation {
-  readonly quote: string | null;
-  readonly currency: "GBP" | "UNSUPPORTED" | null;
+  readonly quote: string;
+  readonly currency: "GBP" | "UNSUPPORTED";
 }
 
 export interface TimingInterpretation {
@@ -52,50 +56,120 @@ export type ExplanationTarget =
   | "BILLS"
   | "BORROWING"
   | "ASSUMPTIONS"
-  | "OTHER";
+  | "TIMING_EFFECT"
+  | "OTHER_SUPPORTED_EXPLANATION";
 
-interface InterpretationCommon {
-  readonly missingFields: readonly string[];
-  readonly unsupportedFeatures: readonly string[];
-}
+export type CompleteTimingInterpretation = Readonly<{
+  quote: string;
+  kind: "NEXT_MONTH" | "MONTHS_AFTER_SELECTED" | "NAMED_MONTH" | "EXPLICIT_YEAR_MONTH";
+  monthNumber: number | null;
+  year: number | null;
+  offsetMonths: number | null;
+}>;
 
 export type ConversationInterpretation =
-  | (InterpretationCommon & Readonly<{
+  | Readonly<{
       kind: "CREATE_ONE_OFF_PURCHASE";
       amount: AmountInterpretation;
-      timing: TimingInterpretation;
+      timing: CompleteTimingInterpretation;
       purposeQuote: string | null;
-    }>)
-  | (InterpretationCommon & Readonly<{
+    }>
+  | Readonly<{
       kind: "CHANGE_PURCHASE_AMOUNT";
       amount: AmountInterpretation;
-      referencedScenarioLabel: string | null;
-    }>)
-  | (InterpretationCommon & Readonly<{
+      scenarioReferenceStrategy: ScenarioReferenceStrategyId;
+      scenarioReferenceQuote: string | null;
+    }>
+  | Readonly<{
       kind: "CHANGE_PURCHASE_MONTH";
-      timing: TimingInterpretation;
-      referencedScenarioLabel: string | null;
-    }>)
+      timing: CompleteTimingInterpretation;
+      scenarioReferenceStrategy: ScenarioReferenceStrategyId;
+      scenarioReferenceQuote: string | null;
+    }>
   | Readonly<{
       kind: "EXPLAIN_SELECTED_RESULT";
-      explanationTarget: ExplanationTarget;
+      explanationTarget: ExplanationTargetId;
       goalReferenceQuote: string | null;
+      scenarioReferenceStrategy: ScenarioReferenceStrategyId;
+      scenarioReferenceQuote: string | null;
     }>
   | Readonly<{
       kind: "SELECT_EXISTING_SCENARIO";
-      scenarioReferenceQuote: string | null;
+      selectionTarget: ScenarioSelectionTargetId;
+      scenarioLabelQuote: string | null;
+    }>
+  | Readonly<{
+      kind: "CLARIFY_PURCHASE_AMOUNT";
+      purposeQuote: string | null;
+      timing: CompleteTimingInterpretation | null;
+    }>
+  | Readonly<{
+      kind: "CLARIFY_PURCHASE_MONTH";
+      amount: AmountInterpretation;
+      purposeQuote: string | null;
+    }>
+  | Readonly<{
+      kind: "CLARIFY_SCENARIO_REFERENCE";
+      attemptedOperation:
+        | Readonly<{ kind: "CHANGE_PURCHASE_AMOUNT"; amount: AmountInterpretation }>
+        | Readonly<{ kind: "CHANGE_PURCHASE_MONTH"; timing: CompleteTimingInterpretation }>
+        | Readonly<{ kind: "EXPLAIN_SELECTED_RESULT"; explanationTarget: ExplanationTargetId; goalReferenceQuote: string | null }>
+        | Readonly<{ kind: "SELECT_EXISTING_SCENARIO" }>;
     }>
   | Readonly<{ kind: "HELP" | "GREETING" }>
   | Readonly<{
       kind: "UNSUPPORTED";
-      category: string;
-      userGoalSummary: string | null;
+      category: UnsupportedCategoryId;
     }>
   | Readonly<{
       kind: "AMBIGUOUS";
-      ambiguity: string;
-      clarificationKey: string;
+      ambiguity: AmbiguityId;
     }>;
+
+/** Frozen shape retained only for C0 evidence and historical contract comparison. */
+export type ConversationInterpretationV1 =
+  | Readonly<{
+      kind: "CREATE_ONE_OFF_PURCHASE";
+      amount: { quote: string | null; currency: "GBP" | "UNSUPPORTED" | null };
+      timing: TimingInterpretation;
+      purposeQuote: string | null;
+      missingFields: readonly string[];
+      unsupportedFeatures: readonly string[];
+    }>
+  | Readonly<{
+      kind: "CHANGE_PURCHASE_AMOUNT";
+      amount: { quote: string | null; currency: "GBP" | "UNSUPPORTED" | null };
+      referencedScenarioLabel: string | null;
+      missingFields: readonly string[];
+      unsupportedFeatures: readonly string[];
+    }>
+  | Readonly<{
+      kind: "CHANGE_PURCHASE_MONTH";
+      timing: TimingInterpretation;
+      referencedScenarioLabel: string | null;
+      missingFields: readonly string[];
+      unsupportedFeatures: readonly string[];
+    }>
+  | Readonly<{
+      kind: "EXPLAIN_SELECTED_RESULT";
+      explanationTarget: "OVERALL_CLASSIFICATION" | "SAFETY_BUFFER" | "BUFFER_RECOVERY" | "GOAL_DELAY" | "BILLS" | "BORROWING" | "ASSUMPTIONS" | "OTHER";
+      goalReferenceQuote: string | null;
+    }>
+  | Readonly<{ kind: "SELECT_EXISTING_SCENARIO"; scenarioReferenceQuote: string | null }>
+  | Readonly<{ kind: "HELP" | "GREETING" }>
+  | Readonly<{ kind: "UNSUPPORTED"; category: string; userGoalSummary: string | null }>
+  | Readonly<{ kind: "AMBIGUOUS"; ambiguity: string; clarificationKey: string }>;
+
+export type ClarificationResolution =
+  | Readonly<{ kind: "RESOLVE_PURCHASE_AMOUNT"; amount: AmountInterpretation }>
+  | Readonly<{ kind: "RESOLVE_PURCHASE_MONTH"; timing: CompleteTimingInterpretation }>
+  | Readonly<{
+      kind: "RESOLVE_SCENARIO_REFERENCE";
+      selectionTarget: ScenarioSelectionTargetId;
+      scenarioLabelQuote: string | null;
+    }>
+  | Readonly<{ kind: "UNSUPPORTED"; category: UnsupportedCategoryId }>
+  | Readonly<{ kind: "AMBIGUOUS"; ambiguity: AmbiguityId }>;
 
 export type TrustedFactKey =
   | "OVERALL_CLASSIFICATION"
@@ -133,17 +207,24 @@ export type PendingClarification =
       originalMessageId: string;
       partialPurpose: string | null;
       partialTiming: TimingInterpretation;
+      attemptedOperation?: "CREATE_ONE_OFF_PURCHASE" | "CHANGE_PURCHASE_AMOUNT" | undefined;
     }>
   | Readonly<{
       type: "PURCHASE_MONTH";
       originalMessageId: string;
       amountQuote: string;
       partialPurpose: string | null;
+      attemptedOperation?: "CREATE_ONE_OFF_PURCHASE" | "CHANGE_PURCHASE_MONTH" | undefined;
     }>
   | Readonly<{
       type: "SCENARIO_REFERENCE";
       originalMessageId: string;
       availableRunIds: readonly string[];
+      attemptedOperation?: ScenarioFollowUpId | undefined;
+      amount?: AmountInterpretation | undefined;
+      timing?: CompleteTimingInterpretation | undefined;
+      explanationTarget?: ExplanationTargetId | undefined;
+      goalReferenceQuote?: string | null | undefined;
     }>;
 
 export type ConversationMessageKind =
@@ -256,6 +337,15 @@ export interface InterpretationProviderRequest {
   readonly timezone: typeof CONVERSATION_TIMEZONE;
 }
 
+export interface ClarificationResolutionProviderRequest {
+  readonly userMessage: string;
+  readonly pendingClarification: PendingClarification;
+  readonly availableScenarios: readonly AvailableScenarioReference[];
+  readonly selectedScenarioType: "one_off_purchase" | null;
+  readonly trustedDate: string;
+  readonly timezone: typeof CONVERSATION_TIMEZONE;
+}
+
 export interface ExplanationProviderRequest {
   readonly explanationTarget: ExplanationTarget;
   readonly availableFactKeys: readonly TrustedFactKey[];
@@ -270,5 +360,6 @@ export interface ProviderResult<T> {
 
 export interface ConversationModelProvider {
   interpret(request: InterpretationProviderRequest): Promise<ProviderResult<ConversationInterpretation>>;
+  resolveClarification(request: ClarificationResolutionProviderRequest): Promise<ProviderResult<ClarificationResolution>>;
   planExplanation(request: ExplanationProviderRequest): Promise<ProviderResult<ExplanationPlan>>;
 }
