@@ -1,23 +1,22 @@
 import { z } from "zod";
+import {
+  AMBIGUITY_IDS,
+  EXPLANATION_TARGET_IDS,
+  INTERPRETATION_INTENT_IDS,
+  SCENARIO_FOLLOW_UP_IDS,
+  SCENARIO_REFERENCE_STRATEGY_IDS,
+  SCENARIO_SELECTION_TARGET_IDS,
+  UNSUPPORTED_CATEGORY_IDS
+} from "./interpretation-policy";
 
-export const conversationIntentKindSchema = z.enum([
-  "CREATE_ONE_OFF_PURCHASE",
-  "CHANGE_PURCHASE_AMOUNT",
-  "CHANGE_PURCHASE_MONTH",
-  "EXPLAIN_SELECTED_RESULT",
-  "SELECT_EXISTING_SCENARIO",
-  "HELP",
-  "GREETING",
-  "UNSUPPORTED",
-  "AMBIGUOUS"
-]);
+export const conversationIntentKindSchema = z.enum(INTERPRETATION_INTENT_IDS);
 
-const amountSchema = z.object({
-  quote: z.string().max(80).nullable(),
-  currency: z.enum(["GBP", "UNSUPPORTED"]).nullable()
+export const amountInterpretationSchema = z.object({
+  quote: z.string().min(1).max(80),
+  currency: z.enum(["GBP", "UNSUPPORTED"])
 }).strict();
 
-const timingSchema = z.object({
+export const legacyTimingInterpretationSchema = z.object({
   quote: z.string().max(120).nullable(),
   kind: z.enum([
     "NEXT_MONTH",
@@ -32,75 +31,183 @@ const timingSchema = z.object({
   offsetMonths: z.number().int().min(0).max(120).nullable()
 }).strict();
 
+export const completeTimingInterpretationSchema = z.object({
+  quote: z.string().min(1).max(120),
+  kind: z.enum(["NEXT_MONTH", "MONTHS_AFTER_SELECTED", "NAMED_MONTH", "EXPLICIT_YEAR_MONTH"]),
+  monthNumber: z.number().int().min(1).max(12).nullable(),
+  year: z.number().int().min(2000).max(2200).nullable(),
+  offsetMonths: z.number().int().min(0).max(120).nullable()
+}).strict().superRefine((value, context) => {
+  if (value.kind === "NEXT_MONTH" && (value.monthNumber !== null || value.year !== null || value.offsetMonths !== 1)) {
+    context.addIssue({ code: "custom", message: "NEXT_MONTH requires only offsetMonths=1." });
+  }
+  if (value.kind === "MONTHS_AFTER_SELECTED" && (value.monthNumber !== null || value.year !== null || value.offsetMonths === null || value.offsetMonths < 1)) {
+    context.addIssue({ code: "custom", message: "MONTHS_AFTER_SELECTED requires a positive offset only." });
+  }
+  if (value.kind === "NAMED_MONTH" && (value.monthNumber === null || value.year !== null || value.offsetMonths !== null)) {
+    context.addIssue({ code: "custom", message: "NAMED_MONTH requires only monthNumber." });
+  }
+  if (value.kind === "EXPLICIT_YEAR_MONTH" && (value.monthNumber === null || value.year === null || value.offsetMonths !== null)) {
+    context.addIssue({ code: "custom", message: "EXPLICIT_YEAR_MONTH requires year and monthNumber only." });
+  }
+});
+
 export const pendingClarificationSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("PURCHASE_AMOUNT"),
     originalMessageId: z.string().min(3).max(160),
     partialPurpose: z.string().max(160).nullable(),
-    partialTiming: timingSchema
+    partialTiming: legacyTimingInterpretationSchema,
+    attemptedOperation: z.enum(["CREATE_ONE_OFF_PURCHASE", "CHANGE_PURCHASE_AMOUNT"]).optional()
   }).strict(),
   z.object({
     type: z.literal("PURCHASE_MONTH"),
     originalMessageId: z.string().min(3).max(160),
     amountQuote: z.string().min(1).max(80),
-    partialPurpose: z.string().max(160).nullable()
+    partialPurpose: z.string().max(160).nullable(),
+    attemptedOperation: z.enum(["CREATE_ONE_OFF_PURCHASE", "CHANGE_PURCHASE_MONTH"]).optional()
   }).strict(),
   z.object({
     type: z.literal("SCENARIO_REFERENCE"),
     originalMessageId: z.string().min(3).max(160),
-    availableRunIds: z.array(z.string().min(3).max(160)).max(30)
+    availableRunIds: z.array(z.string().min(3).max(160)).max(30),
+    attemptedOperation: z.enum(SCENARIO_FOLLOW_UP_IDS).optional(),
+    amount: amountInterpretationSchema.optional(),
+    timing: completeTimingInterpretationSchema.optional(),
+    explanationTarget: z.enum(EXPLANATION_TARGET_IDS).optional(),
+    goalReferenceQuote: z.string().max(160).nullable().optional()
   }).strict()
 ]);
-
-const commonSchema = {
-  missingFields: z.array(z.string().max(80)).max(4),
-  unsupportedFeatures: z.array(z.string().max(80)).max(8)
-};
 
 export const conversationInterpretationSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("CREATE_ONE_OFF_PURCHASE"),
-    amount: amountSchema,
-    timing: timingSchema,
-    purposeQuote: z.string().max(160).nullable(),
-    ...commonSchema
+    amount: amountInterpretationSchema,
+    timing: completeTimingInterpretationSchema,
+    purposeQuote: z.string().max(160).nullable()
   }).strict(),
   z.object({
     kind: z.literal("CHANGE_PURCHASE_AMOUNT"),
-    amount: amountSchema,
-    referencedScenarioLabel: z.string().max(160).nullable(),
-    ...commonSchema
+    amount: amountInterpretationSchema,
+    scenarioReferenceStrategy: z.enum(SCENARIO_REFERENCE_STRATEGY_IDS),
+    scenarioReferenceQuote: z.string().max(160).nullable()
   }).strict(),
   z.object({
     kind: z.literal("CHANGE_PURCHASE_MONTH"),
-    timing: timingSchema,
-    referencedScenarioLabel: z.string().max(160).nullable(),
-    ...commonSchema
+    timing: completeTimingInterpretationSchema,
+    scenarioReferenceStrategy: z.enum(SCENARIO_REFERENCE_STRATEGY_IDS),
+    scenarioReferenceQuote: z.string().max(160).nullable()
   }).strict(),
   z.object({
     kind: z.literal("EXPLAIN_SELECTED_RESULT"),
-    explanationTarget: z.enum([
-      "OVERALL_CLASSIFICATION", "SAFETY_BUFFER", "BUFFER_RECOVERY", "GOAL_DELAY",
-      "BILLS", "BORROWING", "ASSUMPTIONS", "OTHER"
-    ]),
-    goalReferenceQuote: z.string().max(160).nullable()
+    explanationTarget: z.enum(EXPLANATION_TARGET_IDS),
+    goalReferenceQuote: z.string().max(160).nullable(),
+    scenarioReferenceStrategy: z.enum(SCENARIO_REFERENCE_STRATEGY_IDS),
+    scenarioReferenceQuote: z.string().max(160).nullable()
   }).strict(),
   z.object({
     kind: z.literal("SELECT_EXISTING_SCENARIO"),
-    scenarioReferenceQuote: z.string().max(160).nullable()
+    selectionTarget: z.enum(SCENARIO_SELECTION_TARGET_IDS),
+    scenarioLabelQuote: z.string().max(160).nullable()
+  }).strict(),
+  z.object({
+    kind: z.literal("CLARIFY_PURCHASE_AMOUNT"),
+    purposeQuote: z.string().max(160).nullable(),
+    timing: completeTimingInterpretationSchema.nullable()
+  }).strict(),
+  z.object({
+    kind: z.literal("CLARIFY_PURCHASE_MONTH"),
+    amount: amountInterpretationSchema,
+    purposeQuote: z.string().max(160).nullable()
+  }).strict(),
+  z.object({
+    kind: z.literal("CLARIFY_SCENARIO_REFERENCE"),
+    attemptedOperation: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("CHANGE_PURCHASE_AMOUNT"), amount: amountInterpretationSchema }).strict(),
+      z.object({ kind: z.literal("CHANGE_PURCHASE_MONTH"), timing: completeTimingInterpretationSchema }).strict(),
+      z.object({ kind: z.literal("EXPLAIN_SELECTED_RESULT"), explanationTarget: z.enum(EXPLANATION_TARGET_IDS), goalReferenceQuote: z.string().max(160).nullable() }).strict(),
+      z.object({ kind: z.literal("SELECT_EXISTING_SCENARIO") }).strict()
+    ])
   }).strict(),
   z.object({ kind: z.literal("HELP") }).strict(),
   z.object({ kind: z.literal("GREETING") }).strict(),
   z.object({
     kind: z.literal("UNSUPPORTED"),
-    category: z.string().min(1).max(100),
-    userGoalSummary: z.string().max(240).nullable()
+    category: z.enum(UNSUPPORTED_CATEGORY_IDS)
   }).strict(),
   z.object({
     kind: z.literal("AMBIGUOUS"),
-    ambiguity: z.string().min(1).max(240),
-    clarificationKey: z.string().min(1).max(100)
+    ambiguity: z.enum(AMBIGUITY_IDS)
   }).strict()
+]).superRefine((value, context) => {
+  if ("amount" in value && value.amount.currency !== "GBP") {
+    context.addIssue({ code: "custom", message: "Supported purchase branches require GBP." });
+  }
+  if ("scenarioReferenceStrategy" in value) {
+    const explicit = value.scenarioReferenceStrategy === "EXPLICIT_SCENARIO_LABEL";
+    if (explicit !== (value.scenarioReferenceQuote !== null)) {
+      context.addIssue({ code: "custom", message: "Scenario reference strategy and quote do not agree." });
+    }
+  }
+  if (value.kind === "SELECT_EXISTING_SCENARIO") {
+    const explicit = value.selectionTarget === "EXPLICIT_SCENARIO_LABEL";
+    if (explicit !== (value.scenarioLabelQuote !== null)) {
+      context.addIssue({ code: "custom", message: "Selection target and label quote do not agree." });
+    }
+  }
+});
+
+export const conversationInterpretationEnvelopeV2Schema = z.object({
+  interpretation: conversationInterpretationSchema
+}).strict();
+
+export const amountClarificationResolutionSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("RESOLVE_PURCHASE_AMOUNT"), amount: amountInterpretationSchema }).strict(),
+  z.object({ kind: z.literal("UNSUPPORTED"), category: z.enum(UNSUPPORTED_CATEGORY_IDS) }).strict(),
+  z.object({ kind: z.literal("AMBIGUOUS"), ambiguity: z.enum(AMBIGUITY_IDS) }).strict()
+]);
+
+export const monthClarificationResolutionSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("RESOLVE_PURCHASE_MONTH"), timing: completeTimingInterpretationSchema }).strict(),
+  z.object({ kind: z.literal("UNSUPPORTED"), category: z.enum(UNSUPPORTED_CATEGORY_IDS) }).strict(),
+  z.object({ kind: z.literal("AMBIGUOUS"), ambiguity: z.enum(AMBIGUITY_IDS) }).strict()
+]);
+
+export const scenarioClarificationResolutionSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("RESOLVE_SCENARIO_REFERENCE"),
+    selectionTarget: z.enum(SCENARIO_SELECTION_TARGET_IDS),
+    scenarioLabelQuote: z.string().max(160).nullable()
+  }).strict(),
+  z.object({ kind: z.literal("UNSUPPORTED"), category: z.enum(UNSUPPORTED_CATEGORY_IDS) }).strict(),
+  z.object({ kind: z.literal("AMBIGUOUS"), ambiguity: z.enum(AMBIGUITY_IDS) }).strict()
+]).superRefine((value, context) => {
+  if (value.kind !== "RESOLVE_SCENARIO_REFERENCE") return;
+  const explicit = value.selectionTarget === "EXPLICIT_SCENARIO_LABEL";
+  if (explicit !== (value.scenarioLabelQuote !== null)) {
+    context.addIssue({ code: "custom", message: "Selection target and label quote do not agree." });
+  }
+});
+
+export const clarificationResolutionEnvelopeSchema = z.object({
+  resolution: z.union([
+    amountClarificationResolutionSchema,
+    monthClarificationResolutionSchema,
+    scenarioClarificationResolutionSchema
+  ])
+}).strict();
+
+/** Frozen v1 runtime schema retained for historical C0 evidence. */
+export const conversationInterpretationV1Schema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("CREATE_ONE_OFF_PURCHASE"), amount: z.object({ quote: z.string().nullable(), currency: z.enum(["GBP", "UNSUPPORTED"]).nullable() }).strict(), timing: legacyTimingInterpretationSchema, purposeQuote: z.string().nullable(), missingFields: z.array(z.string()), unsupportedFeatures: z.array(z.string()) }).strict(),
+  z.object({ kind: z.literal("CHANGE_PURCHASE_AMOUNT"), amount: z.object({ quote: z.string().nullable(), currency: z.enum(["GBP", "UNSUPPORTED"]).nullable() }).strict(), referencedScenarioLabel: z.string().nullable(), missingFields: z.array(z.string()), unsupportedFeatures: z.array(z.string()) }).strict(),
+  z.object({ kind: z.literal("CHANGE_PURCHASE_MONTH"), timing: legacyTimingInterpretationSchema, referencedScenarioLabel: z.string().nullable(), missingFields: z.array(z.string()), unsupportedFeatures: z.array(z.string()) }).strict(),
+  z.object({ kind: z.literal("EXPLAIN_SELECTED_RESULT"), explanationTarget: z.enum(["OVERALL_CLASSIFICATION", "SAFETY_BUFFER", "BUFFER_RECOVERY", "GOAL_DELAY", "BILLS", "BORROWING", "ASSUMPTIONS", "OTHER"]), goalReferenceQuote: z.string().nullable() }).strict(),
+  z.object({ kind: z.literal("SELECT_EXISTING_SCENARIO"), scenarioReferenceQuote: z.string().nullable() }).strict(),
+  z.object({ kind: z.literal("HELP") }).strict(),
+  z.object({ kind: z.literal("GREETING") }).strict(),
+  z.object({ kind: z.literal("UNSUPPORTED"), category: z.string(), userGoalSummary: z.string().nullable() }).strict(),
+  z.object({ kind: z.literal("AMBIGUOUS"), ambiguity: z.string(), clarificationKey: z.string() }).strict()
 ]);
 
 export const explanationPlanSchema = z.object({
