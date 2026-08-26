@@ -183,3 +183,29 @@ Track C1 should not start until Terra and Luna have been run and reviewed. Its c
 5. Preserve the existing provider authority, exact-money parser, date resolver, simulator, immutable run, and server renderer without expansion.
 
 Free model-written financial explanations remain unapproved and are not recommended. Phase B2 remains paused.
+
+## Approved post-C0 credential-rotation and live-run gate
+
+Track C0 is approved as complete with `LIVE_PROVIDER ACCEPTANCE — BLOCKED`. The credential whose bytes entered an unintended ignored Turbopack cache is treated as requiring rotation even though the cache was removed and no secret reached tracked files or client bundles.
+
+Before any live request, an authorised human owner must revoke that credential, configure a newly created Future You project service-account key in the approved ignored server environment, and explicitly confirm its project, service-account, billing, model-access, storage and authorisation properties without disclosing the key. A configured environment variable alone is not that confirmation.
+
+Until the confirmation is received:
+
+- `OPENAI_PROVIDER_ENABLED` remains `false`.
+- `OPENAI_MODEL` remains unset.
+- No readiness request, smoke request, corpus run or diagnostic request may reach OpenAI.
+- Track C1 and Track B Phase B2 remain paused.
+
+After confirmation, the approved live order is:
+
+1. Run disabled readiness and verify only its five approved fields; this makes no request.
+2. Enable `gpt-5.6-terra` with `OPENAI_REASONING_EFFORT=low`, run one canonical £650 smoke case, and proceed to the unchanged three-repetition corpus only if every smoke gate passes.
+3. Disable the provider before changing models.
+4. Enable `gpt-5.6-luna` with the same reasoning, timeout, retry, prompt, schema, trusted-date and expectation configuration; run the same smoke and three-repetition corpus gates.
+5. Disable the provider again. Use `gpt-5.6-sol` only for shared failures or a small representative diagnostic, initially at the same reasoning effort.
+6. Keep cumulative live evaluation within the separately approved US$10 maximum, disable the provider after the runs, report the evidence, and stop before Track C1.
+
+The explicit `low` reasoning setting in this approved live procedure supersedes the earlier provider-default setting for these future Terra, Luna and selected Sol calls only. It does not change any prompt, schema, template, intent, retry policy, UI or financial authority.
+
+Automated proof now covers both halves of the deployment boundary: the production build receives no OpenAI key, while the server provider resolver reads a synthetic key injected after module loading from the runtime environment. The disabled readiness command is executed with a generated synthetic credential and must return exactly the five approved lines without printing that value or making a request. Byte-level post-build scans continue to cover tracked files, non-ignored repository files, generated artifacts and client bundles.
