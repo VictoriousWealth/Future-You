@@ -6,6 +6,7 @@ import {
   type FakeProviderMode
 } from "./fake-conversation-model-provider";
 import { OpenAIResponsesConversationModelProvider } from "./openai/openai-responses-conversation-provider";
+import { requireEnabledOpenAIRuntimeConfiguration } from "./openai/openai-runtime-configuration";
 
 const FAKE_MODES = new Set<FakeProviderMode>([
   "normal", "timeout", "rate_limit", "provider_failure", "invalid_schema",
@@ -32,13 +33,15 @@ export function resolveConversationProvider(): ResolvedConversationProvider {
     };
   }
   if (configured === "openai") {
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-    if (!apiKey) throw new Error("OPENAI_API_KEY is required when CONVERSATION_PROVIDER=openai.");
-    const model = process.env.OPENAI_CONVERSATION_MODEL?.trim() || "gpt-5.6-luna";
+    const configuration = requireEnabledOpenAIRuntimeConfiguration();
     return {
-      provider: new OpenAIResponsesConversationModelProvider(apiKey, model),
+      provider: new OpenAIResponsesConversationModelProvider(configuration.apiKey, configuration.model, {
+        timeoutMs: configuration.timeoutMs,
+        maxRetries: configuration.maxRetries,
+        reasoningEffort: configuration.reasoningEffort
+      }),
       providerIdentifier: "openai",
-      modelIdentifier: model
+      modelIdentifier: configuration.model
     };
   }
   throw new Error("Set CONVERSATION_PROVIDER to openai, or explicitly use fake in local/test mode.");
