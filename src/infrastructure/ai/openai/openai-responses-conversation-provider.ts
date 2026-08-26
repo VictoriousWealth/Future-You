@@ -19,7 +19,7 @@ import {
 } from "../../../application/conversation/contracts";
 import {
   amountClarificationResolutionSchema,
-  conversationInterpretationEnvelopeV2Schema,
+  conversationInterpretationEnvelopeV3Schema,
   explanationPlanSchema,
   monthClarificationResolutionSchema,
   scenarioClarificationResolutionSchema
@@ -38,7 +38,7 @@ import {
 import {
   AMOUNT_CLARIFICATION_PARAMETERS,
   EXPLANATION_PARAMETERS_V1,
-  INTERPRETATION_PARAMETERS_V2,
+  INTERPRETATION_PARAMETERS_V3,
   MONTH_CLARIFICATION_PARAMETERS,
   SCENARIO_CLARIFICATION_PARAMETERS,
   assertStrictProviderSchema
@@ -63,8 +63,8 @@ import {
   type SanitisedInterpretationDiagnosticDraft
 } from "./interpretation-diagnostics";
 
-export const INTERPRET_TOOL = "submit_conversation_interpretation_v2";
-export const CLARIFICATION_TOOL = "submit_clarification_resolution";
+export const INTERPRET_TOOL = "submit_conversation_interpretation_v3";
+export const CLARIFICATION_TOOL = "submit_clarification_resolution_v2";
 export const EXPLANATION_TOOL = "submit_explanation_plan";
 
 type ProviderValue = ConversationInterpretation | ClarificationResolution | ExplanationPlan;
@@ -114,11 +114,10 @@ function minimalState(input: unknown): unknown {
   };
 }
 
-function repairInput(input: unknown, invalidOutput: unknown, validationErrors: readonly unknown[]): unknown {
+function repairInput(input: unknown, validationErrors: readonly unknown[]): unknown {
   return {
     mode: "BOUNDED_REPAIR",
     originalRequest: minimalState(input),
-    invalidInterpretation: invalidOutput,
     validationErrors,
     permittedIdentifiers: {
       intents: INTERPRETATION_INTENT_IDS,
@@ -148,7 +147,8 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     this.reasoningEffort = options.reasoningEffort ?? null;
     this.maxRetries = options.maxRetries ?? 1;
     this.diagnosticSink = options.diagnosticSink ?? null;
-    assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V2);
+    assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V3);
+    assertStrictProviderSchema(MONTH_CLARIFICATION_PARAMETERS);
   }
 
   private async forcedCall<T extends ProviderValue>(input: Readonly<{
@@ -174,7 +174,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     let firstFailureDiagnostic: SanitisedInterpretationDiagnosticDraft | null = null;
     const startedAt = performance.now();
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt += 1) {
-      let invalidOutput: unknown = null;
+      let providerArguments: unknown;
       let issueCodes: readonly unknown[] = [];
       let attemptDiagnostic: SanitisedInterpretationDiagnosticDraft | null = null;
       const diagnosticMetadata: InterpretationDiagnosticMetadata | null = input.diagnostic
@@ -237,7 +237,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           throw new ConversationProviderError("UNKNOWN_TOOL", false, "The provider returned an unknown tool.");
         }
         try {
-          invalidOutput = JSON.parse(call.arguments);
+          providerArguments = JSON.parse(call.arguments);
         } catch {
           if (diagnosticMetadata) {
             attemptDiagnostic = jsonArgumentsDiagnostic(diagnosticMetadata);
@@ -248,13 +248,22 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider returned invalid JSON arguments.");
         }
         try {
-          const parsed = input.parse(invalidOutput);
+          const parsed = input.parse(providerArguments);
           if (diagnosticMetadata) {
             attemptDiagnostic = successfulInterpretationDiagnostic(
               diagnosticMetadata,
               parsed as ConversationInterpretation | ClarificationResolution,
               input.request as InterpretationProviderRequest | ClarificationResolutionProviderRequest
             );
+            if (attemptDiagnostic.failedStage !== null
+              && attemptDiagnostic.diagnosticCodes.some((code) => code.startsWith("TIMING_"))) {
+              issueCodes = repairValidationErrors(attemptDiagnostic);
+              throw new ConversationProviderError(
+                "INVALID_OUTPUT",
+                true,
+                "The provider timing interpretation failed deterministic validation."
+              );
+            }
             if (repairUsed) attemptDiagnostic = markRepairSucceeded(attemptDiagnostic);
             this.diagnosticSink?.record(attemptDiagnostic);
           }
@@ -267,8 +276,11 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
             totalTokens
           };
         } catch (error) {
+          if (error instanceof ConversationProviderError && attemptDiagnostic && attemptDiagnostic.failedStage !== null) {
+            throw error;
+          }
           if (diagnosticMetadata) {
-            attemptDiagnostic = runtimeValidationDiagnostic(diagnosticMetadata, invalidOutput, error);
+            attemptDiagnostic = runtimeValidationDiagnostic(diagnosticMetadata, providerArguments, error);
             issueCodes = repairValidationErrors(attemptDiagnostic);
           } else {
             issueCodes = legacyValidationIssueCodes(error);
@@ -291,7 +303,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
         }
         if (canRepair && attempt < this.maxRetries + 1) {
           repairUsed = true;
-          nextInput = repairInput(input.request, invalidOutput, issueCodes);
+          nextInput = repairInput(input.request, issueCodes);
           continue;
         }
         if (!lastError.retryable || attempt === this.maxRetries + 1) {
@@ -321,8 +333,8 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       toolName: INTERPRET_TOOL,
       instructions: INTERPRETATION_PROMPT,
       request,
-      parameters: INTERPRETATION_PARAMETERS_V2,
-      parse: (value) => conversationInterpretationEnvelopeV2Schema.parse(value).interpretation,
+      parameters: INTERPRETATION_PARAMETERS_V3,
+      parse: (value) => conversationInterpretationEnvelopeV3Schema.parse(value).interpretation,
       allowValidationRepair: true,
       diagnostic: {
         promptVersion: INTERPRETATION_PROMPT_VERSION,
