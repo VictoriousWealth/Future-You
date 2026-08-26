@@ -1,5 +1,8 @@
 import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { resolveConversationProvider } from "../src/infrastructure/ai/provider-configuration";
 import {
   OPENAI_BASELINE_MAX_RETRIES,
   OPENAI_BASELINE_TIMEOUT_MS,
@@ -9,6 +12,10 @@ import {
 } from "../src/infrastructure/ai/openai/openai-runtime-configuration";
 
 describe("Track C0 OpenAI configuration and readiness boundary", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("keeps the three approved model IDs exact and configuration-driven", () => {
     expect(OPENAI_TRACK_C_CANDIDATE_MODELS).toEqual([
       "gpt-5.6-terra",
@@ -90,5 +97,55 @@ describe("Track C0 OpenAI configuration and readiness boundary", () => {
     ]) {
       expect(readiness).toContain(label);
     }
+  });
+
+  it("resolves the OpenAI provider from runtime-only environment after module loading", () => {
+    const runtimeOnlyKey = `runtime-only-${randomUUID()}`;
+    vi.stubEnv("CONVERSATION_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_PROVIDER_ENABLED", "true");
+    vi.stubEnv("OPENAI_API_KEY", runtimeOnlyKey);
+    vi.stubEnv("OPENAI_MODEL", "gpt-5.6-terra");
+    vi.stubEnv("OPENAI_REASONING_EFFORT", "low");
+
+    expect(readOpenAIRuntimeConfiguration()).toMatchObject({
+      providerEnabled: true,
+      apiKey: runtimeOnlyKey,
+      model: "gpt-5.6-terra",
+      reasoningEffort: "low"
+    });
+    expect(resolveConversationProvider()).toMatchObject({
+      providerIdentifier: "openai",
+      modelIdentifier: "gpt-5.6-terra"
+    });
+  });
+
+  it("keeps disabled readiness output exact and never prints the configured runtime key", () => {
+    const runtimeOnlyKey = `readiness-private-${randomUUID()}`;
+    const result = spawnSync(
+      process.execPath,
+      ["--conditions=react-server", "--import", "tsx", "scripts/check-openai-readiness.ts"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          OPENAI_API_KEY: runtimeOnlyKey,
+          OPENAI_PROVIDER_ENABLED: "false",
+          OPENAI_MODEL: ""
+        }
+      }
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe([
+      "Key configured: yes",
+      "Provider enabled: no",
+      "Selected model: not configured",
+      "Provider reachable: no",
+      "Model accessible: no",
+      ""
+    ].join("\n"));
+    expect(result.stdout).not.toContain(runtimeOnlyKey);
   });
 });
