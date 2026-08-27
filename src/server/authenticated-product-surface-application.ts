@@ -15,6 +15,8 @@ import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simu
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
 import { EMPTY_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../application/ports/tax-opportunity-profile-source";
 import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../fixtures/sarah-v1-tax-opportunity-profile";
+import { SARAH_V1_GOAL_CONTRIBUTION_HISTORY_SOURCE } from "../fixtures/sarah-v1-goal-contribution-history";
+import { EMPTY_GOAL_CONTRIBUTION_HISTORY_SOURCE } from "../application/ports/goal-contribution-history-source";
 import { createSimulatorApplication } from "./simulator-application";
 import { SARAH_DEMO_USER_ID, SARAH_STORY_MANIFEST } from "./sarah-story-contract";
 
@@ -61,6 +63,9 @@ export const resolveAuthenticatedProductSurfaceApplication: AuthenticatedProduct
       taxOpportunityProfileSource: isCanonicalSarah
         ? SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE
         : EMPTY_TAX_OPPORTUNITY_PROFILE_SOURCE,
+      goalContributionHistorySource: isCanonicalSarah
+        ? SARAH_V1_GOAL_CONTRIBUTION_HISTORY_SOURCE
+        : EMPTY_GOAL_CONTRIBUTION_HISTORY_SOURCE,
       simulator
     })
   };
