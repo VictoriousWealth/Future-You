@@ -165,21 +165,40 @@ async function expectAppleMeaningfulIconScale(page: Page) {
 async function expectHeaderWordmarkInsideViewport(page: Page) {
   const geometry = await page.getByRole("link", { name: "Future You home" }).evaluate((wordmark) => {
     const symbol = wordmark.querySelector<HTMLElement>(".fy-angular-symbol");
-    if (!symbol) throw new Error("The shared angular symbol is missing.");
+    const backdrop = wordmark.querySelector<HTMLElement>(".fy-angular-backdrop");
+    const copy = [...wordmark.querySelectorAll<HTMLElement>(".fy-wordmark-copy > *")];
+    if (!symbol || !backdrop || copy.length < 2) throw new Error("The shared logo lockup is incomplete.");
     const wordmarkBox = wordmark.getBoundingClientRect();
     const symbolBox = symbol.getBoundingClientRect();
+    const backdropBox = backdrop.getBoundingClientRect();
+    const backdropStyle = getComputedStyle(backdrop);
+    const wordmarkStyle = getComputedStyle(wordmark);
     return {
       viewportWidth: document.documentElement.clientWidth,
       wordmarkLeft: wordmarkBox.left,
       wordmarkRight: wordmarkBox.right,
       symbolLeft: symbolBox.left,
-      symbolRight: symbolBox.right
+      symbolRight: symbolBox.right,
+      backdropLeft: backdropBox.left,
+      backdropRight: backdropBox.right,
+      backdropFilter: backdropStyle.filter,
+      backdropOpacity: backdropStyle.opacity,
+      backgroundImage: wordmarkStyle.backgroundImage,
+      borderStyle: wordmarkStyle.borderStyle,
+      copyColors: copy.map((segment) => getComputedStyle(segment).color)
     };
   });
   expect(geometry.wordmarkLeft, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
   expect(geometry.symbolLeft, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
   expect(geometry.wordmarkRight, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
   expect(geometry.symbolRight, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.backdropLeft, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+  expect(geometry.backdropRight, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.backdropFilter).toBe("none");
+  expect(geometry.backdropOpacity).toBe("1");
+  expect(geometry.backgroundImage).toContain("linear-gradient");
+  expect(geometry.borderStyle).toBe("solid");
+  expect(geometry.copyColors.every((color) => color === "rgb(255, 255, 255)")).toBe(true);
 }
 
 async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/benefits") {
@@ -197,8 +216,22 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.getByText("Private financial context. Deterministic what-if results. You stay in control.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
-  await expect(page.locator(".auth-brand-symbol .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
-  await expect(page.locator(".fy-angular-backdrop")).toHaveCount(0);
+  const welcomeWordmark = page.locator(".auth-brand.fy-wordmark");
+  await expect(welcomeWordmark).toContainText("FUTUREYOU");
+  await expect(welcomeWordmark).not.toContainText("AI");
+  await expect(welcomeWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(welcomeWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
+  const welcomeBrandColors = await welcomeWordmark.evaluate((wordmark) => ({
+    backgroundImage: getComputedStyle(wordmark).backgroundImage,
+    borderColor: getComputedStyle(wordmark).borderColor,
+    backdropFilter: getComputedStyle(wordmark.querySelector<HTMLElement>(".fy-angular-backdrop")!).filter,
+    copyColors: [...wordmark.querySelectorAll<HTMLElement>(".fy-wordmark-copy > *")]
+      .map((segment) => getComputedStyle(segment).color)
+  }));
+  expect(welcomeBrandColors.backgroundImage).toContain("linear-gradient");
+  expect(welcomeBrandColors.borderColor).toBe("rgb(0, 74, 173)");
+  expect(welcomeBrandColors.backdropFilter).toBe("none");
+  expect(welcomeBrandColors.copyColors.every((color) => color === "rgb(255, 255, 255)")).toBe(true);
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
   await page.getByRole("link", { name: "Login", exact: true }).click();
@@ -248,6 +281,7 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   await expect(page.locator(".onboarding-header .fy-wordmark")).not.toContainText("AI");
   await expect(page.locator(".onboarding-header .fy-angular-symbol")).toBeVisible();
   await expect(page.locator(".onboarding-header .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(page.locator(".onboarding-header .fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
 
   await fillCanonicalOnboarding(page);
@@ -296,7 +330,7 @@ test("captures the returning Sarah journey and every canonical visual state", as
   await expect(homeWordmark).not.toContainText("AI");
   await expect(homeWordmark.locator(".fy-angular-symbol")).toBeVisible();
   await expect(homeWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
-  await expect(homeWordmark.locator(".fy-angular-backdrop")).toHaveCount(0);
+  await expect(homeWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expectHeaderWordmarkInsideViewport(page);
   const homeHero = page.locator(".fy-home-hero");
   await expect(homeHero.locator(".fy-home-hero-action .fy-action-triangle.is-right")).toBeVisible();
@@ -478,8 +512,11 @@ test("uses the generated profile portrait for the financial-context settings lin
 
 test("keeps Welcome focused on the supplied identity and authentication actions", async ({ page }) => {
   await page.goto("/welcome");
-  await expect(page.locator(".auth-brand-symbol .fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
-  await expect(page.locator(".fy-angular-backdrop")).toHaveCount(0);
+  const welcomeWordmark = page.locator(".auth-brand.fy-wordmark");
+  await expect(welcomeWordmark).toContainText("FUTUREYOU");
+  await expect(welcomeWordmark).not.toContainText("AI");
+  await expect(welcomeWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(welcomeWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Register", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Sign in", exact: true })).toHaveCount(0);
@@ -537,16 +574,17 @@ test("keeps Welcome focused on the supplied identity and authentication actions"
   expect(compactGeometry.actionsBottom).toBeLessThanOrEqual(compactGeometry.viewportHeight);
 
   await page.setViewportSize({ width: 768, height: 900 });
-  const breakpoint = page.locator(".auth-brand-break");
-  await expect(breakpoint).toHaveCSS("display", "inline");
-
-  await page.setViewportSize({ width: 769, height: 900 });
-  await expect(breakpoint).toHaveCSS("display", "none");
-  const desktopNameAlignment = await page.locator(".auth-brand-copy strong > span").evaluateAll((segments) =>
+  const tabletNameAlignment = await welcomeWordmark.locator(".fy-wordmark-copy > span, .fy-wordmark-copy > strong").evaluateAll((segments) =>
     segments.map((segment) => segment.getBoundingClientRect().top)
   );
-  expect(desktopNameAlignment).toHaveLength(2);
-  expect(Math.abs((desktopNameAlignment[0] ?? 0) - (desktopNameAlignment[1] ?? 0))).toBeLessThan(1);
+  expect(tabletNameAlignment).toHaveLength(2);
+  expect(Math.abs((tabletNameAlignment[0] ?? 0) - (tabletNameAlignment[1] ?? 0))).toBeLessThan(1);
+
+  await page.setViewportSize({ width: 769, height: 900 });
+  const desktopNameAlignment = await welcomeWordmark.locator(".fy-wordmark-copy > span, .fy-wordmark-copy > strong").evaluateAll((segments) =>
+    segments.map((segment) => segment.getBoundingClientRect().top)
+  );
+  expect(desktopNameAlignment).toEqual(tabletNameAlignment);
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(page).toHaveScreenshot("welcome-desktop.png", { animations: "disabled" });
@@ -690,6 +728,7 @@ test("captures the shared onboarding lockup without confirming financial context
   const onboardingWordmark = page.locator(".onboarding-header .fy-wordmark");
   await expect(onboardingWordmark.locator(".fy-angular-symbol")).toBeVisible();
   await expect(onboardingWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+  await expect(onboardingWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expect(onboardingWordmark).toContainText("FUTUREYOU");
   await expect(onboardingWordmark).not.toContainText("AI");
   await page.screenshot({ path: evidence("04-onboarding-intro-414x896.png") });
@@ -729,6 +768,7 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
       await expect(headerWordmark).toContainText(route === "/ask" ? "FUTUREYOUAI" : "FUTUREYOU");
       if (route !== "/ask") await expect(headerWordmark).not.toContainText("AI");
       await expect(headerWordmark.locator(".fy-angular-artwork")).toHaveAttribute("src", /future-you-logo\.svg/);
+      await expect(headerWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
       await expectHeaderWordmarkInsideViewport(page);
       const h1Count = await page.getByRole("heading", { level: 1 }).count();
       expect(h1Count).toBe(1);
