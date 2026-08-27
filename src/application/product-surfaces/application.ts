@@ -230,6 +230,58 @@ function opportunityDTO(
   };
 }
 
+function taxAndAllowanceOpportunities(
+  context: FinancialContextSnapshot,
+  pensions: readonly InformationalPensionContext[]
+): BenefitsSurfaceDTO["taxAndAllowances"] {
+  const opportunities: BenefitsSurfaceDTO["taxAndAllowances"][number][] = [];
+  if (pensions.length > 0) {
+    opportunities.push({
+      id: "PENSION_TAX_RELIEF",
+      title: "Pension tax relief",
+      status: "details_required",
+      statusLabel: "Check details",
+      description: "Pension contributions can receive tax relief. Whether it happens automatically or must be claimed depends on the pension scheme and Income Tax position.",
+      matchedBecause: "Shown because your plan confirms an active workplace pension.",
+      eligibilityLabel: "Your scheme’s tax-relief method is not confirmed in Future You.",
+      includedInCurrentPlan: false,
+      numericalEffectLabel: "No numerical effect has been calculated.",
+      provenance: {
+        sourceType: "official_public_guidance",
+        publisher: "GOV.UK",
+        sourceReference: "Tax on your private pension contributions: Tax relief",
+        sourceUrl: "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
+        accessedDate: "2026-08-27"
+      }
+    });
+  }
+  const hasFirstHomeGoal = context.goals.some((goal) => {
+    const label = goal.label.toLowerCase();
+    return label.includes("house deposit") || label.includes("home deposit") || label.includes("first home");
+  });
+  if (hasFirstHomeGoal) {
+    opportunities.push({
+      id: "LIFETIME_ISA_FIRST_HOME",
+      title: "Lifetime ISA for a first home",
+      status: "details_required",
+      statusLabel: "Eligibility not checked",
+      description: "A Lifetime ISA can support a first-home purchase or later-life saving, subject to eligibility and withdrawal rules.",
+      matchedBecause: "Shown because your plan includes a house-deposit goal.",
+      eligibilityLabel: "Your age and first-time-buyer status are not confirmed in Future You.",
+      includedInCurrentPlan: false,
+      numericalEffectLabel: "No numerical effect has been calculated.",
+      provenance: {
+        sourceType: "official_public_guidance",
+        publisher: "GOV.UK",
+        sourceReference: "Lifetime ISA: Overview",
+        sourceUrl: "https://www.gov.uk/lifetime-isa",
+        accessedDate: "2026-08-27"
+      }
+    });
+  }
+  return opportunities;
+}
+
 function previewGoals(
   context: FinancialContextSnapshot,
   run: OneOffPurchaseResponseDTO
@@ -449,6 +501,7 @@ export class ProductSurfaceApplication {
     const opportunities = trustedOpportunities(workplace, employerOpportunities)
       .map((opportunity) => opportunityDTO(opportunity, pensions[0]))
       .filter((opportunity): opportunity is NonNullable<typeof opportunity> => opportunity !== null);
+    const taxAndAllowances = taxAndAllowanceOpportunities(context, pensions);
     const emptyState: BenefitsSurfaceDTO["emptyState"] = opportunities.length > 0
       ? null
       : workplace
@@ -476,6 +529,13 @@ export class ProductSurfaceApplication {
       workplace: workplaceDTO,
       activeFacts,
       opportunities,
+      taxAndAllowances,
+      loyaltySchemes: {
+        status: "not_connected",
+        statusLabel: "Not connected",
+        title: "No loyalty schemes connected",
+        description: "Future You has no trusted loyalty-card or rewards data for you, so no memberships or offers are being assumed."
+      },
       emptyState
     });
   }
