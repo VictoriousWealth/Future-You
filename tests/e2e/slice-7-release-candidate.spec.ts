@@ -495,12 +495,13 @@ test("keeps the default current-plan banner absent from every primary surface", 
   }
 });
 
-test("uses the generated profile portrait for the financial-context settings link", async ({ page }) => {
+test("uses the generated profile portrait for the Profile entry", async ({ page }) => {
   await signIn(page, "sarah", "/home");
-  const profileLink = page.getByRole("link", { name: "Open financial context settings" });
+  const profileLink = page.getByRole("link", { name: "Open profile" });
   const portrait = profileLink.locator("img");
 
   await expect(profileLink).toBeVisible();
+  await expect(profileLink).toHaveAttribute("href", "/profile");
   await expect(portrait).toBeVisible();
   await expect(portrait).toHaveAttribute("src", /sarah-profile\.png/);
   await expect(portrait).toHaveAttribute("alt", "");
