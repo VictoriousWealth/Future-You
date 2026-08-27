@@ -61,5 +61,11 @@ describe("Goals progress chart rendering authority", () => {
     expect(markup).toContain("£SERVER-MAX");
     expect(markup).toContain("£SERVER-FIRST");
     expect(markup).toContain("SERVER HISTORY SOURCE");
+    expect(markup).toContain("fy-chart-point-tooltip");
+    expect(markup).toContain('aria-label="SERVER GOAL, Jan 99: £SERVER-FIRST"');
+    expect(markup).toContain('aria-label="Jan 99, SERVER GOAL: £SERVER-SEGMENT"');
+    expect(markup).toContain('role="tooltip"');
+    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toContain("Hide SERVER GOAL");
   });
 });
