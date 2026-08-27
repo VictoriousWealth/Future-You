@@ -812,14 +812,14 @@ test("preserves the historical run through a visible immutable context correctio
   expect(oldRunId).toBeTruthy();
 
   await page.goto("/settings/financial-context");
-  await page.getByRole("button", { name: "Build my current path" }).click();
+  await page.getByRole("button", { name: "Start updating" }).click();
   await page.getByLabel("Actual cleared balance").fill("2800");
   for (let step = 0; step < 6; step += 1) await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Preview my current path" }).click();
+  await page.getByRole("button", { name: "Review changes" }).click();
   await expect(page.getByTestId("onboarding-preview")).toContainText("£2800.00");
-  await expect(page.getByText("You’re creating a new version of your financial plan.")).toBeVisible();
+  await expect(page.getByText("Previous plans and what-if results stay unchanged.")).toBeVisible();
   await page.screenshot({ path: evidence("18-context-correction-preview-414x896.png") });
-  await page.getByRole("button", { name: "Confirm this financial context" }).click();
+  await page.getByRole("button", { name: "Save updated financial context" }).click();
   await expect(page).toHaveURL(/\/ask$/);
   await expect(page.getByTestId("stale-context-state")).toBeVisible();
 
