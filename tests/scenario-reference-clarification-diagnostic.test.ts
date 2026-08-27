@@ -241,7 +241,7 @@ describe("Track C1G scenario-reference clarification diagnostic", () => {
   );
 
   it.each(missingScenarioDiagnosticFixtures)(
-    "shows the application difference between exact and generic $id branches",
+    "preserves the C1G exact branch while active v4 fails closed for generic $id ambiguity",
     async (fixture) => {
       const exactTest = conversationTestApplication();
       const exactConversation = await exactTest.application.create({ requestId: `c1g_exact_${fixture.id}` });
@@ -271,14 +271,13 @@ describe("Track C1G scenario-reference clarification diagnostic", () => {
         metadata: { provider: "fake", model: "fake-c1g", attempts: 1 }
       });
       const ambiguousSimulation = vi.spyOn(ambiguousTest.simulator.simulateOneOffPurchase, "execute");
-      const ambiguous = await ambiguousTest.application.send(ambiguousConversation.conversation.id, {
+      await expect(ambiguousTest.application.send(ambiguousConversation.conversation.id, {
         requestId: `c1g_ambiguous_turn_${fixture.id}`,
         message: fixture.request.userMessage
-      });
-      expect(ambiguous.intent).toBe("AMBIGUOUS");
-      expect(ambiguous.conversation.messages.at(-1)).toMatchObject({
-        kind: "ASSISTANT_CLARIFICATION",
-        templateId: "SUPPORTED_ACTION"
+      })).rejects.toMatchObject({ code: "AI_INTERPRETATION_INVALID" });
+      expect(ambiguousTest.repository.messages.get(ambiguousConversation.conversation.id)?.at(-1)).toMatchObject({
+        kind: "ASSISTANT_ERROR",
+        templateId: "CONVERSATION_ERROR"
       });
       expect(ambiguousTest.repository.conversations.get(ambiguousConversation.conversation.id)?.pendingClarification)
         .toBeNull();
