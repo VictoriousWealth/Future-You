@@ -1794,7 +1794,8 @@ summary {
 .fy-goals-progress { margin-top: 3rem; }
 .fy-goals-progress > h2 { margin: 0 0 1.25rem; color: var(--fy-blue); font-family: var(--fy-font-bricolage-grotesque), Inter, ui-sans-serif, system-ui, sans-serif; font-size: clamp(2rem, 6vw, 2.5rem); line-height: 1.05; letter-spacing: -.045em; }
 .fy-goal-progress-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr)); align-items: stretch; gap: 1rem; }
-.fy-progress-chart-card { min-width: 0; padding: 1.15rem; color: var(--fy-blue); background: #fff; border: 1px solid #d8e2f2; border-radius: 1.25rem; box-shadow: 0 8px 22px rgba(0, 61, 153, .07); }
+.fy-progress-chart-card { position: relative; z-index: 0; min-width: 0; padding: 1.15rem; color: var(--fy-blue); background: #fff; border: 1px solid #d8e2f2; border-radius: 1.25rem; box-shadow: 0 8px 22px rgba(0, 61, 153, .07); }
+.fy-progress-chart-card:has(.fy-chart-point:hover, .fy-chart-point:focus-visible, .fy-contribution-split-segment:hover, .fy-contribution-split-segment:focus-visible) { z-index: 20; }
 .fy-progress-chart-card > header h3 { margin: 0; font-size: 1.25rem; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; }
 .fy-progress-chart-card > header p { margin: .35rem 0 1rem; color: #607797; font-size: .9375rem; line-height: 1.4; }
 .fy-line-chart { position: relative; padding-left: 2.75rem; }
@@ -1802,35 +1803,66 @@ summary {
 .fy-chart-grid line { stroke: #dce5f2; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .fy-chart-series { color: var(--fy-blue-bright); }
 .fy-chart-series.is-purple,
+.fy-chart-point.is-purple,
 .fy-chart-legend .is-purple,
-.fy-contribution-split-bar .is-purple { color: #764bc4; }
+.fy-contribution-split-segment.is-purple { color: #764bc4; }
 .fy-chart-series.is-pink,
+.fy-chart-point.is-pink,
 .fy-chart-legend .is-pink,
-.fy-contribution-split-bar .is-pink { color: #de53ad; }
+.fy-contribution-split-segment.is-pink { color: #de53ad; }
 .fy-chart-series.is-cyan,
+.fy-chart-point.is-cyan,
 .fy-chart-legend .is-cyan,
-.fy-contribution-split-bar .is-cyan { color: #168ec7; }
+.fy-contribution-split-segment.is-cyan { color: #168ec7; }
 .fy-chart-series.is-green,
+.fy-chart-point.is-green,
 .fy-chart-legend .is-green,
-.fy-contribution-split-bar .is-green { color: #20825f; }
+.fy-contribution-split-segment.is-green { color: #20825f; }
 .fy-chart-series.is-blue,
+.fy-chart-point.is-blue,
 .fy-chart-legend .is-blue,
-.fy-contribution-split-bar .is-blue { color: #005bd8; }
+.fy-contribution-split-segment.is-blue { color: #005bd8; }
 .fy-chart-series polyline { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.fy-chart-series circle { fill: #fff; stroke: currentColor; stroke-width: 4; vector-effect: non-scaling-stroke; }
+.fy-chart-point { cursor: help; outline: none; }
+.fy-chart-point-hit { fill: transparent; stroke: none; }
+.fy-chart-point-marker { fill: #fff; stroke: currentColor; stroke-width: 4; vector-effect: non-scaling-stroke; }
+.fy-chart-point-active { fill: currentColor; stroke: #fff; stroke-width: 5; opacity: 0; vector-effect: non-scaling-stroke; transition: opacity var(--fy-motion-fast) var(--fy-ease); }
+.fy-chart-point-tooltip { pointer-events: none; opacity: 0; transform-box: fill-box; transition: opacity var(--fy-motion-fast) var(--fy-ease); }
+.fy-chart-point-tooltip rect { fill: #fff; stroke: #b9cae2; stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 6px 10px rgba(0, 45, 112, .2)); }
+.fy-chart-point-tooltip text { fill: currentColor; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 32px; font-weight: 650; }
+.fy-chart-point-tooltip .fy-chart-tooltip-title { font-size: 35px; font-weight: 800; }
+.fy-chart-point:is(:hover, :focus-visible) .fy-chart-point-active { opacity: 1; }
+.fy-chart-point:is(:hover, :focus-visible) .fy-chart-point-tooltip { opacity: 1; }
+.fy-chart-point:focus-visible .fy-chart-point-active { stroke-width: 8; }
 .fy-line-chart-y { position: absolute; top: 0; bottom: 1.2rem; left: 0; display: flex; flex-direction: column; justify-content: space-between; color: #607797; font-size: .8125rem; line-height: 1; }
 .fy-line-chart-x { display: flex; justify-content: space-between; padding: .3rem .4rem 0; color: #607797; font-size: .8125rem; line-height: 1; }
 .fy-chart-legend { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin: 1rem 0 0; padding: 0; list-style: none; }
-.fy-chart-legend li { display: flex; align-items: center; gap: .4rem; color: var(--fy-blue); font-size: .8125rem; font-weight: 650; }
-.fy-chart-legend i { width: .75rem; height: .75rem; flex: 0 0 auto; background: currentColor; border-radius: 50%; }
+.fy-chart-legend li { color: var(--fy-blue); }
+.fy-chart-legend button { display: flex; min-height: 2.75rem; align-items: center; gap: .4rem; padding: .35rem .15rem; color: inherit; background: transparent; border: 0; border-radius: .5rem; cursor: pointer; font: inherit; font-size: .8125rem; font-weight: 650; }
+.fy-chart-legend button:focus-visible { outline: .2rem solid var(--fy-focus); outline-offset: .12rem; }
+.fy-chart-legend i { width: .75rem; height: .75rem; flex: 0 0 auto; background: currentColor; border: 2px solid currentColor; border-radius: 50%; transition: background var(--fy-motion-fast) var(--fy-ease), opacity var(--fy-motion-fast) var(--fy-ease); }
+.fy-chart-legend li.is-hidden button { opacity: .52; }
+.fy-chart-legend li.is-hidden i { background: transparent; }
 .fy-contribution-split { display: grid; gap: .8rem; }
-.fy-contribution-split-row { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) 3.5rem; align-items: center; gap: .55rem; }
+.fy-contribution-split-row { position: relative; z-index: 0; display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) 3.5rem; align-items: center; gap: .55rem; }
+.fy-contribution-split-row:has(.fy-contribution-split-segment:hover, .fy-contribution-split-segment:focus-visible) { z-index: 10; }
 .fy-contribution-split-row > span,
 .fy-contribution-split-row > strong { font-size: .8125rem; line-height: 1; }
 .fy-contribution-split-row > span { color: #607797; }
 .fy-contribution-split-row > strong { text-align: right; }
-.fy-contribution-split-bar { display: flex; height: 1rem; overflow: hidden; background: #edf2f8; border-radius: .35rem; }
-.fy-contribution-split-bar i { display: block; height: 100%; flex: 0 0 auto; background: currentColor; border-right: 2px solid #fff; }
+.fy-contribution-split-bar { position: relative; display: flex; height: 1rem; background: #edf2f8; border-radius: .35rem; }
+.fy-contribution-split-segment { position: relative; display: block; height: 100%; flex: 0 0 auto; background: currentColor; border-right: 2px solid #fff; cursor: help; outline: none; }
+.fy-contribution-split-segment.is-hidden { opacity: 0; pointer-events: none; }
+.fy-contribution-split-segment:first-child { border-radius: .35rem 0 0 .35rem; }
+.fy-contribution-split-segment:last-child { border-right: 0; border-radius: 0 .35rem .35rem 0; }
+.fy-contribution-split-segment:is(:hover, :focus-visible) { z-index: 3; filter: brightness(.9); }
+.fy-split-tooltip { position: absolute; z-index: 5; bottom: calc(100% + .5rem); left: 50%; display: grid; width: max-content; max-width: 11rem; gap: .1rem; padding: .55rem .65rem; color: inherit; background: #fff; border: 1px solid #b9cae2; border-radius: .7rem; box-shadow: 0 6px 16px rgba(0,45,112,.18); opacity: 0; pointer-events: none; transform: translateX(-50%); transition: opacity var(--fy-motion-fast) var(--fy-ease); }
+.fy-contribution-split-segment:first-child .fy-split-tooltip { left: 0; transform: none; }
+.fy-contribution-split-segment:last-child .fy-split-tooltip { right: 0; left: auto; transform: none; }
+.fy-split-tooltip strong { font-size: .9375rem; line-height: 1.2; }
+.fy-split-tooltip small { color: inherit; font-size: .8125rem; line-height: 1.25; }
+.fy-contribution-split-segment:is(:hover, :focus-visible) .fy-split-tooltip { opacity: 1; }
+.fy-contribution-split-segment:focus-visible { box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--fy-focus); }
 .fy-chart-source { display: block; margin-top: .9rem; color: #607797; font-size: .8125rem; line-height: 1.4; }
 .fy-chart-empty { margin: 1rem 0 0; padding: 1rem; color: #607797; background: #f3f6fa; border-radius: .9rem; font-size: 1rem; line-height: 1.45; }
 
