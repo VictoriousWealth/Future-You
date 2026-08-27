@@ -743,11 +743,12 @@ summary {
 
 /* Future You product shell — established by Slice 5 and shared by later slices. */
 .fy-product-shell {
+  --fy-shell-gutter: 1.25rem;
   position: relative;
   width: min(100%, 31rem);
   min-height: 100dvh;
   margin: 0 auto;
-  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem 10.5rem;
+  padding: 0 var(--fy-shell-gutter) 10.5rem;
   overflow-x: hidden;
   color: var(--fy-blue);
   background: radial-gradient(circle at 90% 5%, rgba(56, 182, 255, 0.08), transparent 18rem), #fff;
@@ -758,9 +759,21 @@ summary {
 
 .fy-app-header {
   display: flex;
+  margin-right: calc(var(--fy-shell-gutter) * -1);
+  margin-left: calc(var(--fy-shell-gutter) * -1);
+  padding: max(1rem, env(safe-area-inset-top)) var(--fy-shell-gutter) .75rem;
   align-items: center;
   justify-content: space-between;
   min-height: 2.8rem;
+  background: linear-gradient(145deg, var(--fy-blue-bright), var(--fy-blue));
+  border-radius: 0 0 2rem 2rem;
+}
+
+.fy-app-header > .fy-wordmark {
+  padding: .6em .4em .1em 1.3em;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
 }
 
 .fy-wordmark {
@@ -1212,18 +1225,21 @@ summary {
   position: absolute;
   z-index: 1;
   top: 8.2rem;
+  right: 1rem;
+  bottom: 1rem;
   left: 1rem;
   display: -webkit-box;
-  max-width: calc(100% - 4.75rem);
+  width: auto;
+  max-width: none;
   overflow: hidden;
-  font-size: 2rem;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.55rem, 7.7vw, 2rem);
   line-height: 1.03;
   letter-spacing: -.07em;
+  text-overflow: ellipsis;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
-.fy-home-hero-action { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.65rem; display: grid; width: 2.22rem; height: 2.22rem; place-items: center; color: var(--fy-blue); background: #8c9ffa; border-radius: 50%; }
-.fy-home-hero-action .fy-action-triangle { width: 1rem; height: 1rem; }
 .fy-quick-chat-layout {
   --fy-home-decision-size: clamp(7.25rem, 34.8vw, 9rem);
   --fy-home-decision-gap: clamp(.65rem, 3.85vw, 1rem);
@@ -2174,10 +2190,9 @@ summary {
 }
 
 @media (max-width: 23.75rem) {
-  .fy-product-shell { padding-right: 0.9rem; padding-left: 0.9rem; }
+  .fy-product-shell { --fy-shell-gutter: .9rem; }
   .fy-bottom-nav { right: 0.7rem; left: 0.7rem; }
   .fy-composer { right: 0.8rem; left: 0.8rem; }
-  .fy-home-hero strong { font-size: 2rem; }
   .fy-surface-heading h1 { font-size: 2.2rem; }
   .fy-contribution-pair { grid-template-columns: 1fr; }
   .auth-panel { min-height: calc(100svh - 1rem); padding: 1rem; border-radius: var(--fy-radius-lg); }
@@ -2200,6 +2215,13 @@ summary {
     border: 1px solid rgba(82, 113, 255, 0.16);
     border-radius: 2rem;
     box-shadow: 0 24px 80px rgba(0, 74, 173, 0.12);
+  }
+
+  .fy-app-header {
+    margin-top: -1.4rem;
+    margin-right: calc(clamp(1.5rem, 4vw, 3.4rem) * -1);
+    margin-left: 0;
+    padding: 1.4rem clamp(1.5rem, 4vw, 3.4rem) .8rem 1.25rem;
   }
 
   .fy-app-header { grid-area: header; }
@@ -2226,7 +2248,6 @@ summary {
   .fy-bottom-nav a { width: 100%; min-height: 4.6rem; flex: 0 0 auto; border-radius: 1.1rem; }
   .fy-bottom-nav a[aria-current="page"] { min-width: 0; min-height: 4.9rem; flex-basis: auto; }
   .fy-bottom-nav a[aria-current="page"]::after { content: "Current"; font-size: var(--fy-type-min); opacity: 0.82; }
-  .fy-app-header { padding-right: 0.2rem; }
   .fy-composer,
   .fy-ask-shell.is-initial .fy-composer {
     position: sticky;
