@@ -1189,7 +1189,7 @@ summary {
 .fy-home-question { margin: 1.35rem 0 .75rem; color: var(--fy-blue); font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 
 .fy-home-hero {
-  --fy-home-hero-edge-gap: .4rem;
+  --fy-home-hero-edge-gap: 1rem;
   position: relative;
   display: grid;
   width: calc(100% + ((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * 2));
@@ -1200,10 +1200,20 @@ summary {
   margin-left: calc((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * -1);
   padding: 0.8rem 1rem 1.25rem;
   overflow: hidden;
+  isolation: isolate;
   color: #fff;
   background: #004aad;
   border-radius: 1.2rem;
-  text-decoration: none;
+}
+.fy-home-hero::after {
+  position: absolute;
+  z-index: -1;
+  right: -3.6rem;
+  bottom: -4.7rem;
+  width: 12rem;
+  height: 12rem;
+  content: "";
+  background: radial-gradient(circle, rgba(222,83,173,.38), transparent 66%);
 }
 .fy-home-hero-title {
   position: relative;
@@ -1218,23 +1228,36 @@ summary {
 .fy-home-hero-question {
   position: relative;
   z-index: 1;
-  align-self: end;
-  display: -webkit-box;
+  display: grid;
+  gap: .08em;
   width: 100%;
   max-width: none;
-  max-height: 2.06em;
   margin: 0;
   overflow: hidden;
   overflow-wrap: anywhere;
   color: #fff;
-  font-size: clamp(1.55rem, 7.7vw, 2rem);
+  font-size: clamp(1.2rem, 5.8vw, 1.5rem);
   font-weight: 700;
-  line-height: 1.03;
-  letter-spacing: -.07em;
-  text-overflow: ellipsis;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-height: 1.05;
+  letter-spacing: -.045em;
 }
+.fy-home-hero-question > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fy-home-hero-latest { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-self: start; align-items: center; margin-top: .65rem; }
+.fy-home-hero-action {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 3.1rem;
+  height: 3.1rem;
+  place-items: center;
+  color: var(--fy-blue);
+  background: #8c9ffa;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.fy-home-hero-action:hover { background: #9bc3ff; }
+.fy-home-hero-action:focus-visible { outline: .2rem solid #fff; outline-offset: .15rem; }
+.fy-home-hero-action > .fy-action-triangle { width: 1.05rem; height: 1.05rem; }
 .fy-quick-chat-layout {
   --fy-home-decision-size: clamp(7.25rem, 34.8vw, 9rem);
   --fy-home-decision-gap: clamp(.65rem, 3.85vw, 1rem);
