@@ -13,6 +13,21 @@ import { GoalCard } from "./goal-card";
 
 const DEFAULT_DECISION = { label: "Can I afford a £650 trip?", prompt: "Can I afford a £650 trip next month?" } as const;
 
+function MockupSparkleCluster() {
+  return (
+    <svg
+      className="fy-home-hero-star"
+      data-icon="mockup-sparkle-cluster"
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path d="M40 2c.6 16.2 7.2 23.5 21 27-13.8 3.5-20.4 10.8-21 27-.6-16.2-7.2-23.5-21-27C32.8 25.5 39.4 18.2 40 2Z"/>
+      <path d="M13 27c.3 7.4 3.4 10.8 10 12.5-6.6 1.7-9.7 5.1-10 12.5-.3-7.4-3.4-10.8-10-12.5C9.6 37.8 12.7 34.4 13 27Z"/>
+      <path d="M20 3c.2 4.8 2.2 7 6.5 8.1-4.3 1.1-6.3 3.3-6.5 8.1-.2-4.8-2.2-7-6.5-8.1C17.8 10 19.8 7.8 20 3Z"/>
+    </svg>
+  );
+}
+
 function decisionHref(decision: QuickChatOption): string {
   return `/ask?prompt=${encodeURIComponent(decision.prompt)}&autosend=1`;
 }
@@ -99,7 +114,10 @@ export function HomeSurface() {
           <section className="fy-home-intro">
             <h1 className="fy-personal-greeting">Good morning,<br/><strong>{data.displayName}!</strong></h1>
             <div className="fy-home-hero" title={heroQuestion}>
-              <span className="fy-home-hero-title"><span>Ask</span><span>Future You</span></span>
+              <span className="fy-home-hero-title">
+                <span className="fy-home-hero-title-line"><MockupSparkleCluster/><span>Ask</span></span>
+                <span>Future You</span>
+              </span>
               <span className="fy-home-hero-latest">
                 <strong className="fy-home-hero-question"><span>{heroQuestionLines[0]}</span><span>{heroQuestionLines[1]}</span></strong>
                 <Link className="fy-home-hero-action" href={heroHref} aria-label={`Open conversation: ${heroQuestion}`}><ActionTriangleIcon/></Link>
@@ -110,14 +128,14 @@ export function HomeSurface() {
               <div className="fy-quick-chat-row is-n">
                 {QUICK_CHAT_OPTIONS.slice(0, 2).map((decision) => (
                   <Link className="fy-home-decision fy-quick-chat-card" href={decisionHref(decision)} key={decision.label}>
-                    <QuickChatIcon name={decision.icon}/><strong>{decision.label}</strong>
+                    <QuickChatIcon/><strong>{decision.label}</strong>
                   </Link>
                 ))}
               </div>
               <div className="fy-quick-chat-row is-n-plus-one">
                 {QUICK_CHAT_OPTIONS.slice(2).map((decision) => (
                   <Link className="fy-home-decision fy-quick-chat-card" href={decisionHref(decision)} key={decision.label}>
-                    <QuickChatIcon name={decision.icon}/><strong>{decision.label}</strong>
+                    <QuickChatIcon/><strong>{decision.label}</strong>
                   </Link>
                 ))}
               </div>
