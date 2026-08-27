@@ -31,7 +31,7 @@ export function ProductHeader({ action, showAI = false }: Readonly<{ action?: Re
         <FutureYouWordmark showAI={showAI}/>
       </Link>
       {action ?? (
-        <Link className="fy-profile-link" href="/settings/financial-context" aria-label="Open financial context settings">
+        <Link className="fy-profile-link" href="/profile" aria-label="Open profile">
           <Image src="/images/sarah-profile.png" alt="" width={52} height={52} priority/>
         </Link>
       )}
@@ -39,7 +39,7 @@ export function ProductHeader({ action, showAI = false }: Readonly<{ action?: Re
   );
 }
 
-export function ProductNavigation({ active }: Readonly<{ active: ProductDestination }>) {
+export function ProductNavigation({ active }: Readonly<{ active: ProductDestination | null }>) {
   return (
     <nav className="fy-bottom-nav" aria-label="Product navigation">
       {DESTINATIONS.map((destination) => (
@@ -64,7 +64,7 @@ export function ProductShell({
   children,
   testId
 }: Readonly<{
-  active: ProductDestination;
+  active: ProductDestination | null;
   className?: string;
   headerAction?: ReactNode;
   children: ReactNode;
