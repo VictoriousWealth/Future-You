@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { GoalsProgressDTO } from "../src/application/product-surfaces/contracts";
 import { GoalProgressCharts } from "../src/ui/features/product-surfaces/goal-progress-charts";
 
@@ -67,5 +67,29 @@ describe("Goals progress chart rendering authority", () => {
     expect(markup).toContain('role="tooltip"');
     expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain("Hide SERVER GOAL");
+  });
+
+  it("does not reuse React keys when Now and the first forecast point share a period", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const repeatedPeriodProgress: GoalsProgressDTO = {
+      ...progress,
+      forecast: {
+        ...progress.forecast,
+        series: [{
+          ...series[0]!,
+          points: [
+            series[0]!.points[0]!,
+            { ...series[0]!.points[1]!, period: series[0]!.points[0]!.period }
+          ]
+        }]
+      }
+    };
+
+    try {
+      renderToStaticMarkup(createElement(GoalProgressCharts, { progress: repeatedPeriodProgress }));
+      expect(error.mock.calls.flat().join(" ")).not.toContain("same key");
+    } finally {
+      error.mockRestore();
+    }
   });
 });
