@@ -59,7 +59,7 @@ export function GoalsSurface() {
               <Link href="/goals">Return to current path</Link>
             </div>
           ) : null}
-          <section className="fy-goals-list" aria-label="Financial goals">
+          <section className={`fy-goals-list ${data.mode === "current_path" ? "is-current" : "is-preview"}`} aria-label="Financial goals">
             {data.goals.length === 0 ? (
               <div className="fy-inline-empty" data-testid="goals-empty-state">
                 <strong>No goals are confirmed in this financial plan.</strong>
@@ -77,6 +77,11 @@ export function GoalsSurface() {
                     <footer><span>Impact</span><strong>{goal.changeLabel}</strong></footer>
                   </article>
                 ))}
+            {data.mode === "current_path" ? (
+              <Link className="fy-add-goal-card" href="/settings/financial-context">
+                <span aria-hidden="true">+</span><strong>Add another goal</strong>
+              </Link>
+            ) : null}
           </section>
           <p className="fy-surface-footnote">Balances shown are confirmed context values, not hypothetical future balances.</p>
         </>
