@@ -72,6 +72,8 @@ const expectedFailures: Readonly<Record<
   timing_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "TIMING_QUOTE_NOT_GROUNDED" },
   scenario_label_quote_not_grounded: { stage: "SOURCE_GROUNDING", code: "SCENARIO_LABEL_QUOTE_NOT_FOUND" },
   scenario_reference_unresolved: { stage: "CONVERSATION_STATE_VALIDATION", code: "SCENARIO_REFERENCE_UNRESOLVED" },
+  scenario_reference_clarification_required: { stage: "BRANCH_SEMANTIC_VALIDATION", code: "SCENARIO_REFERENCE_CLARIFICATION_REQUIRED" },
+  follow_up_evidence_mismatch: { stage: "BRANCH_SEMANTIC_VALIDATION", code: "FOLLOW_UP_EVIDENCE_MISMATCH" },
   invented_scenario_id: { stage: "STRICT_SCHEMA_VALIDATION", code: "MODEL_SUPPLIED_UNTRUSTED_SCENARIO_ID" },
   unsupported_branch_with_command_data: { stage: "BRANCH_SEMANTIC_VALIDATION", code: "UNSUPPORTED_BRANCH_CONTAINS_COMMAND_FIELDS" },
   cross_user_reference_rejected: { stage: null, code: "CROSS_USER_REFERENCE_REJECTED" },
@@ -109,7 +111,7 @@ describe("sanitised interpretation diagnostics", () => {
   it("defines stable, closed and unique validation-stage and diagnostic-code inventories", () => {
     expect(new Set(INTERPRETATION_VALIDATION_STAGES).size).toBe(INTERPRETATION_VALIDATION_STAGES.length);
     expect(new Set(INTERPRETATION_DIAGNOSTIC_CODES).size).toBe(INTERPRETATION_DIAGNOSTIC_CODES.length);
-    expect(INTERPRETATION_DIAGNOSTIC_VERSION).toBe("fy-interpretation-diagnostic/2.0.0");
+    expect(INTERPRETATION_DIAGNOSTIC_VERSION).toBe("fy-interpretation-diagnostics/3.0.0");
     expect(INTERPRETATION_VALIDATION_STAGES).toEqual(expect.arrayContaining([
       "PROVIDER_RESPONSE_RECEIVED",
       "STRICT_SCHEMA_VALIDATION",
@@ -234,7 +236,7 @@ describe("sanitised interpretation diagnostics", () => {
     openai.create.mockResolvedValueOnce({
       output: [{
         type: "function_call",
-        name: "submit_conversation_interpretation_v3",
+        name: "submit_conversation_interpretation_v4",
         arguments: JSON.stringify({
           interpretation: {
             kind: "CREATE_ONE_OFF_PURCHASE",
