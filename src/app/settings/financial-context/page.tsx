@@ -24,7 +24,7 @@ export default async function CorrectFinancialContextPage() {
   if (!correction.ok) redirect("/onboarding");
   return (
     <>
-      <nav className="settings-return" aria-label="Financial context settings"><Link href="/home">← Back to current path</Link></nav>
+      <nav className="settings-return" aria-label="Financial context settings"><Link href="/profile/settings">← Back to settings</Link></nav>
       <ManualOnboardingFlow
         configuration={publicSupabaseConfiguration()}
         snapshotDate={correction.value.draft.snapshotDate}
