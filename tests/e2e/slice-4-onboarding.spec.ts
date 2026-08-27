@@ -251,19 +251,19 @@ test("completes manual onboarding, runs £650, retries safely, and creates immut
   expect(conflicting).toMatchObject({ status: 409, body: { error: { code: "IDEMPOTENCY_KEY_REUSED" } } });
 
   await page.goto("/settings/financial-context");
-  await page.getByRole("button", { name: "Build my current path" }).click();
+  await page.getByRole("button", { name: "Start updating" }).click();
   await expect(page.getByLabel("Actual cleared balance")).toHaveValue("2750.00");
   await page.getByLabel("Actual cleared balance").fill("2800");
   for (let step = 0; step < 6; step += 1) {
     await page.getByRole("button", { name: "Continue" }).click();
   }
-  await page.getByRole("button", { name: "Preview my current path" }).click();
+  await page.getByRole("button", { name: "Review changes" }).click();
   await expect(page.getByText("£2800.00")).toBeVisible();
   const revisionResponse = page.waitForResponse((response) =>
     response.url().endsWith("/api/v1/financial-context/current/revisions") &&
     response.request().method() === "POST"
   );
-  await page.getByRole("button", { name: "Confirm this financial context" }).click();
+  await page.getByRole("button", { name: "Save updated financial context" }).click();
   expect((await revisionResponse).status()).toBe(201);
   await expect(page).toHaveURL(/\/ask$/);
   await expect(page.getByTestId("stale-context-state")).toBeVisible();
