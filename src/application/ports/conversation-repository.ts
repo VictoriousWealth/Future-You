@@ -1,8 +1,8 @@
 import type {
-  ConversationIntentKind,
   ConversationMessageKind,
   PendingClarification
 } from "../conversation/contracts";
+import type { RecordedConversationIntentKind } from "../conversation/demo-contracts";
 
 export interface StoredConversation {
   readonly id: string;
@@ -44,7 +44,7 @@ export type BeginConversationTurnOutcome =
   | Readonly<{ status: "idempotency_conflict" | "not_found"; turnId: null }>;
 
 export interface StoredConversationTurnCompletion {
-  readonly intent: ConversationIntentKind | null;
+  readonly intent: RecordedConversationIntentKind | null;
   readonly providerAttemptCount: number;
   readonly explanationFallbackUsed: boolean;
   readonly finalStatus: "COMPLETED" | "FAILED";
@@ -76,7 +76,7 @@ export interface CompleteConversationTurnCommand {
   readonly assistantKind: Exclude<ConversationMessageKind, "USER_TEXT">;
   readonly assistantText: string;
   readonly templateId: string | null;
-  readonly interpretationKind: ConversationIntentKind | null;
+  readonly interpretationKind: RecordedConversationIntentKind | null;
   readonly referencedRunId: string | null;
   readonly providerAttemptCount: number;
   readonly explanationFallbackUsed: boolean;
