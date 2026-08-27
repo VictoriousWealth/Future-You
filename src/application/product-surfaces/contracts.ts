@@ -4,7 +4,7 @@ export const PRODUCT_SURFACE_API_VERSION = "future-you.product-surfaces/v1" as c
 export const HOME_SURFACE_SCHEMA = "home-surface/1.2.0" as const;
 export const GOALS_SURFACE_SCHEMA = "goals-surface/1.0.0" as const;
 export const GOALS_PREVIEW_SURFACE_SCHEMA = "goals-preview-surface/1.0.0" as const;
-export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.1.0" as const;
+export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.2.0" as const;
 
 export interface SurfaceContextDTO {
   readonly id: string;
@@ -174,6 +174,30 @@ export interface BenefitsSurfaceDTO {
       readonly userStateId: string;
     }>;
   }>[];
+  readonly taxAndAllowances: readonly Readonly<{
+    readonly id: "PENSION_TAX_RELIEF" | "LIFETIME_ISA_FIRST_HOME";
+    readonly title: string;
+    readonly status: "details_required";
+    readonly statusLabel: "Check details" | "Eligibility not checked";
+    readonly description: string;
+    readonly matchedBecause: string;
+    readonly eligibilityLabel: string;
+    readonly includedInCurrentPlan: false;
+    readonly numericalEffectLabel: "No numerical effect has been calculated.";
+    readonly provenance: Readonly<{
+      readonly sourceType: "official_public_guidance";
+      readonly publisher: "GOV.UK";
+      readonly sourceReference: string;
+      readonly sourceUrl: string;
+      readonly accessedDate: string;
+    }>;
+  }>[];
+  readonly loyaltySchemes: Readonly<{
+    readonly status: "not_connected";
+    readonly statusLabel: "Not connected";
+    readonly title: "No loyalty schemes connected";
+    readonly description: string;
+  }>;
   readonly emptyState: null | Readonly<{
     readonly kind: "no_workplace" | "no_verified_catalogue" | "no_known_information";
     readonly title: string;
