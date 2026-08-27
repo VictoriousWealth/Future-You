@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { HomeSurfaceDTO } from "../../../application/product-surfaces/contracts";
 import type { ConversationListResponseDTO } from "../../../application/conversation/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
@@ -43,6 +43,8 @@ export function HomeSurface() {
   const [recentConversationQuestion, setRecentConversationQuestion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [goalProgressRevealed, setGoalProgressRevealed] = useState(false);
+  const goalsRef = useRef<HTMLDivElement | null>(null);
   const load = useCallback(() => setAttempt((value) => value + 1), []);
 
   useEffect(() => {
@@ -64,6 +66,23 @@ export function HomeSurface() {
       .catch((caught: Error) => { if (active) setError(caught.message); });
     return () => { active = false; };
   }, [attempt]);
+
+  useEffect(() => {
+    if (!data || goalProgressRevealed) return;
+    const goals = goalsRef.current;
+    if (!goals) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      setGoalProgressRevealed(true);
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setGoalProgressRevealed(true);
+      observer.disconnect();
+    }, { threshold: 0.2, rootMargin: "0px 0px -10% 0px" });
+    observer.observe(goals);
+    return () => observer.disconnect();
+  }, [data, goalProgressRevealed]);
 
   const heroQuestion = recentConversationQuestion ?? DEFAULT_DECISION.label;
   const heroHref = recentConversationQuestion
@@ -115,9 +134,17 @@ export function HomeSurface() {
               <div><p>Safety buffer</p><strong>{data.safetyBuffer.current.display}</strong><small>Preferred {data.safetyBuffer.preferred.display}</small></div>
               <i>{data.safetyBuffer.statusLabel}</i>
             </article>
-            <div className="fy-home-goals">
+            <div className="fy-home-goals" ref={goalsRef}>
               {data.goals.length > 0
-                ? data.goals.map((goal) => <GoalCard goal={goal} compact key={goal.id}/>)
+                ? data.goals.map((goal) => (
+                    <GoalCard
+                      goal={goal}
+                      compact
+                      animateProgress
+                      progressRevealed={goalProgressRevealed}
+                      key={goal.id}
+                    />
+                  ))
                 : <section className="fy-inline-empty"><strong>No goals are confirmed yet.</strong><span>Add them through your financial-context settings before modelling their dates.</span></section>}
             </div>
           </section>
