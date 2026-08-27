@@ -11,6 +11,12 @@ import type {
   InterpretationProviderRequest,
   ProviderResult
 } from "../../../application/conversation/contracts";
+import type {
+  DemoConversationInterpretation,
+  DemoConversationModelProvider,
+  DemoResponsePlan,
+  DemoResponseProviderRequest
+} from "../../../application/conversation/demo-contracts";
 import {
   CLARIFICATION_RESOLUTION_PROMPT_VERSION,
   CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
@@ -24,9 +30,15 @@ import {
   monthClarificationResolutionSchema,
   scenarioClarificationResolutionSchema
 } from "../../../application/conversation/schemas";
+import {
+  demoConversationInterpretationEnvelopeSchema,
+  demoResponsePlanSchema
+} from "../../../application/conversation/demo-schemas";
 import { ConversationProviderError } from "../../../application/conversation/provider-error";
 import {
   CLARIFICATION_RESOLUTION_PROMPT,
+  DEMO_INTERPRETATION_PROMPT,
+  DEMO_RESPONSE_PROMPT,
   EXPLANATION_PROMPT,
   INTERPRETATION_PROMPT
 } from "../../../application/conversation/prompts";
@@ -37,6 +49,8 @@ import {
 } from "../../../application/conversation/interpretation-policy";
 import {
   AMOUNT_CLARIFICATION_PARAMETERS,
+  DEMO_INTERPRETATION_PARAMETERS_V1,
+  DEMO_RESPONSE_PARAMETERS_V1,
   EXPLANATION_PARAMETERS_V1,
   INTERPRETATION_PARAMETERS_V4,
   MONTH_CLARIFICATION_PARAMETERS,
@@ -66,8 +80,15 @@ import {
 export const INTERPRET_TOOL = "submit_conversation_interpretation_v4";
 export const CLARIFICATION_TOOL = "submit_clarification_resolution_v2";
 export const EXPLANATION_TOOL = "submit_explanation_plan";
+export const DEMO_INTERPRET_TOOL = "submit_demo_conversation_interpretation_v1";
+export const DEMO_RESPONSE_TOOL = "submit_demo_trusted_response_v1";
 
-type ProviderValue = ConversationInterpretation | ClarificationResolution | ExplanationPlan;
+type ProviderValue =
+  | ConversationInterpretation
+  | ClarificationResolution
+  | ExplanationPlan
+  | DemoConversationInterpretation
+  | DemoResponsePlan;
 type JsonSchema = Readonly<Record<string, unknown>>;
 
 interface ForcedCallResult<T extends ProviderValue> {
@@ -148,7 +169,7 @@ function repairInput(input: unknown, validationErrors: readonly unknown[]): unkn
   };
 }
 
-export class OpenAIResponsesConversationModelProvider implements ConversationModelProvider {
+export class OpenAIResponsesConversationModelProvider implements ConversationModelProvider, DemoConversationModelProvider {
   private readonly client: OpenAI;
   private readonly reasoningEffort: OpenAIReasoningEffort | null;
   private readonly maxRetries: number;
@@ -169,6 +190,8 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     this.maxRetries = options.maxRetries ?? 1;
     this.diagnosticSink = options.diagnosticSink ?? null;
     assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V4);
+    assertStrictProviderSchema(DEMO_INTERPRETATION_PARAMETERS_V1);
+    assertStrictProviderSchema(DEMO_RESPONSE_PARAMETERS_V1);
     assertStrictProviderSchema(MONTH_CLARIFICATION_PARAMETERS);
   }
 
@@ -413,6 +436,35 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       parameters: EXPLANATION_PARAMETERS_V1,
       parse: (value) => explanationPlanSchema.parse(value),
       allowValidationRepair: true
+    });
+    return { value: result.value, metadata: this.metadata(result) };
+  }
+
+  async interpretDemo(
+    request: InterpretationProviderRequest
+  ): Promise<ProviderResult<DemoConversationInterpretation>> {
+    const result = await this.forcedCall({
+      toolName: DEMO_INTERPRET_TOOL,
+      instructions: DEMO_INTERPRETATION_PROMPT,
+      request,
+      parameters: DEMO_INTERPRETATION_PARAMETERS_V1,
+      parse: (value) => demoConversationInterpretationEnvelopeSchema.parse(value).interpretation,
+      allowValidationRepair: false,
+      initialProviderInput: providerVisibleInterpretationRequest(request)
+    });
+    return { value: result.value, metadata: this.metadata(result) };
+  }
+
+  async writeDemoResponse(
+    request: DemoResponseProviderRequest
+  ): Promise<ProviderResult<DemoResponsePlan>> {
+    const result = await this.forcedCall({
+      toolName: DEMO_RESPONSE_TOOL,
+      instructions: DEMO_RESPONSE_PROMPT,
+      request,
+      parameters: DEMO_RESPONSE_PARAMETERS_V1,
+      parse: (value) => demoResponsePlanSchema.parse(value),
+      allowValidationRepair: false
     });
     return { value: result.value, metadata: this.metadata(result) };
   }
