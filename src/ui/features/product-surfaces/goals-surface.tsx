@@ -41,7 +41,7 @@ export function GoalsSurface() {
 
   return (
     <ProductShell active="goals" className="fy-goals-shell" testId="goals-surface">
-      {!data && !error ? <SurfaceLoading label="goals"/> : null}
+      {!data && !error ? <SurfaceLoading label="Goals"/> : null}
       {error ? <SurfaceError message={error} retry={retry}/> : null}
       {data ? (
         data.mode === "current_path" ? (
