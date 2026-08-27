@@ -157,7 +157,7 @@ export function prepareFinancialContextPreview(
   if (projection.assumptions.systemAssumptions.some((item) => item.id.startsWith("calendar-fallback-"))) {
     warnings.push({
       code: "CALENDAR_FALLBACK_WARNING",
-      message: "A weekday-only calendar fallback was used outside committed calendar coverage."
+      message: "Some projections extend beyond our current bank-holiday calendar. Future You used weekdays for those later paydays. Your monthly goal estimates are unchanged."
     });
   }
 
