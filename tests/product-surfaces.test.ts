@@ -8,6 +8,7 @@ import { createSimulatorApplication } from "../src/server/simulator-application"
 import { SARAH_V1_BROWSER_PROOF_COMMAND } from "../src/server/sarah-v1-demo-command";
 import { SARAH_V1_CONTEXT } from "../src/fixtures/sarah-v1";
 import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../src/fixtures/sarah-v1-tax-opportunity-profile";
+import { SARAH_V1_GOAL_CONTRIBUTION_HISTORY_SOURCE } from "../src/fixtures/sarah-v1-goal-contribution-history";
 import { SarahV1ContextSource } from "../src/infrastructure/context/sarah-v1-context-source";
 import { InMemorySimulationRunStore } from "../src/infrastructure/runs/in-memory-simulation-run-store";
 import { SLICE_1_RULES } from "../src/domain/simulator/engine";
@@ -56,6 +57,7 @@ function setup(
       workplaceSource,
       employerBenefitSource,
       taxOpportunityProfileSource: SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE,
+      goalContributionHistorySource: SARAH_V1_GOAL_CONTRIBUTION_HISTORY_SOURCE,
       simulator
     })
   };
@@ -118,6 +120,13 @@ describe("Slice 6 product-surface application", () => {
         ringDasharray: "7333 2667"
       },
       completion: { month: "2026-12", display: "December 2026", statusLabel: "On track" }
+    });
+    expect(result.value.progress.forecast.series).toHaveLength(3);
+    expect(result.value.progress.monthlyContributionSplit.periods).toHaveLength(6);
+    expect(result.value.progress.contributionHistory).toMatchObject({
+      status: "available",
+      sourceLabel: "Sarah’s recorded goal contributions (demo data)",
+      axisMaximum: { minorUnits: "45000", display: "£450" }
     });
   });
 
