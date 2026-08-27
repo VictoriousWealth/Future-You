@@ -122,18 +122,6 @@ export function HomeSurface() {
             </div>
           </section>
 
-          {data.opportunityPreview.kind === "authoritative" ? (
-            <section className="fy-opportunity-preview">
-              <p>Future You spotted</p><h2>{data.opportunityPreview.title}</h2>
-              <strong>{data.opportunityPreview.statusLabel}</strong>
-              <span>{data.opportunityPreview.description}</span>
-              <Link href={data.opportunityPreview.href}>{data.opportunityPreview.actionLabel} →</Link>
-            </section>
-          ) : (
-            <Link className="fy-benefits-handoff" href="/benefits">
-              <span>Benefits</span><strong>See the workplace facts in your plan</strong><ActionTriangleIcon/>
-            </Link>
-          )}
         </>
       ) : null}
     </ProductShell>
