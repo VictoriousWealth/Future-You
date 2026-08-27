@@ -43,6 +43,7 @@
   --fy-motion-fast: 120ms;
   --fy-motion-base: 200ms;
   --fy-motion-slow: 360ms;
+  --fy-goal-progress-duration: 2200ms;
   --fy-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fy-type-body: 1.0625rem;
   --fy-type-min: 0.6875rem;
@@ -1406,7 +1407,7 @@ summary {
 .fy-goal-ratio svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); }
 .fy-goal-ratio circle { fill: none; }
 .fy-goal-ratio-track { stroke: #d9c2ff; stroke-width: 7; }
-.fy-goal-ratio-arc { stroke: var(--fy-purple); stroke-width: 11; stroke-linecap: round; transition: stroke-dasharray 900ms var(--fy-ease); }
+.fy-goal-ratio-arc { stroke: var(--fy-purple); stroke-width: 11; stroke-linecap: round; transition: stroke-dasharray var(--fy-goal-progress-duration) cubic-bezier(.65, 0, .35, 1); }
 .fy-goal-ratio.is-progress-pending .fy-goal-ratio-arc { stroke-dasharray: 0 10000; }
 .fy-goal-ratio > span { position: relative; z-index: 1; }
 .fy-goal-money { display: flex; align-items: baseline; gap: .3rem; margin: 1rem 0 .6rem; }
@@ -1420,7 +1421,7 @@ summary {
     repeating-linear-gradient(90deg, transparent 0 .55rem, rgba(255,255,255,.92) .55rem .65rem),
     linear-gradient(90deg, var(--fy-cyan), var(--fy-blue-bright));
   border-radius: 999px 0 0 999px;
-  transition: width 900ms var(--fy-ease);
+  transition: width var(--fy-goal-progress-duration) cubic-bezier(.65, 0, .35, 1);
 }
 .fy-progress-track.is-progress-pending > span { width: 0 !important; }
 .fy-progress-track span.is-complete { border-radius: inherit; }
@@ -2087,7 +2088,7 @@ summary {
 .fy-prompt-rail { position: relative; }
 .fy-scenario-pill,
 .fy-classification-pill { max-width: 100%; white-space: normal; }
-.fy-progress-track > span { transition: width 900ms var(--fy-ease); }
+.fy-progress-track > span { transition: width var(--fy-goal-progress-duration) cubic-bezier(.65, 0, .35, 1); }
 
 /* Track B1 — the explicit, controlled Sarah demonstration story. */
 .fy-story-entry {
