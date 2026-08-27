@@ -8,12 +8,60 @@ import type {
 } from "../../../application/onboarding/contracts";
 import { ProductShell } from "../../product-shell/product-shell";
 
-interface GoalEditValues {
+export interface GoalEditValues {
   readonly label: string;
   readonly currentBalance: string;
   readonly targetBalance: string;
   readonly contribution: string;
   readonly paused: boolean;
+}
+
+export function buildGoalDraft(
+  draft: FinancialOnboardingDraftDTO,
+  goalId: string,
+  values: GoalEditValues,
+  mode: "edit" | "create"
+): FinancialOnboardingDraftDTO {
+  if (mode === "create") {
+    return {
+      ...draft,
+      goals: [...draft.goals, {
+        id: goalId,
+        label: values.label,
+        currentBalance: {
+          currency: "GBP",
+          amount: values.currentBalance,
+          evidenceState: "confirmed",
+          evidenceSource: "User confirmed while adding this goal"
+        },
+        targetBalance: {
+          currency: "GBP",
+          amount: values.targetBalance,
+          evidenceState: "confirmed",
+          evidenceSource: "User confirmed while adding this goal"
+        },
+        normalContribution: { currency: "GBP", amount: values.contribution },
+        paused: values.paused
+      }],
+      goalPolicy: {
+        ...draft.goalPolicy,
+        allocationOrder: [...draft.goalPolicy.allocationOrder, goalId]
+      }
+    };
+  }
+  return {
+    ...draft,
+    goals: draft.goals.map((goal) => goal.id === goalId
+      ? {
+          ...goal,
+          label: values.label,
+          currentBalance: { ...goal.currentBalance, amount: values.currentBalance },
+          targetBalance: { ...goal.targetBalance, amount: values.targetBalance },
+          normalContribution: { ...goal.normalContribution, amount: values.contribution },
+          paused: values.paused
+        }
+      : goal)
+  };
 }
 
 interface GoalEditIssue {
@@ -35,22 +83,25 @@ export function GoalEditSurface({
   draft,
   goalId,
   expectedCurrentContextVersionId,
-  requestKey
+  requestKey,
+  mode = "edit"
 }: Readonly<{
   draft: FinancialOnboardingDraftDTO;
   goalId: string;
   expectedCurrentContextVersionId: string;
   requestKey: string;
+  mode?: "edit" | "create";
 }>) {
+  const creating = mode === "create";
   const originalGoal = draft.goals.find((goal) => goal.id === goalId);
-  if (!originalGoal) throw new Error("The selected goal is not part of the current financial plan.");
+  if (!creating && !originalGoal) throw new Error("The selected goal is not part of the current financial plan.");
 
   const [values, setValues] = useState<GoalEditValues>({
-    label: originalGoal.label,
-    currentBalance: originalGoal.currentBalance.amount,
-    targetBalance: originalGoal.targetBalance.amount,
-    contribution: originalGoal.normalContribution.amount,
-    paused: originalGoal.paused
+    label: originalGoal?.label ?? "",
+    currentBalance: originalGoal?.currentBalance.amount ?? "0.00",
+    targetBalance: originalGoal?.targetBalance.amount ?? "",
+    contribution: originalGoal?.normalContribution.amount ?? "",
+    paused: originalGoal?.paused ?? false
   });
   const [preview, setPreview] = useState<FinancialContextPreviewDTO | null>(null);
   const [issues, setIssues] = useState<readonly GoalEditIssue[]>([]);
@@ -62,19 +113,7 @@ export function GoalEditSurface({
     setIssues([]);
   };
 
-  const revisedDraft = (): FinancialOnboardingDraftDTO => ({
-    ...draft,
-    goals: draft.goals.map((goal) => goal.id === goalId
-      ? {
-          ...goal,
-          label: values.label,
-          currentBalance: { ...goal.currentBalance, amount: values.currentBalance },
-          targetBalance: { ...goal.targetBalance, amount: values.targetBalance },
-          normalContribution: { ...goal.normalContribution, amount: values.contribution },
-          paused: values.paused
-        }
-      : goal)
-  });
+  const revisedDraft = () => buildGoalDraft(draft, goalId, values, mode);
 
   const requestPreview = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -115,7 +154,7 @@ export function GoalEditSurface({
           draft: revisedDraft(),
           mode: "revision",
           expectedCurrentContextVersionId,
-          requestId: `goal-edit-${requestKey}`,
+          requestId: `goal-${creating ? "create" : "edit"}-${requestKey}`,
           reviewedCanonicalRequestHash: preview.candidate.canonicalRequestHash
         })
       });
@@ -139,8 +178,10 @@ export function GoalEditSurface({
       <Link className="fy-goal-edit-back" href="/goals">← Your goals</Link>
       <header className="fy-surface-heading fy-goal-edit-heading">
         <p>Goal settings</p>
-        <h1>Edit goal</h1>
-        <span>Update the facts Future You uses for {originalGoal.label}. Your current plan stays unchanged until you review and confirm.</span>
+        <h1>{creating ? "Add goal" : "Edit goal"}</h1>
+        <span>{creating
+          ? "Add the goal you are working towards. Your current plan stays unchanged until you review and confirm."
+          : `Update the facts Future You uses for ${originalGoal?.label}. Your current plan stays unchanged until you review and confirm.`}</span>
       </header>
 
       <form className="fy-goal-edit-card" onSubmit={requestPreview} aria-busy={busy}>
@@ -172,14 +213,14 @@ export function GoalEditSurface({
           <span><strong>Pause regular contributions</strong><small>The saved balance remains in your plan.</small></span>
         </label>
         {!preview ? (
-          <button className="primary-button" type="submit" disabled={busy}>{busy ? "Building preview…" : "Preview goal update"}</button>
+          <button className="primary-button" type="submit" disabled={busy}>{busy ? "Building preview…" : creating ? "Preview new goal" : "Preview goal update"}</button>
         ) : null}
       </form>
 
       {preview && previewGoal ? (
         <section className="fy-goal-edit-preview" aria-labelledby="goal-edit-preview-title">
           <p>Review before saving</p>
-          <h2 id="goal-edit-preview-title">Your updated goal</h2>
+          <h2 id="goal-edit-preview-title">{creating ? "Your new goal" : "Your updated goal"}</h2>
           <div>
             <span>{previewGoal.label}</span>
             <strong>{previewGoal.currentBalance.display} of {previewGoal.targetBalance.display}</strong>
@@ -192,7 +233,7 @@ export function GoalEditSurface({
           <p className="fy-goal-edit-immutability">Saving creates a new version of your financial plan. Earlier plans and what-if results remain unchanged.</p>
           <div className="fy-goal-edit-actions">
             <button className="secondary-button" type="button" disabled={busy} onClick={() => setPreview(null)}>Continue editing</button>
-            <button className="primary-button" type="button" disabled={busy} onClick={confirm}>{busy ? "Saving goal…" : "Save goal changes"}</button>
+            <button className="primary-button" type="button" disabled={busy} onClick={confirm}>{busy ? "Saving goal…" : creating ? "Add goal" : "Save goal changes"}</button>
           </div>
         </section>
       ) : null}
