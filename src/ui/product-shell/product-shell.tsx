@@ -23,12 +23,17 @@ const DESTINATIONS: readonly Readonly<{
 export function ProductHeader({ action, showAI = false }: Readonly<{ action?: ReactNode; showAI?: boolean }>) {
   return (
     <header className="fy-app-header">
-      <Link className="fy-wordmark" href="/home" aria-label="Future You home">
+      <Link
+        className="fy-wordmark"
+        href="/home"
+        aria-label="Future You home"
+        style={{ paddingLeft: "1.3em", paddingTop: "0.6em", paddingBottom: "0.1em" }}
+      >
         <FutureYouWordmark showAI={showAI}/>
       </Link>
       {action ?? (
         <Link className="fy-profile-link" href="/settings/financial-context" aria-label="Open financial context settings">
-          <Image src="/images/sarah-profile.png" alt="" width={44} height={44} priority/>
+          <Image src="/images/sarah-profile.png" alt="" width={52} height={52} priority/>
         </Link>
       )}
     </header>
