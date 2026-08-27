@@ -3,7 +3,7 @@ export const QUICK_CHAT_OPTIONS = [
   { label: "How am I doing?", prompt: "How am I doing?", icon: "spark" as const },
   { label: "What should I prioritise?", prompt: "What should I prioritise?", icon: "square" as const },
   { label: "Future You Wrapped", prompt: "Future You Wrapped", icon: "triangle" as const },
-  { label: "Let’s amend my goals", href: "/settings/financial-context", icon: "star" as const }
+  { label: "Let’s amend my goals", prompt: "Let’s amend my goals", icon: "star" as const }
 ] as const;
 
 export type QuickChatOption = (typeof QUICK_CHAT_OPTIONS)[number];
