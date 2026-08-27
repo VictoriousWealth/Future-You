@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { SurfaceGoalDTO } from "../../../application/product-surfaces/contracts";
 
 export function GoalProgressRing({ progress }: Readonly<{
@@ -40,21 +41,37 @@ export function GoalCard({ goal, compact = false }: Readonly<{
   goal: SurfaceGoalDTO;
   compact?: boolean;
 }>) {
-  return (
-    <article className={`fy-goal-card ${compact ? "compact" : ""}`} data-testid={`goal-${goal.id}`}>
-      <header>
-        <div>
-          <p>{goal.completion.statusLabel}</p>
+  const href = `/goals/${encodeURIComponent(goal.id)}`;
+
+  if (compact) {
+    return (
+      <Link
+        className="fy-goal-card fy-goal-card-link compact"
+        href={href}
+        prefetch={false}
+        aria-label={`Edit ${goal.label}`}
+        data-testid={`goal-${goal.id}`}
+      >
+        <header>
           <h3>{goal.label}</h3>
-        </div>
+          <p>{goal.completion.display}</p>
+        </header>
         <GoalProgressRing progress={goal.progress}/>
-      </header>
-      <div className="fy-goal-money">
-        <strong>{goal.currentBalance.display}</strong>
-        <span>of {goal.targetBalance.display}</span>
-      </div>
-      <GoalProgressBar progress={goal.progress}/>
-      <footer><span>Expected</span><strong>{goal.completion.display}</strong></footer>
-    </article>
+        <GoalProgressBar progress={goal.progress}/>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      className="fy-goal-card fy-goal-card-link current-row"
+      href={href}
+      prefetch={false}
+      aria-label={`Edit ${goal.label}`}
+      data-testid={`goal-${goal.id}`}
+    >
+      <h3>{goal.label}</h3>
+      <strong>Target: {goal.targetBalance.display}</strong>
+    </Link>
   );
 }
