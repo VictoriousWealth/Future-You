@@ -92,7 +92,7 @@ export function HomeSurface() {
 
   return (
     <ProductShell active="home" className="fy-home-shell" testId="home-surface">
-      {!data && !error ? <SurfaceLoading label="future"/> : null}
+      {!data && !error ? <SurfaceLoading label="Home"/> : null}
       {error ? <SurfaceError message={error} retry={load}/> : null}
       {data ? (
         <>
