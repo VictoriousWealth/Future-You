@@ -85,6 +85,24 @@ test("delivers the shared Home, Goals, Ask and Benefits product journey", async 
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("£3,300");
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("£4,500");
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("December 2026");
+  const forecastChart = page.locator(".fy-progress-chart-card").filter({ hasText: "Goal forecast" });
+  await expect(forecastChart.locator(".fy-chart-series polyline")).toHaveCount(3);
+  await forecastChart.getByRole("button", { name: "Hide Emergency fund" }).click();
+  await expect(forecastChart.locator(".fy-chart-series polyline")).toHaveCount(2);
+  await forecastChart.getByRole("button", { name: "Show Emergency fund" }).click();
+  await expect(forecastChart.locator(".fy-chart-series polyline")).toHaveCount(3);
+
+  const splitChart = page.locator(".fy-progress-chart-card").filter({ hasText: "Monthly contribution split" });
+  await splitChart.getByRole("button", { name: "Hide House deposit" }).click();
+  await expect(splitChart.locator(".fy-contribution-split-segment.is-hidden")).toHaveCount(6);
+  await splitChart.getByRole("button", { name: "Show House deposit" }).click();
+  await expect(splitChart.locator(".fy-contribution-split-segment.is-hidden")).toHaveCount(0);
+
+  const historyChart = page.locator(".fy-progress-chart-card").filter({ hasText: "Past contributions" });
+  await historyChart.getByRole("button", { name: "Hide Holiday" }).click();
+  await expect(historyChart.locator(".fy-chart-series polyline")).toHaveCount(2);
+  await historyChart.getByRole("button", { name: "Show Holiday" }).click();
+  await expect(historyChart.locator(".fy-chart-series polyline")).toHaveCount(3);
   const addGoal = page.getByRole("link", { name: "Add another goal" });
   await expect(addGoal).toHaveAttribute("href", "/goals/new");
   await addGoal.click();
