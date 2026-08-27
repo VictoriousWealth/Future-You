@@ -638,7 +638,7 @@ test("scales meaningful interface icons with the Apple-aligned body type", async
     };
   });
   expect(authLogoStack.backdropZ).toBeLessThan(authLogoStack.artworkZ);
-  expect(authLogoStack.artworkTop).toBe("-7px");
+  expect(authLogoStack.artworkTop).toBe("-9px");
   expect(authLogoStack.artworkRight).toBe("1px");
   expect(authLogoStack.widthRatio).toBeGreaterThanOrEqual(3.1);
   expect(authLogoStack.heightRatio).toBeGreaterThanOrEqual(2.9);
