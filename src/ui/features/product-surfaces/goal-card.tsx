@@ -92,9 +92,10 @@ export function GoalProgressBar({ progress, animateProgress = false, progressRev
   );
 }
 
-export function GoalCard({ goal, compact = false, animateProgress = false, progressRevealed = true }: Readonly<{
+export function GoalCard({ goal, compact = false, showBalance = false, animateProgress = false, progressRevealed = true }: Readonly<{
   goal: SurfaceGoalDTO;
   compact?: boolean;
+  showBalance?: boolean;
   animateProgress?: boolean;
   progressRevealed?: boolean;
 }>) {
@@ -114,6 +115,12 @@ export function GoalCard({ goal, compact = false, animateProgress = false, progr
           <p>{goal.completion.display}</p>
         </header>
         <GoalProgressRing progress={goal.progress} animateProgress={animateProgress} progressRevealed={progressRevealed}/>
+        {showBalance ? (
+          <p className="fy-goal-card-balance">
+            <strong>{goal.currentBalance.display}</strong>
+            <span>of {goal.targetBalance.display}</span>
+          </p>
+        ) : null}
         <GoalProgressBar progress={goal.progress} animateProgress={animateProgress} progressRevealed={progressRevealed}/>
       </Link>
     );
@@ -121,14 +128,20 @@ export function GoalCard({ goal, compact = false, animateProgress = false, progr
 
   return (
     <Link
-      className="fy-goal-card fy-goal-card-link current-row"
+      className="fy-goal-card fy-goal-card-link detailed"
       href={href}
       prefetch={false}
       aria-label={`Edit ${goal.label}`}
       data-testid={`goal-${goal.id}`}
     >
-      <h3>{goal.label}</h3>
-      <strong>Target: {goal.targetBalance.display}</strong>
+      <header>
+        <div><p>Projected completion</p><h3>{goal.label}</h3></div>
+        <GoalProgressRing progress={goal.progress}/>
+      </header>
+      <div className="fy-goal-money"><strong>{goal.currentBalance.display}</strong><span>of {goal.targetBalance.display}</span></div>
+      <GoalProgressBar progress={goal.progress}/>
+      <footer><span>Status</span><strong>{goal.completion.statusLabel}</strong></footer>
+      <span className="fy-goal-completion">{goal.completion.display}</span>
     </Link>
   );
 }
