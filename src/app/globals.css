@@ -1194,7 +1194,7 @@ summary {
   display: grid;
   width: calc(100% + ((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * 2));
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 14.56rem;
+  min-height: 12.2rem;
   margin-top: 1rem;
   margin-right: calc((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * -1);
   margin-left: calc((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * -1);
@@ -1202,18 +1202,8 @@ summary {
   overflow: hidden;
   isolation: isolate;
   color: #fff;
-  background: #004aad;
+  background: var(--fy-blue);
   border-radius: 1.2rem;
-}
-.fy-home-hero::after {
-  position: absolute;
-  z-index: -1;
-  right: -3.6rem;
-  bottom: -4.7rem;
-  width: 12rem;
-  height: 12rem;
-  content: "";
-  background: radial-gradient(circle, rgba(222,83,173,.38), transparent 66%);
 }
 .fy-home-hero-title {
   position: relative;
@@ -1236,6 +1226,7 @@ summary {
   overflow: hidden;
   overflow-wrap: anywhere;
   color: #fff;
+  font-family: var(--fy-font-bricolage-grotesque), Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.2rem, 5.8vw, 1.5rem);
   font-weight: 700;
   line-height: 1.05;
