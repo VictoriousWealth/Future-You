@@ -1,14 +1,8 @@
 import Image from "next/image";
 
-export function FutureYouAngularSymbol({
-  fullSize = false,
-  withBackdrop = false
-}: Readonly<{
-  fullSize?: boolean;
-  withBackdrop?: boolean;
-}>) {
+function FutureYouAngularSymbol({ withBackdrop }: Readonly<{ withBackdrop: boolean }>) {
   return (
-    <span className={fullSize ? "auth-brand-symbol" : "fy-angular-symbol"} aria-hidden="true">
+    <span className="fy-angular-symbol" aria-hidden="true">
       {withBackdrop ? (
         <Image
           className="fy-angular-backdrop"
@@ -25,15 +19,15 @@ export function FutureYouAngularSymbol({
 
 export function FutureYouWordmark({
   showAI = false,
-  symbolBackdrop = false
+  symbolBackdrop = true
 }: Readonly<{
   showAI?: boolean;
   symbolBackdrop?: boolean;
 }>) {
   return (
-    <>
+    <span className="fy-wordmark-lockup">
       <FutureYouAngularSymbol withBackdrop={symbolBackdrop}/>
       <span className="fy-wordmark-copy"><span>FUTURE</span><strong>YOU</strong>{showAI ? <i>AI</i> : null}</span>
-    </>
+    </span>
   );
 }
