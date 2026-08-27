@@ -61,7 +61,8 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain("YOU");
     expect(markup).toContain("fy-angular-symbol");
     expect(markup).toContain("/images/future-you-logo.svg");
-    expect(markup).not.toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain("fy-wordmark-lockup");
     expect(markup).not.toContain("<i>AI</i>");
     expect(markup).toContain('alt=""');
     expect(markup).not.toContain('<svg viewBox="0 0 24 24"><circle cx="12" cy="8"');
@@ -71,7 +72,8 @@ describe("Slice 6 renderer authority", () => {
     const markup = renderToStaticMarkup(createElement(ProductHeader, { showAI: true }));
     expect(markup).toContain("fy-angular-symbol");
     expect(markup).toContain("/images/future-you-logo.svg");
-    expect(markup).not.toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain("fy-wordmark-lockup");
     expect(markup).toContain("<i>AI</i>");
   });
 });
