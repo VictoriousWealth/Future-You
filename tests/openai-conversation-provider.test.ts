@@ -39,7 +39,7 @@ describe("OpenAI Responses conversation adapter", () => {
 
   it("uses one forced strict function, disables storage and built-in tools, and validates output", async () => {
     openai.create.mockResolvedValue({
-      output: [{ type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope()) }],
+      output: [{ type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope()) }],
       usage: { input_tokens: 101, output_tokens: 19, total_tokens: 120 }
     });
     const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
@@ -64,7 +64,7 @@ describe("OpenAI Responses conversation adapter", () => {
       model: "gpt-test",
       store: false,
       parallel_tool_calls: false,
-      tool_choice: { type: "function", name: "submit_conversation_interpretation_v3" },
+      tool_choice: { type: "function", name: "submit_conversation_interpretation_v4" },
       max_output_tokens: 1200
     });
     expect(call.tools).toHaveLength(1);
@@ -90,10 +90,10 @@ describe("OpenAI Responses conversation adapter", () => {
   it("repairs one invalid nested branch with minimal state and the same strict schema", async () => {
     openai.create
       .mockResolvedValueOnce({
-        output: [{ type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope({ amount: null })) }]
+        output: [{ type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope({ amount: null })) }]
       })
       .mockResolvedValueOnce({
-        output: [{ type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope()) }]
+        output: [{ type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope()) }]
       });
     const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
     await expect(provider.interpret(request)).resolves.toMatchObject({
@@ -127,8 +127,8 @@ describe("OpenAI Responses conversation adapter", () => {
     await expect(provider.interpret(request)).rejects.toMatchObject({ category: "UNKNOWN_TOOL", attempts: 1 });
     openai.create.mockResolvedValueOnce({
       output: [
-        { type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope()) },
-        { type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope()) }
+        { type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope()) },
+        { type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope()) }
       ]
     });
     await expect(provider.interpret(request)).rejects.toMatchObject({ category: "MULTIPLE_TOOL_CALLS", attempts: 1 });
@@ -136,7 +136,7 @@ describe("OpenAI Responses conversation adapter", () => {
 
   it("rejects function arguments that fail the runtime schema", async () => {
     openai.create.mockResolvedValue({
-      output: [{ type: "function_call", name: "submit_conversation_interpretation_v3", arguments: JSON.stringify(envelope({ amount: { quote: 650, currency: "GBP" } })) }]
+      output: [{ type: "function_call", name: "submit_conversation_interpretation_v4", arguments: JSON.stringify(envelope({ amount: { quote: 650, currency: "GBP" } })) }]
     });
     const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
     await expect(provider.interpret(request)).rejects.toMatchObject({ category: "INVALID_OUTPUT", attempts: 2 });
