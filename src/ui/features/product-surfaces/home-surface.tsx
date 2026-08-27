@@ -14,9 +14,7 @@ import { GoalCard } from "./goal-card";
 const DEFAULT_DECISION = { label: "Can I afford a £650 trip?", prompt: "Can I afford a £650 trip next month?" } as const;
 
 function decisionHref(decision: QuickChatOption): string {
-  return "href" in decision
-    ? decision.href
-    : `/ask?prompt=${encodeURIComponent(decision.prompt)}`;
+  return `/ask?prompt=${encodeURIComponent(decision.prompt)}&autosend=1`;
 }
 
 function apiMessage(value: unknown): string {
@@ -63,10 +61,9 @@ export function HomeSurface() {
         <>
           <section className="fy-home-intro">
             <h1 className="fy-personal-greeting">Good morning,<br/><strong>{data.displayName}!</strong></h1>
-            <Link className="fy-home-hero" href={heroHref}>
+            <Link className="fy-home-hero" href={heroHref} aria-label={`Open conversation: ${heroQuestion}`} title={heroQuestion}>
               <span className="fy-home-hero-title"><span>Ask</span><span>Future You</span></span>
-              <strong>{heroQuestion}</strong>
-              <span className="fy-home-hero-action"><ActionTriangleIcon/></span>
+              <strong className="fy-home-hero-question">{heroQuestion}</strong>
             </Link>
             <div className="fy-home-decisions fy-quick-chat-layout" aria-label="Questions to try">
               <p>Or Start a Quick Chat With:</p>
