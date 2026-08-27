@@ -1190,7 +1190,8 @@ summary {
 
 .fy-home-hero {
   position: relative;
-  display: block;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 14.56rem;
   margin-top: 1rem;
   padding: 0.8rem 1rem 1.25rem;
@@ -1221,19 +1222,20 @@ summary {
   letter-spacing: -.075em;
   line-height: 1.06;
 }
-.fy-home-hero strong {
-  position: absolute;
+.fy-home-hero-question {
+  position: relative;
   z-index: 1;
-  top: 8.2rem;
-  right: 1rem;
-  bottom: 1rem;
-  left: 1rem;
+  align-self: end;
   display: -webkit-box;
-  width: auto;
+  width: 100%;
   max-width: none;
+  max-height: 2.06em;
+  margin: 0;
   overflow: hidden;
   overflow-wrap: anywhere;
+  color: #fff;
   font-size: clamp(1.55rem, 7.7vw, 2rem);
+  font-weight: 700;
   line-height: 1.03;
   letter-spacing: -.07em;
   text-overflow: ellipsis;
@@ -1307,6 +1309,9 @@ summary {
 .fy-home-goals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-top: .7rem; }
 .fy-home-goals > :last-child:nth-child(odd) { grid-column: 1; }
 .fy-goal-card { padding: 1.05rem; color: var(--fy-blue); background: linear-gradient(145deg, #eef8ff, #fff2fb); border: 1px solid rgba(82,113,255,.42); border-radius: 1.45rem; box-shadow: 0 10px 24px rgba(0,74,173,.06); }
+.fy-goal-card-link { text-decoration: none; transition: border-color var(--fy-motion-fast) var(--fy-ease), transform var(--fy-motion-fast) var(--fy-ease); }
+.fy-goal-card-link:hover { border-color: var(--fy-blue-bright); transform: translateY(-1px); }
+.fy-goal-card-link:focus-visible { outline: .2rem solid var(--fy-focus); outline-offset: .15rem; }
 .fy-goal-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: .7rem; }
 .fy-goal-card header p { margin: 0 0 .2rem; color: var(--fy-pink); font-size: var(--fy-type-min); font-weight: 850; text-transform: uppercase; }
 .fy-goal-card h3 { margin: 0; font-size: 1.13rem; line-height: 1; letter-spacing: -.045em; }
@@ -1403,6 +1408,56 @@ summary {
 .fy-goals-list.is-preview { gap: .75rem; }
 .fy-goals-list.is-preview .fy-goal-card { padding: 1.15rem; }
 .fy-surface-footnote { margin: 1rem .2rem; color: #7387a5; font-size: var(--fy-type-min); line-height: 1.45; }
+
+.fy-goal-edit-shell .fy-product-content { width: min(100%, 42rem); }
+.fy-goal-edit-back { display: inline-flex; margin-top: 1.15rem; color: var(--fy-blue); font-size: .8rem; font-weight: 800; text-decoration: none; }
+.fy-goal-edit-heading { margin-top: 1.25rem; }
+.fy-goal-edit-card,
+.fy-goal-edit-preview {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  color: var(--fy-blue);
+  background: linear-gradient(145deg, #eef8ff, #fff5fb);
+  border: 1px solid rgba(82,113,255,.42);
+  border-radius: 1.45rem;
+  box-shadow: var(--fy-shadow-low);
+}
+.fy-goal-edit-fields { display: grid; gap: .9rem; }
+.fy-goal-edit-fields > label { display: grid; gap: .4rem; font-size: .82rem; font-weight: 800; }
+.fy-goal-edit-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--fy-touch);
+  padding: .75rem .85rem;
+  color: var(--fy-ink);
+  background: #fff;
+  border: 1px solid rgba(82,113,255,.34);
+  border-radius: .9rem;
+  font: inherit;
+}
+.fy-money-input { position: relative; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; overflow: hidden; background: #fff; border: 1px solid rgba(82,113,255,.34); border-radius: .9rem; }
+.fy-money-input:focus-within { outline: .2rem solid var(--fy-focus); outline-offset: .12rem; }
+.fy-money-input b { padding-left: .85rem; color: var(--fy-purple); font-size: 1rem; }
+.fy-money-input input { border: 0; border-radius: 0; outline: 0; }
+.fy-goal-pause-control { display: flex; align-items: flex-start; gap: .75rem; padding: .85rem; color: var(--fy-ink); background: rgba(255,255,255,.68); border-radius: 1rem; cursor: pointer; }
+.fy-goal-pause-control > input { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; margin-top: .1rem; accent-color: var(--fy-purple); }
+.fy-goal-pause-control > span { display: grid; gap: .15rem; }
+.fy-goal-pause-control small { color: var(--fy-muted); font-size: var(--fy-type-min); font-weight: 500; }
+.fy-goal-edit-preview { margin-top: 1rem; }
+.fy-goal-edit-preview > p:first-child { margin: 0; color: var(--fy-pink); font-size: var(--fy-type-min); font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+.fy-goal-edit-preview h2 { margin: -.6rem 0 0; font-size: 1.6rem; letter-spacing: -.04em; }
+.fy-goal-edit-preview > div:not(.fy-goal-edit-actions) { display: grid; gap: .2rem; padding: 1rem; background: #fff; border-radius: 1rem; }
+.fy-goal-edit-preview > div > span { color: var(--fy-pink); font-size: .8rem; font-weight: 800; }
+.fy-goal-edit-preview > div > strong { font-size: 1.2rem; }
+.fy-goal-edit-preview > div > small { color: var(--fy-muted); }
+.fy-goal-edit-preview dl { display: grid; gap: .55rem; margin: 0; }
+.fy-goal-edit-preview dl > div { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .55rem; border-bottom: 1px solid rgba(82,113,255,.18); }
+.fy-goal-edit-preview dt { color: var(--fy-muted); }
+.fy-goal-edit-preview dd { margin: 0; text-align: right; font-weight: 800; }
+.fy-goal-edit-immutability { margin: 0; color: var(--fy-muted); font-size: .76rem; line-height: 1.5; }
+.fy-goal-edit-actions { display: grid; gap: .65rem; }
+.fy-goal-edit-errors { width: 100%; margin-top: 1rem; }
 
 .fy-preview-banner,
 .fy-historical-warning { margin-bottom: .8rem; padding: .9rem 1rem; border-radius: 1rem; }
@@ -1863,7 +1918,7 @@ summary {
 .fy-workplace-card h2,
 .fy-message-content,
 .fy-home-decision strong,
-.fy-home-hero strong { overflow-wrap: anywhere; }
+.fy-home-hero-question { overflow-wrap: anywhere; }
 
 .fy-inline-empty {
   display: grid;
@@ -2280,6 +2335,9 @@ summary {
   .form-stack > :is(p, fieldset, button, .field-guidance) { grid-column: 1 / -1; }
   .goal-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .goal-form legend { grid-column: 1 / -1; }
+  .fy-goal-edit-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fy-goal-edit-fields > label:first-child { grid-column: 1 / -1; }
+  .fy-goal-edit-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .goal-preview-list article { padding-right: 0.5rem; padding-left: 0.5rem; }
 }
