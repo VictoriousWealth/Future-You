@@ -1,4 +1,5 @@
 import { ConversationApplication } from "../../src/application/conversation/application";
+import { DemoConversationTrustedDataReader } from "../../src/application/conversation/demo-trusted-data";
 import type {
   BeginConversationTurnCommand,
   BeginConversationTurnOutcome,
@@ -13,6 +14,7 @@ import { FakeConversationModelProvider, type FakeProviderMode } from "../../src/
 import { createSimulatorApplication } from "../../src/server/simulator-application";
 import { SARAH_V1_CONTEXT } from "../../src/fixtures/sarah-v1";
 import { slice2TestDependencies } from "./slice-2";
+import { SARAH_EMPLOYER_BENEFIT_SOURCE } from "../fixtures/employer-benefits";
 
 interface StoredTurn {
   readonly identity: string;
@@ -116,7 +118,10 @@ export class InMemoryConversationRepository implements ConversationRepository {
   }
 }
 
-export function conversationTestApplication(mode: FakeProviderMode = "normal") {
+export function conversationTestApplication(
+  mode: FakeProviderMode = "normal",
+  options: Readonly<{ demo?: boolean }> = {}
+) {
   const dependencies = slice2TestDependencies();
   let currentVersionId: string | null = SARAH_V1_CONTEXT.version;
   const contextSource = {
@@ -133,7 +138,28 @@ export function conversationTestApplication(mode: FakeProviderMode = "normal") {
     provider,
     providerIdentifier: "fake",
     modelIdentifier: "fake-conversation/2.0.0",
-    now: () => new Date("2026-08-24T12:00:00.000Z")
+    now: () => new Date("2026-08-24T12:00:00.000Z"),
+    ...(options.demo
+      ? {
+          demo: {
+            enabled: true,
+            provider,
+            trustedData: new DemoConversationTrustedDataReader({
+              contextSource,
+              workplaceSource: {
+                async getWorkplace() {
+                  return {
+                    name: "OniBank",
+                    associationSource: "employer_provisioned" as const,
+                    verificationStatus: "verified" as const
+                  };
+                }
+              },
+              employerBenefitSource: SARAH_EMPLOYER_BENEFIT_SOURCE
+            })
+          }
+        }
+      : {})
   });
   return {
     application,
