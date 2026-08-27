@@ -135,7 +135,7 @@ export function GoalCard({ goal, compact = false, showBalance = false, animatePr
       data-testid={`goal-${goal.id}`}
     >
       <header>
-        <div><p>Projected completion</p><h3>{goal.label}</h3></div>
+        <div><h3>{goal.label}</h3></div>
         <GoalProgressRing progress={goal.progress}/>
       </header>
       <div className="fy-goal-money"><strong>{goal.currentBalance.display}</strong><span>of {goal.targetBalance.display}</span></div>
