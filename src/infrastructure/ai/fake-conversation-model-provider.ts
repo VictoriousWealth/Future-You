@@ -65,6 +65,8 @@ export type FakeInterpretationDiagnosticMode =
   | "timing_correct_months_after_selected"
   | "timing_missing_selected_scenario"
   | "timing_quote_kind_mismatch"
+  | "scenario_reference_clarification_required"
+  | "follow_up_evidence_mismatch"
   | "timing_repair_fixes"
   | "timing_repair_repeats_failure"
   | "timing_repair_changes_failure";
@@ -111,6 +113,8 @@ export const FAKE_INTERPRETATION_DIAGNOSTIC_MODES = [
   "timing_correct_months_after_selected",
   "timing_missing_selected_scenario",
   "timing_quote_kind_mismatch",
+  "scenario_reference_clarification_required",
+  "follow_up_evidence_mismatch",
   "timing_repair_fixes",
   "timing_repair_repeats_failure",
   "timing_repair_changes_failure"
@@ -125,7 +129,7 @@ export interface FakeInterpretationDiagnosticFixture {
   }>[];
 }
 
-const DIAGNOSTIC_INTERPRET_TOOL = "submit_conversation_interpretation_v3";
+const DIAGNOSTIC_INTERPRET_TOOL = "submit_conversation_interpretation_v4";
 const DIAGNOSTIC_CLARIFICATION_TOOL = "submit_clarification_resolution_v2";
 
 function diagnosticEnvelope(overrides: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
@@ -381,6 +385,50 @@ export function fakeInterpretationDiagnosticFixture(
       return { method: "INTERPRET", request: diagnosticRequest, responses: [response([diagnosticCall(diagnosticEnvelope({
         timing: { quote: "next month", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null }
       }))])] };
+    case "scenario_reference_clarification_required":
+      return {
+        method: "INTERPRET",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "What about £500?",
+          supportedFollowUpEvidence: {
+            family: "AMOUNT_CHANGE",
+            amount: { quote: "£500", currency: "GBP" },
+            amountMinorUnits: "50000"
+          }
+        },
+        responses: [response([diagnosticCall({
+          interpretation: { kind: "AMBIGUOUS", ambiguity: "UNCLEAR_SUPPORTED_ACTION" }
+        })])]
+      };
+    case "follow_up_evidence_mismatch":
+      return {
+        method: "INTERPRET",
+        request: {
+          ...diagnosticRequest,
+          userMessage: "What about £500?",
+          supportedFollowUpEvidence: {
+            family: "AMOUNT_CHANGE",
+            amount: { quote: "£500", currency: "GBP" },
+            amountMinorUnits: "50000"
+          }
+        },
+        responses: [response([diagnosticCall({
+          interpretation: {
+            kind: "CLARIFY_SCENARIO_REFERENCE",
+            attemptedOperation: {
+              kind: "CHANGE_PURCHASE_MONTH",
+              timing: {
+                quote: "next month",
+                kind: "NEXT_MONTH",
+                monthNumber: null,
+                year: null,
+                offsetMonths: 1
+              }
+            }
+          }
+        })])]
+      };
     case "timing_correct_named_month":
       return {
         method: "INTERPRET",
@@ -461,6 +509,106 @@ export function fakeInterpretationDiagnosticFixture(
           response([diagnosticCall(diagnosticEnvelope({ timing: { quote: "next month", kind: "NAMED_MONTH", monthNumber: 10, year: null, offsetMonths: null } }))])
         ]
       };
+  }
+}
+
+export const FAKE_SCENARIO_REFERENCE_MODES = [
+  "valid_amount_change",
+  "ambiguous_amount_without_scenario",
+  "correct_amount_scenario_clarification",
+  "valid_timing_change",
+  "ambiguous_timing_without_scenario",
+  "correct_timing_scenario_clarification",
+  "valid_explanation",
+  "ambiguous_explanation_without_result",
+  "correct_explanation_scenario_clarification",
+  "genuine_ambiguity",
+  "repair_corrects_ambiguity",
+  "repair_repeats_ambiguity",
+  "repair_changes_to_invalid_branch"
+] as const;
+
+export type FakeScenarioReferenceMode = typeof FAKE_SCENARIO_REFERENCE_MODES[number];
+
+/** C1H low-level deterministic Responses fixtures; they never make a network request. */
+export function fakeScenarioReferenceFixture(mode: FakeScenarioReferenceMode): FakeInterpretationDiagnosticFixture {
+  const response = (interpretation: ConversationInterpretation) => ({
+    output: [diagnosticCall({ interpretation })],
+    usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 }
+  });
+  const amount = { quote: "£500", currency: "GBP" as const };
+  const timing = {
+    quote: "October", kind: "NAMED_MONTH" as const,
+    monthNumber: 10, year: null, offsetMonths: null
+  };
+  const noScenarioAmount: InterpretationProviderRequest = {
+    ...diagnosticRequest,
+    userMessage: "What about £500?",
+    supportedFollowUpEvidence: { family: "AMOUNT_CHANGE", amount, amountMinorUnits: "50000" }
+  };
+  const noScenarioTiming: InterpretationProviderRequest = {
+    ...diagnosticRequest,
+    userMessage: "What if I wait until October?",
+    supportedFollowUpEvidence: { family: "MONTH_CHANGE", timing }
+  };
+  const noResultExplanation: InterpretationProviderRequest = {
+    ...diagnosticRequest,
+    userMessage: "Why did it delay my emergency fund?",
+    supportedFollowUpEvidence: {
+      family: "RESULT_EXPLANATION",
+      explanationTarget: "GOAL_DELAY",
+      goalReferenceQuote: "emergency fund"
+    }
+  };
+  const selectedState = {
+    availableScenarios: [{ label: "£650 trip", scenarioType: "one_off_purchase" as const, selected: true }],
+    selectedScenarioType: "one_off_purchase" as const
+  };
+  const ambiguous: ConversationInterpretation = { kind: "AMBIGUOUS", ambiguity: "UNCLEAR_SUPPORTED_ACTION" };
+  const correctAmount: ConversationInterpretation = {
+    kind: "CLARIFY_SCENARIO_REFERENCE",
+    attemptedOperation: { kind: "CHANGE_PURCHASE_AMOUNT", amount }
+  };
+  const correctTiming: ConversationInterpretation = {
+    kind: "CLARIFY_SCENARIO_REFERENCE",
+    attemptedOperation: { kind: "CHANGE_PURCHASE_MONTH", timing }
+  };
+  const correctExplanation: ConversationInterpretation = {
+    kind: "CLARIFY_SCENARIO_REFERENCE",
+    attemptedOperation: {
+      kind: "EXPLAIN_SELECTED_RESULT",
+      explanationTarget: "GOAL_DELAY",
+      goalReferenceQuote: "emergency fund"
+    }
+  };
+
+  switch (mode) {
+    case "valid_amount_change":
+      return { method: "INTERPRET", request: { ...noScenarioAmount, ...selectedState }, responses: [response({ kind: "CHANGE_PURCHASE_AMOUNT", amount, scenarioReferenceStrategy: "SELECTED_SCENARIO", scenarioReferenceQuote: null })] };
+    case "ambiguous_amount_without_scenario":
+      return { method: "INTERPRET", request: noScenarioAmount, responses: [response(ambiguous)] };
+    case "correct_amount_scenario_clarification":
+      return { method: "INTERPRET", request: noScenarioAmount, responses: [response(correctAmount)] };
+    case "valid_timing_change":
+      return { method: "INTERPRET", request: { ...noScenarioTiming, ...selectedState }, responses: [response({ kind: "CHANGE_PURCHASE_MONTH", timing, scenarioReferenceStrategy: "SELECTED_SCENARIO", scenarioReferenceQuote: null })] };
+    case "ambiguous_timing_without_scenario":
+      return { method: "INTERPRET", request: noScenarioTiming, responses: [response(ambiguous)] };
+    case "correct_timing_scenario_clarification":
+      return { method: "INTERPRET", request: noScenarioTiming, responses: [response(correctTiming)] };
+    case "valid_explanation":
+      return { method: "INTERPRET", request: { ...noResultExplanation, ...selectedState }, responses: [response({ kind: "EXPLAIN_SELECTED_RESULT", explanationTarget: "GOAL_DELAY", goalReferenceQuote: "emergency fund", scenarioReferenceStrategy: "SELECTED_SCENARIO", scenarioReferenceQuote: null })] };
+    case "ambiguous_explanation_without_result":
+      return { method: "INTERPRET", request: noResultExplanation, responses: [response(ambiguous)] };
+    case "correct_explanation_scenario_clarification":
+      return { method: "INTERPRET", request: noResultExplanation, responses: [response(correctExplanation)] };
+    case "genuine_ambiguity":
+      return { method: "INTERPRET", request: { ...diagnosticRequest, userMessage: "Can you compare it somehow?", supportedFollowUpEvidence: { family: "NONE" } }, responses: [response(ambiguous)] };
+    case "repair_corrects_ambiguity":
+      return { method: "INTERPRET", request: noScenarioAmount, responses: [response(ambiguous), response(correctAmount)] };
+    case "repair_repeats_ambiguity":
+      return { method: "INTERPRET", request: noScenarioAmount, responses: [response(ambiguous), response(ambiguous)] };
+    case "repair_changes_to_invalid_branch":
+      return { method: "INTERPRET", request: noScenarioAmount, responses: [response(ambiguous), response(correctTiming)] };
   }
 }
 
@@ -552,15 +700,6 @@ export function interpretWithDeterministicFake(request: InterpretationProviderRe
   }
 
   if (/why|how did|what changed|what caused|explain/.test(lower)) {
-    const reference = referenceStrategy(request, message);
-    if (!reference) return {
-      kind: "CLARIFY_SCENARIO_REFERENCE",
-      attemptedOperation: {
-        kind: "EXPLAIN_SELECTED_RESULT",
-        explanationTarget: "OVERALL_CLASSIFICATION",
-        goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null
-      }
-    };
     const explanationTarget = /emergency|goal|deposit|holiday/.test(lower)
       ? "GOAL_DELAY" as const
       : /recover|restored/.test(lower)
@@ -576,6 +715,15 @@ export function interpretWithDeterministicFake(request: InterpretationProviderRe
                 : /timing|wait|month/.test(lower)
                   ? "TIMING_EFFECT" as const
                   : "OVERALL_CLASSIFICATION" as const;
+    const reference = referenceStrategy(request, message);
+    if (!reference) return {
+      kind: "CLARIFY_SCENARIO_REFERENCE",
+      attemptedOperation: {
+        kind: "EXPLAIN_SELECTED_RESULT",
+        explanationTarget,
+        goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null
+      }
+    };
     return {
       kind: "EXPLAIN_SELECTED_RESULT", explanationTarget,
       goalReferenceQuote: message.match(/emergency fund|house deposit|holiday/i)?.[0] ?? null,
