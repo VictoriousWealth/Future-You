@@ -522,6 +522,15 @@ test("uses the generated profile portrait for the Profile entry", async ({ page 
   await page.getByRole("link", { name: /Update financial context/ }).click();
   await expect(page).toHaveURL(/\/settings\/financial-context$/);
   await expect(page.getByRole("link", { name: "← Back to settings" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Start updating" }).click();
+  for (let step = 0; step < 5; step += 1) {
+    await page.getByRole("button", { name: "Continue" }).click();
+  }
+  await expect(page.getByRole("heading", { name: "Workplace", exact: true })).toBeVisible();
+  await expect(page.getByText("Provided by your employer", { exact: true })).toBeVisible();
+  await expect(page.getByText("OniBank", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Employer or workplace")).toHaveCount(0);
 });
 
 test("keeps Welcome focused on the supplied identity and authentication actions", async ({ page }) => {
@@ -867,7 +876,9 @@ test("meets keyboard, reduced-motion, long-content and zoom resilience gates", a
   await page.reload();
   const clientLoading = page.getByTestId("home-surface").getByTestId("surface-loading");
   await expect(clientLoading).toBeVisible();
-  const motion = await clientLoading.locator(".fy-state-orbit").evaluate((element) => {
+  await expect(clientLoading.locator(".fy-skeleton-shape")).not.toHaveCount(0);
+  await expect(clientLoading.locator(".fy-state-orbit")).toHaveCount(0);
+  const motion = await clientLoading.locator(".fy-skeleton-shape").first().evaluate((element) => {
     const style = getComputedStyle(element);
     return { name: style.animationName, duration: style.animationDuration };
   });
