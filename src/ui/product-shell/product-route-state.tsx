@@ -8,7 +8,7 @@ export function ProductRouteLoading({ active, label }: Readonly<{
   active: ProductDestination;
   label: string;
 }>) {
-  return <ProductShell active={active}><SurfaceLoading label={label}/></ProductShell>;
+  return <ProductShell active={active} className={`fy-${active}-shell`}><SurfaceLoading label={label}/></ProductShell>;
 }
 
 export function ProductRouteError({ active, reset }: Readonly<{
