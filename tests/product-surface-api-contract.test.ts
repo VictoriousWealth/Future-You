@@ -57,6 +57,11 @@ describe("Slice 6 product-surface API contracts", () => {
       "ADDITIONAL_PENSION_MATCH",
       "SEASON_TICKET_LOAN"
     ]);
+    expect(benefits.taxAndAllowances.map((opportunity: { id: string }) => opportunity.id)).toEqual([
+      "PENSION_TAX_RELIEF",
+      "LIFETIME_ISA_FIRST_HOME"
+    ]);
+    expect(benefits.loyaltySchemes.status).toBe("not_connected");
   });
 
   it("validates preview IDs before application access", async () => {
