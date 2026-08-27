@@ -10,6 +10,12 @@ import type {
   ProviderResult
 } from "../../application/conversation/contracts";
 import type { UnsupportedCategoryId } from "../../application/conversation/interpretation-policy";
+import type {
+  DemoConversationInterpretation,
+  DemoConversationModelProvider,
+  DemoResponsePlan,
+  DemoResponseProviderRequest
+} from "../../application/conversation/demo-contracts";
 import { ConversationProviderError } from "../../application/conversation/provider-error";
 import { parseGroundedTimingQuote } from "../../application/conversation/timing-policy";
 
@@ -783,10 +789,12 @@ function resolveWithDeterministicFake(request: ClarificationResolutionProviderRe
   return { kind: "AMBIGUOUS", ambiguity: "UNRECOGNISED_SCENARIO_REFERENCE" };
 }
 
-export class FakeConversationModelProvider implements ConversationModelProvider {
+export class FakeConversationModelProvider implements ConversationModelProvider, DemoConversationModelProvider {
   readonly observedInterpretationRequests: InterpretationProviderRequest[] = [];
   readonly observedClarificationRequests: ClarificationResolutionProviderRequest[] = [];
   readonly observedExplanationRequests: ExplanationProviderRequest[] = [];
+  readonly observedDemoInterpretationRequests: InterpretationProviderRequest[] = [];
+  readonly observedDemoResponseRequests: DemoResponseProviderRequest[] = [];
 
   constructor(private readonly mode: FakeProviderMode = "normal") {}
 
@@ -831,6 +839,43 @@ export class FakeConversationModelProvider implements ConversationModelProvider 
         caveatKeys: ["HYPOTHETICAL_ONLY", "ASSUMED_TIMING"],
         followUpActionKeys: ["TRY_LOWER_AMOUNT", "TRY_ANOTHER_MONTH", "VIEW_CURRENT_PATH"],
         tone: "CLEAR"
+      },
+      metadata: metadata()
+    };
+  }
+
+  async interpretDemo(
+    request: InterpretationProviderRequest
+  ): Promise<ProviderResult<DemoConversationInterpretation>> {
+    this.observedDemoInterpretationRequests.push(structuredClone(request));
+    this.failIfConfigured();
+    const message = request.userMessage.trim().toLowerCase();
+    if (
+      /\b(?:what|which|show|list|tell me about)\b.*\b(?:work(?:place)?\s+)?benefits?\b/.test(message)
+      && !/\b(?:use|activate|apply|simulate|calculate|change|take)\b/.test(message)
+    ) {
+      return { value: { kind: "RETRIEVE_WORK_BENEFITS" }, metadata: metadata() };
+    }
+    if (
+      /\b(?:what|which|show|list|tell me about)\b.*\b(?:my\s+)?goals?\b/.test(message)
+      && !/\b(?:change|prioriti[sz]e|fund|use|commit|recommend)\b/.test(message)
+    ) {
+      return { value: { kind: "RETRIEVE_GOALS" }, metadata: metadata() };
+    }
+    return { value: interpretWithDeterministicFake(request), metadata: metadata() };
+  }
+
+  async writeDemoResponse(
+    request: DemoResponseProviderRequest
+  ): Promise<ProviderResult<DemoResponsePlan>> {
+    this.observedDemoResponseRequests.push(structuredClone(request));
+    this.failIfConfigured();
+    if (this.mode === "explanation_failure") {
+      throw new ConversationProviderError("UNAVAILABLE", true, "Fake demo wording failure.");
+    }
+    return {
+      value: {
+        template: `Here’s what your trusted Future You data shows:\n\n${request.facts.map((fact) => `{{${fact.key}}}`).join("\n\n")}`
       },
       metadata: metadata()
     };
