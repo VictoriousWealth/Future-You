@@ -1189,28 +1189,21 @@ summary {
 .fy-home-question { margin: 1.35rem 0 .75rem; color: var(--fy-blue); font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 
 .fy-home-hero {
+  --fy-home-hero-edge-gap: .4rem;
   position: relative;
   display: grid;
+  width: calc(100% + ((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * 2));
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 14.56rem;
   margin-top: 1rem;
+  margin-right: calc((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * -1);
+  margin-left: calc((var(--fy-shell-gutter) - var(--fy-home-hero-edge-gap)) * -1);
   padding: 0.8rem 1rem 1.25rem;
   overflow: hidden;
-  isolation: isolate;
   color: #fff;
   background: #004aad;
   border-radius: 1.2rem;
   text-decoration: none;
-}
-.fy-home-hero::after {
-  position: absolute;
-  z-index: -2;
-  right: -3.6rem;
-  bottom: -4.7rem;
-  width: 12rem;
-  height: 12rem;
-  content: "";
-  background: radial-gradient(circle, rgba(222,83,173,.38), transparent 66%);
 }
 .fy-home-hero-title {
   position: relative;
@@ -2281,6 +2274,7 @@ summary {
 
   .fy-app-header { grid-area: header; }
   .fy-product-content { grid-area: content; width: min(100%, 60rem); margin: 0 auto; }
+  .fy-home-hero { width: 100%; margin-right: 0; margin-left: 0; }
   .fy-bottom-nav {
     position: sticky;
     z-index: 10;
