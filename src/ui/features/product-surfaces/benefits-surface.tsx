@@ -12,6 +12,25 @@ function apiMessage(value: unknown): string {
     ?? "Your benefits and opportunities are temporarily unavailable.";
 }
 
+function readableDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return value;
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ] as const;
+  const month = months[Number(match[2]) - 1];
+  return month ? `${Number(match[3])} ${month} ${match[1]}` : value;
+}
+
+function opportunityExplanation(benefitKey: BenefitsSurfaceDTO["opportunities"][number]["benefitKey"]): string {
+  if (benefitKey === "SEASON_TICKET_LOAN") {
+    return "A season-ticket loan is a workplace loan that helps pay the upfront cost of a public-transport pass. You repay your employer over time, often through monthly deductions from your pay. Interest, limits and repayment terms depend on the employer.";
+  }
+
+  return "Pension matching means your employer may add more money to your workplace pension when you contribute more, up to its limit. That extra money goes into your retirement savings, not your take-home pay.";
+}
+
 export function BenefitsSurface() {
   const [data, setData] = useState<BenefitsSurfaceDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +72,7 @@ export function BenefitsSurface() {
                   {data.workplace.status === "unverified" ? (
                     <div className="fy-status-stack"><span>{data.workplace.statusLabel}</span></div>
                   ) : null}
-                  {data.workplace.status !== "not_supplied" ? <p>{data.workplace.explanation}</p> : null}
+                  {data.workplace.status === "unverified" ? <p>{data.workplace.explanation}</p> : null}
                 </article>
               </div>
 
@@ -70,7 +89,7 @@ export function BenefitsSurface() {
                       <p className="fy-benefit-boundary">{fact.spendability}</p>
                       <details className="fy-opportunity-source">
                         <summary>Why this appears</summary>
-                        <p>Confirmed in financial context {fact.provenance.contextVersion}. This is not a new opportunity or spendable balance.</p>
+                        <p>Future You shows this because your confirmed financial plan includes an active workplace pension. The contribution percentages above come from that plan.</p>
                       </details>
                     </article>
                   ))}
@@ -88,6 +107,10 @@ export function BenefitsSurface() {
                     >
                       <header><div><span>Worth checking</span><h3>{opportunity.title}</h3></div><strong>{opportunity.statusLabel}</strong></header>
                       <p>{opportunity.description}</p>
+                      <div className="fy-benefit-explainer">
+                        <strong>What this means</strong>
+                        <p>{opportunityExplanation(opportunity.benefitKey)}</p>
+                      </div>
                       {opportunity.currentContribution ? <p className="fy-benefit-current">{opportunity.currentContribution}</p> : null}
                       <p className="fy-benefit-confidence">{opportunity.eligibilityLabel} {opportunity.uptakeLabel} {opportunity.planInclusionLabel}</p>
                       <p className="fy-benefit-boundary">{opportunity.numericalEffectLabel}</p>
@@ -96,8 +119,8 @@ export function BenefitsSurface() {
                       ) : null}
                       <details className="fy-opportunity-source">
                         <summary>Information source</summary>
-                        <p>{opportunity.provenance.sourceReference}</p>
-                        <p>Reference date: {opportunity.provenance.referenceDate}</p>
+                        <p>Future You found this in {opportunity.employerName}&apos;s workplace benefits information.</p>
+                        <p>We last checked it on {readableDate(opportunity.provenance.referenceDate)}. Your eligibility still needs to be confirmed.</p>
                       </details>
                     </article>
                   ))}
@@ -148,7 +171,7 @@ export function BenefitsSurface() {
             </div>
           </section>
 
-          <Link className="fy-context-settings" href="/settings/financial-context">Review the information used</Link>
+          <Link className="fy-context-settings" href="/profile/settings">Review the information used</Link>
         </>
       ) : null}
     </ProductShell>
