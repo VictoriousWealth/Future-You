@@ -509,6 +509,19 @@ test("uses the generated profile portrait for the Profile entry", async ({ page 
   const size = await portrait.boundingBox();
   expect(size?.width).toBeGreaterThanOrEqual(40);
   expect(size?.height).toBeGreaterThanOrEqual(40);
+
+  await profileLink.click();
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByRole("heading", { name: "Profile", exact: true })).toBeVisible();
+  await expect(page.getByText("Sarah Wonk", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: /Settings Account and financial plan/ }).click();
+  await expect(page).toHaveURL(/\/profile\/settings$/);
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: /Update financial context/ }).click();
+  await expect(page).toHaveURL(/\/settings\/financial-context$/);
+  await expect(page.getByRole("link", { name: "← Back to settings" })).toBeVisible();
 });
 
 test("keeps Welcome focused on the supplied identity and authentication actions", async ({ page }) => {
