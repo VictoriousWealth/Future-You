@@ -46,8 +46,7 @@ export function HomeSurface() {
       {data ? (
         <>
           <section className="fy-home-intro">
-            <h1 className="fy-personal-greeting">Welcome back,<br/><strong>{data.displayName}!</strong></h1>
-            <p className="fy-home-question">What are you thinking about?</p>
+            <h1 className="fy-personal-greeting">Good morning,<br/><strong>{data.displayName}!</strong></h1>
             <Link className="fy-home-hero" href={`/ask?prompt=${encodeURIComponent(DECISIONS[0].prompt)}`}>
               <span className="fy-home-spark" aria-hidden="true">✦</span>
               <small>Ask Future You</small>
