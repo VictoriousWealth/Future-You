@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   GoalsPreviewSurfaceDTO,
   GoalsSurfaceDTO
@@ -11,6 +11,7 @@ import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
 import { GoalCard, GoalProgressBar, GoalProgressRing } from "./goal-card";
+import { GoalProgressCharts } from "./goal-progress-charts";
 
 function apiMessage(value: unknown): string {
   return (value as Partial<ApiErrorResponseDTO> | null)?.error?.message ?? "Your goals are temporarily unavailable.";
@@ -22,12 +23,15 @@ export function GoalsSurface() {
   const [data, setData] = useState<GoalsSurfaceDTO | GoalsPreviewSurfaceDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [goalProgressRevealed, setGoalProgressRevealed] = useState(false);
+  const goalsRef = useRef<HTMLElement | null>(null);
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
   useEffect(() => {
     let active = true;
     setData(null);
     setError(null);
+    setGoalProgressRevealed(false);
     const endpoint = runId ? `/api/v1/goals/preview?runId=${encodeURIComponent(runId)}` : "/api/v1/goals";
     fetch(endpoint, { cache: "no-store" })
       .then(async (response) => {
@@ -39,6 +43,23 @@ export function GoalsSurface() {
     return () => { active = false; };
   }, [runId, attempt]);
 
+  useEffect(() => {
+    if (!data || data.mode !== "current_path" || goalProgressRevealed) return;
+    const goals = goalsRef.current;
+    if (!goals) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      setGoalProgressRevealed(true);
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setGoalProgressRevealed(true);
+      observer.disconnect();
+    }, { threshold: 0.18 });
+    observer.observe(goals);
+    return () => observer.disconnect();
+  }, [data, goalProgressRevealed]);
+
   return (
     <ProductShell active="goals" className="fy-goals-shell" testId="goals-surface">
       {!data && !error ? <SurfaceLoading label="Goals"/> : null}
@@ -49,17 +70,30 @@ export function GoalsSurface() {
             <div className="fy-goals-current-panel">
               <h1>Your goals</h1>
               <p className="fy-goals-current-intro">See how much you have saved and what remains.</p>
-              <section className="fy-goals-list is-current" aria-label="Financial goals">
+              <section className="fy-goals-list is-current" aria-label="Financial goals" ref={goalsRef}>
                 {data.goals.length === 0 ? (
                   <div className="fy-inline-empty" data-testid="goals-empty-state">
                     <strong>No goals are confirmed in this financial plan.</strong>
                     <span>Create a new immutable financial-context version to add goals.</span>
                     <Link href="/settings/financial-context">Review financial context →</Link>
                   </div>
-                ) : data.goals.map((goal) => <GoalCard goal={goal} compact showBalance key={goal.id}/>)}
-                <Link className="fy-add-goal-card" href="/settings/financial-context">
+                ) : data.goals.map((goal) => (
+                  <GoalCard
+                    goal={goal}
+                    compact
+                    showBalance
+                    animateProgress
+                    progressRevealed={goalProgressRevealed}
+                    key={goal.id}
+                  />
+                ))}
+                <Link className="fy-add-goal-card" href="/goals/new">
                   <span aria-hidden="true">+</span><strong>Add another goal</strong>
                 </Link>
+              </section>
+              <section className="fy-goals-progress" aria-labelledby="goals-progress-title">
+                <h2 id="goals-progress-title">Your progress</h2>
+                <GoalProgressCharts progress={data.progress}/>
               </section>
             </div>
           </section>
