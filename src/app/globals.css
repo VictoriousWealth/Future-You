@@ -879,6 +879,38 @@ summary {
 
 .fy-profile-link img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
+.fy-profile-shell {
+  padding-bottom: 7rem;
+  background: #f4f6fa;
+}
+
+.fy-profile-shell .fy-product-content { width: min(100%, 38rem); }
+.fy-account-heading { padding: 1.5rem 0 1rem; }
+.fy-account-heading.has-back-link { padding-top: 1rem; }
+.fy-account-heading a { display: inline-flex; min-height: var(--fy-touch); align-items: center; color: var(--fy-blue); font-size: var(--fy-ios-body); text-decoration: none; }
+.fy-account-heading h1 { margin: 0; color: var(--fy-ink); font-size: var(--fy-ios-large-title); line-height: 1.12; letter-spacing: -.035em; }
+.fy-account-heading.has-back-link h1 { margin-top: .25rem; }
+
+.fy-profile-identity { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #fff; border: 1px solid rgba(22,52,95,.08); border-radius: 1rem; }
+.fy-profile-identity > img { width: 5.5rem; height: 5.5rem; flex: 0 0 5.5rem; object-fit: cover; border: 2px solid var(--fy-blue); border-radius: 50%; }
+.fy-profile-identity h2 { margin: 0; color: var(--fy-ink); font-size: var(--fy-ios-title-2); line-height: 1.18; letter-spacing: -.025em; }
+.fy-profile-identity p { margin: .3rem 0 0; overflow-wrap: anywhere; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+
+.fy-account-section { margin-top: 1.6rem; }
+.fy-account-section > h2 { margin: 0 0 .45rem .85rem; color: var(--fy-muted); font-size: var(--fy-ios-footnote); font-weight: 650; line-height: 1.385; text-transform: uppercase; }
+.fy-settings-list { overflow: hidden; background: #fff; border: 1px solid rgba(22,52,95,.08); border-radius: 1rem; }
+.fy-settings-list > a,
+.fy-settings-static-row { display: grid; min-height: 4.5rem; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .75rem 1rem; color: inherit; text-decoration: none; }
+.fy-settings-list > a { transition: background var(--fy-motion-fast) var(--fy-ease); }
+.fy-settings-list > a:hover { background: #f8faff; }
+.fy-settings-icon { display: grid; width: 2.1rem; height: 2.1rem; place-items: center; color: #fff; background: var(--fy-blue); border-radius: .55rem; }
+.fy-settings-icon svg { width: var(--fy-icon-body); height: var(--fy-icon-body); stroke-width: 2; }
+.fy-settings-copy { display: grid; min-width: 0; gap: .15rem; }
+.fy-settings-copy strong { color: var(--fy-ink); font-size: var(--fy-ios-body); line-height: 1.294; }
+.fy-settings-copy small { overflow-wrap: anywhere; color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
+.fy-settings-chevron { width: var(--fy-icon-body); height: var(--fy-icon-body); color: #8ba0be; stroke-width: 2.2; }
+.fy-profile-sign-out .sign-out { width: 100%; min-height: var(--fy-touch); margin-top: 1.6rem; color: #a83767; background: #fff; border: 1px solid rgba(168,55,103,.13); border-radius: 1rem; }
+
 .fy-ask-intro { padding-top: 1.3rem; }
 
 .fy-thread-heading p {
@@ -1556,6 +1588,9 @@ summary {
 .fy-benefit-row h3 { margin: .12rem 0 0; color: var(--fy-ink); font-size: var(--fy-ios-headline); line-height: 1.294; letter-spacing: -.015em; }
 .fy-benefit-row > header > strong { max-width: 44%; flex: 0 0 auto; color: var(--fy-blue); font-size: var(--fy-ios-footnote); line-height: 1.385; text-align: right; }
 .fy-benefit-row > p { margin: .65rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-benefit-explainer { margin-top: .75rem; padding: .75rem; background: #f4f7fb; border-left: 3px solid var(--fy-blue); }
+.fy-benefit-explainer strong { display: block; color: var(--fy-ink); font-size: var(--fy-ios-footnote); line-height: 1.385; }
+.fy-benefit-explainer p { margin: .25rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
 .fy-contribution-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-top: .75rem; }
 .fy-contribution-pair > div { display: grid; gap: .2rem; padding: .75rem; background: #f4f7fb; border-radius: .7rem; }
 .fy-contribution-pair span { color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
