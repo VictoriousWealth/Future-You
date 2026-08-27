@@ -51,4 +51,24 @@ describe("onboarding browser authority boundary", () => {
     expect(markup).toContain("£SERVER-CAPACITY");
     expect(markup).toContain("2099-12 SERVER");
   });
+
+  it("uses plain financial-settings language for revision review", () => {
+    const result = new PreviewFinancialContextUseCase({
+      rules: SLICE_1_RULES,
+      calendar: ENGLAND_WALES_WORKING_DAY_CALENDAR,
+      calendarMetadata: ENGLAND_WALES_CALENDAR_METADATA
+    }).execute({
+      draft: SARAH_V1_ONBOARDING_DRAFT,
+      mode: "revision",
+      expectedCurrentContextVersionId: "sarah-v1@2026-09-01"
+    });
+    if (!result.ok) throw new Error(result.error.code);
+
+    const markup = renderToStaticMarkup(
+      createElement(FinancialContextPreviewView, { preview: result.value, mode: "revision" })
+    );
+    expect(markup).toContain("Check the updated information");
+    expect(markup).toContain("Calculation details");
+    expect(markup).not.toContain("Here’s where these numbers take you");
+  });
 });
