@@ -182,4 +182,74 @@ describe("OpenAI Responses conversation adapter", () => {
     expect(openai.create).toHaveBeenCalledTimes(1);
     expect(openai.create.mock.calls[0]![0]).toMatchObject({ reasoning: { effort: "low" } });
   });
+
+  it("uses a separate strict demo interpretation function without sending financial context", async () => {
+    openai.create.mockResolvedValue({
+      output: [{
+        type: "function_call",
+        name: "submit_demo_conversation_interpretation_v1",
+        arguments: JSON.stringify({ interpretation: { kind: "RETRIEVE_GOALS" } })
+      }],
+      usage: { input_tokens: 20, output_tokens: 4, total_tokens: 24 }
+    });
+    const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
+    await expect(provider.interpretDemo({
+      ...request,
+      userMessage: "What are my goals?"
+    })).resolves.toMatchObject({ value: { kind: "RETRIEVE_GOALS" } });
+    const call = openai.create.mock.calls[0]![0];
+    expect(call).toMatchObject({
+      store: false,
+      parallel_tool_calls: false,
+      tool_choice: { type: "function", name: "submit_demo_conversation_interpretation_v1" }
+    });
+    expect(call.tools).toHaveLength(1);
+    expect(call.tools[0]).toMatchObject({ strict: true });
+    const input = JSON.parse(call.input);
+    expect(input).toEqual({
+      userMessage: "What are my goals?",
+      pendingClarification: null,
+      availableScenarios: [],
+      selectedScenarioType: null,
+      trustedDate: "2026-08-24",
+      timezone: "Europe/London"
+    });
+    expect(call.input).not.toMatch(/financialContext|account|income|goalBalance|userId|email|companyId|runId/i);
+    expect(call).not.toHaveProperty("conversation");
+    expect(call).not.toHaveProperty("previous_response_id");
+  });
+
+  it("uses a strict stateless wording call containing only presentation-ready trusted facts", async () => {
+    openai.create.mockResolvedValue({
+      output: [{
+        type: "function_call",
+        name: "submit_demo_trusted_response_v1",
+        arguments: JSON.stringify({
+          template: "Here’s what your trusted data shows: {{GOAL_1}}"
+        })
+      }]
+    });
+    const provider = new OpenAIResponsesConversationModelProvider("test-key", "gpt-test");
+    await expect(provider.writeDemoResponse({
+      answerKind: "GOALS",
+      facts: [{ key: "GOAL_1", text: "Emergency fund: £3,300 saved toward £4,500." }]
+    })).resolves.toMatchObject({
+      value: { template: "Here’s what your trusted data shows: {{GOAL_1}}" }
+    });
+    const call = openai.create.mock.calls[0]![0];
+    expect(call).toMatchObject({
+      store: false,
+      parallel_tool_calls: false,
+      tool_choice: { type: "function", name: "submit_demo_trusted_response_v1" }
+    });
+    expect(call.tools).toHaveLength(1);
+    expect(call.tools[0]).toMatchObject({ strict: true });
+    expect(JSON.parse(call.input)).toEqual({
+      answerKind: "GOALS",
+      facts: [{ key: "GOAL_1", text: "Emergency fund: £3,300 saved toward £4,500." }]
+    });
+    expect(call.input).not.toMatch(/userMessage|userId|email|companyId|contextVersion|runId|scenarioId|rls/i);
+    expect(call).not.toHaveProperty("conversation");
+    expect(call).not.toHaveProperty("previous_response_id");
+  });
 });
