@@ -105,17 +105,17 @@ export function BenefitsSurface() {
 
           <section className="fy-opportunity-category is-tax" aria-labelledby="tax-opportunities-title">
             <header className="fy-opportunity-category-heading">
-              <div><p>Based on your plan</p><h2 id="tax-opportunities-title">Tax &amp; allowances</h2></div>
+              <div><p>Based on confirmed details</p><h2 id="tax-opportunities-title">Tax &amp; allowances</h2></div>
             </header>
-            <p className="fy-category-explainer">These are useful checks, not confirmed entitlements or money added to your plan.</p>
+            <p className="fy-category-explainer">Current treatments, potential matches and checks are kept separate. Nothing here changes your plan automatically.</p>
             <div className="fy-benefit-group">
               {data.taxAndAllowances.length > 0 ? data.taxAndAllowances.map((opportunity) => (
                 <article className="fy-benefit-row is-public" key={opportunity.id} data-testid={`tax-opportunity-${opportunity.id.toLowerCase()}`}>
-                  <header><div><span>Official guidance</span><h3>{opportunity.title}</h3></div><strong>{opportunity.statusLabel}</strong></header>
+                  <header><div><span>{opportunity.status === "active_treatment" ? "Current treatment" : "Official guidance"}</span><h3>{opportunity.title}</h3></div><strong>{opportunity.statusLabel}</strong></header>
                   <p>{opportunity.description}</p>
                   <p className="fy-benefit-current">{opportunity.matchedBecause}</p>
                   <p className="fy-benefit-confidence">{opportunity.eligibilityLabel}</p>
-                  <p className="fy-benefit-boundary">Not included in your current plan. {opportunity.numericalEffectLabel}</p>
+                  <p className="fy-benefit-boundary">{opportunity.planTreatmentLabel} {opportunity.numericalEffectLabel}</p>
                   <a className="fy-official-source-link" href={opportunity.provenance.sourceUrl} target="_blank" rel="noreferrer">
                     Read on {opportunity.provenance.publisher} <span aria-hidden="true">↗</span>
                   </a>
