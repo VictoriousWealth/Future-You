@@ -11,7 +11,11 @@ describe("Welcome page", () => {
     const markup = renderToStaticMarkup(createElement(WelcomePage));
 
     expect(markup).toContain("/images/future-you-logo.svg");
-    expect(markup).not.toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain("future-you-auth-backdrop.svg");
+    expect(markup).toContain('class="fy-wordmark-lockup"');
+    expect(markup).toContain("FUTURE");
+    expect(markup).toContain("YOU");
+    expect(markup).not.toContain("<i>AI</i>");
     expect(markup).toContain('href="/login"');
     expect(markup).toContain('href="/register"');
     expect(markup).toContain(">Login</a>");
@@ -23,10 +27,9 @@ describe("Welcome page", () => {
     expect(markup).not.toContain("Private financial context. Deterministic what-if results. You stay in control.");
     expect(markup).not.toContain("auth-heading");
     expect(markup).not.toContain("auth-trust-note");
-    expect(markup).toContain('class="auth-brand-break"');
   });
 
-  it("layers the supplied white SVG behind the compact auth logo only", () => {
+  it("uses the same supplied splash-and-wordmark lockup on authentication screens", () => {
     const markup = renderToStaticMarkup(createElement(AuthFrame, {
       title: "Login",
       description: "Responsive auth description",
@@ -37,6 +40,7 @@ describe("Welcome page", () => {
     expect(markup).toContain("/images/future-you-auth-backdrop.svg");
     expect(markup).toContain('class="fy-angular-backdrop"');
     expect(markup).toContain('class="fy-angular-artwork"');
+    expect(markup).toContain('class="fy-wordmark-lockup"');
     expect(markup).toContain('class="auth-copy"');
     expect(markup).toContain('class="auth-description"');
     expect(markup).toContain("Responsive auth description");
