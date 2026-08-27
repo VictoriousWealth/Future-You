@@ -7,6 +7,10 @@ import type {
   InterpretationProviderRequest
 } from "../../../application/conversation/contracts";
 import {
+  exactScenarioReferenceIssue,
+  type ExactScenarioReferenceIssue
+} from "../../../application/conversation/follow-up-evidence";
+import {
   INTERPRETATION_INTENT_IDS,
   SCENARIO_SELECTION_TARGET_IDS,
   UNSUPPORTED_CATEGORY_IDS
@@ -27,7 +31,8 @@ import {
 } from "../../../application/conversation/timing-policy";
 
 export const INTERPRETATION_DIAGNOSTIC_VERSION_V1 = "fy-interpretation-diagnostic/1.0.0" as const;
-export const INTERPRETATION_DIAGNOSTIC_VERSION = "fy-interpretation-diagnostic/2.0.0" as const;
+export const INTERPRETATION_DIAGNOSTIC_VERSION_V2 = "fy-interpretation-diagnostic/2.0.0" as const;
+export const INTERPRETATION_DIAGNOSTIC_VERSION = "fy-interpretation-diagnostics/3.0.0" as const;
 
 export const INTERPRETATION_VALIDATION_STAGES = [
   "PROVIDER_RESPONSE_RECEIVED",
@@ -64,6 +69,8 @@ export const INTERPRETATION_DIAGNOSTIC_CODES = [
   "BRANCH_NOT_ALLOWED_IN_CONVERSATION_STATE",
   "SUPPORTED_INTENT_MISSING_REQUIRED_INFORMATION",
   "UNSUPPORTED_BRANCH_CONTAINS_COMMAND_FIELDS",
+  "SCENARIO_REFERENCE_CLARIFICATION_REQUIRED",
+  "FOLLOW_UP_EVIDENCE_MISMATCH",
   "CLARIFICATION_KIND_INCOMPATIBLE",
   "EXPLANATION_TARGET_INCOMPATIBLE",
   "SCENARIO_SELECTION_TARGET_INCOMPATIBLE",
@@ -666,6 +673,31 @@ function scenarioQuote(value: ConversationInterpretation | ClarificationResoluti
   return null;
 }
 
+function failExactScenarioReferenceInvariant(
+  diagnostic: SanitisedInterpretationDiagnosticDraft,
+  issue: ExactScenarioReferenceIssue
+): SanitisedInterpretationDiagnosticDraft {
+  const stageTrace = diagnostic.stageTrace.filter((event) => [
+    "PROVIDER_RESPONSE_RECEIVED",
+    "TOOL_CALL_SELECTION",
+    "TOOL_ARGUMENT_JSON_PARSE",
+    "STRICT_SCHEMA_VALIDATION",
+    "BRANCH_DISCRIMINATOR_VALIDATION"
+  ].includes(event.stage));
+  return {
+    ...diagnostic,
+    deepestCompletedStage: "BRANCH_DISCRIMINATOR_VALIDATION",
+    failedStage: "BRANCH_SEMANTIC_VALIDATION",
+    diagnosticCodes: uniqueSorted([...diagnostic.diagnosticCodes, issue.code]),
+    jsonPointerPaths: uniqueSorted([...diagnostic.jsonPointerPaths, issue.path]),
+    semanticContractValid: false,
+    sourceGroundingValid: null,
+    conversationStateValid: null,
+    applicationCommandAuthorized: false,
+    stageTrace: [...stageTrace, { stage: "BRANCH_SEMANTIC_VALIDATION", outcome: "FAILED" }]
+  };
+}
+
 export function successfulInterpretationDiagnostic(
   metadata: InterpretationDiagnosticMetadata,
   value: ConversationInterpretation | ClarificationResolution,
@@ -688,6 +720,14 @@ export function successfulInterpretationDiagnostic(
       { stage: "IDENTIFIER_VALIDATION", outcome: "COMPLETED" }
     ]
   });
+
+  if (metadata.rootField === "interpretation" && "supportedFollowUpEvidence" in request) {
+    const issue = exactScenarioReferenceIssue(
+      value as ConversationInterpretation,
+      request as InterpretationProviderRequest
+    );
+    if (issue) return failExactScenarioReferenceInvariant(diagnostic, issue);
+  }
 
   const amount = amountQuote(value);
   if (amount !== null && !quotePresent(request.userMessage, amount)) {
@@ -936,13 +976,18 @@ export function markFinalFailure(
 }
 
 export function repairValidationErrors(
-  diagnostic: SanitisedInterpretationDiagnosticDraft
+  diagnostic: SanitisedInterpretationDiagnosticDraft,
+  supportedFollowUpFamily: string | null = null
 ): readonly Readonly<{ path: string; code: InterpretationDiagnosticCode; rule?: string }>[] {
   const paths = diagnostic.jsonPointerPaths.length > 0 ? diagnostic.jsonPointerPaths : ["/"];
   return diagnostic.diagnosticCodes.map((code, index) => {
     const rule = Object.hasOwn(TIMING_REPAIR_RULE_BY_CODE, code)
       ? TIMING_REPAIR_RULE_BY_CODE[code as keyof typeof TIMING_REPAIR_RULE_BY_CODE]
-      : undefined;
+      : code === "SCENARIO_REFERENCE_CLARIFICATION_REQUIRED"
+        ? `The user is attempting a supported ${supportedFollowUpFamily ?? "FOLLOW_UP"} operation. The required structured value is valid, no selected or explicit scenario can be resolved, and CLARIFY_SCENARIO_REFERENCE must preserve that follow-up information.`
+        : code === "FOLLOW_UP_EVIDENCE_MISMATCH"
+          ? `Return CLARIFY_SCENARIO_REFERENCE with attemptedOperation matching the supported ${supportedFollowUpFamily ?? "FOLLOW_UP"} evidence exactly.`
+          : undefined;
     const timingPath = paths.find((path) => path.includes("/timing"));
     const timingBasePath = timingPath?.slice(0, timingPath.indexOf("/timing") + "/timing".length);
     return {
