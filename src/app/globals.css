@@ -1223,7 +1223,18 @@ summary {
     radial-gradient(circle at 0 45%, rgba(222, 83, 173, .07), transparent 20rem),
     #fff;
 }
-.fy-benefits-shell { background: #f4f6fa; }
+.fy-benefits-shell {
+  /* Apple iOS/iPadOS default text-style sizes: 34, 22, 17, 16, 15, 13 and 12pt. */
+  --fy-benefits-large-title: 2.125rem;
+  --fy-benefits-title-2: 1.375rem;
+  --fy-benefits-headline: 1.0625rem;
+  --fy-benefits-body: 1.0625rem;
+  --fy-benefits-callout: 1rem;
+  --fy-benefits-subheadline: .9375rem;
+  --fy-benefits-footnote: .8125rem;
+  --fy-benefits-caption: .75rem;
+  background: #f4f6fa;
+}
 .fy-home-shell { --fy-compact-card-size: clamp(7.25rem, 34.8vw, 12rem); }
 
 .fy-personal-greeting { margin: 1.35rem 0 0; color: var(--fy-blue); font-size: 1.25rem; line-height: 1.04; letter-spacing: -.045em; }
@@ -1550,20 +1561,20 @@ summary {
   margin: 0;
   color: var(--fy-blue);
   font-family: var(--fy-font-bricolage-grotesque), Inter, sans-serif;
-  font-size: var(--fy-ios-large-title);
+  font-size: var(--fy-benefits-large-title);
   font-weight: 700;
   line-height: 1.205;
   letter-spacing: -.04em;
 }
 .fy-benefits-intro h1 span { font-weight: 400; }
-.fy-benefits-intro p { max-width: 34rem; margin: .55rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-body); line-height: 1.294; }
+.fy-benefits-intro p { max-width: 34rem; margin: .55rem 0 0; color: var(--fy-muted); font-size: var(--fy-benefits-body); line-height: 1.294; }
 
 .fy-opportunity-category { display: grid; gap: .65rem; margin-top: 2rem; }
 .fy-opportunity-category-heading p,
 .fy-opportunity-category-heading h2 { margin: 0; }
-.fy-opportunity-category-heading p { color: var(--fy-muted); font-size: var(--fy-ios-caption); font-weight: 650; line-height: 1.333; text-transform: uppercase; }
-.fy-opportunity-category-heading h2 { margin-top: .1rem; color: var(--fy-blue); font-size: var(--fy-ios-title-2); line-height: 1.273; letter-spacing: -.025em; }
-.fy-category-explainer { margin: -.15rem 0 .15rem; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-opportunity-category-heading p { color: var(--fy-muted); font-size: var(--fy-benefits-caption); font-weight: 650; line-height: 1.333; text-transform: uppercase; }
+.fy-opportunity-category-heading h2 { margin-top: .1rem; color: var(--fy-blue); font-size: var(--fy-benefits-title-2); line-height: 1.273; letter-spacing: -.025em; }
+.fy-category-explainer { margin: -.15rem 0 .15rem; color: var(--fy-muted); font-size: var(--fy-benefits-subheadline); line-height: 1.333; }
 .fy-work-benefit-stack { display: grid; gap: 1rem; }
 .fy-benefit-group { overflow: hidden; background: #fff; border: 1px solid rgba(0,74,173,.14); border-radius: .9rem; }
 .fy-benefit-group > * { border: 0; border-radius: 0; }
@@ -1575,41 +1586,41 @@ summary {
 .fy-category-empty { padding: 1rem; background: #fff; }
 .fy-workplace-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .55rem .8rem; align-items: start; }
 .fy-workplace-summary > div:first-child { display: grid; gap: .12rem; }
-.fy-workplace-summary > div:first-child span { color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
-.fy-workplace-summary > div:first-child strong { color: var(--fy-ink); font-size: var(--fy-ios-headline); line-height: 1.294; }
-.fy-workplace-summary > p { grid-column: 1 / -1; margin: 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-workplace-summary > div:first-child span { color: var(--fy-muted); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
+.fy-workplace-summary > div:first-child strong { color: var(--fy-ink); font-size: var(--fy-benefits-headline); line-height: 1.294; }
+.fy-workplace-summary > p { grid-column: 1 / -1; margin: 0; color: var(--fy-muted); font-size: var(--fy-benefits-subheadline); line-height: 1.333; }
 .fy-status-stack { display: grid; justify-items: end; gap: .2rem; }
-.fy-status-stack span { color: var(--fy-blue); font-size: var(--fy-ios-caption); font-weight: 650; line-height: 1.333; text-align: right; }
+.fy-status-stack span { color: var(--fy-blue); font-size: var(--fy-benefits-caption); font-weight: 650; line-height: 1.333; text-align: right; }
 
 .fy-benefit-row { scroll-margin-top: 1rem; color: var(--fy-ink); }
 .fy-benefit-row > header { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .fy-benefit-row > header > div { min-width: 0; }
-.fy-benefit-row > header span { color: var(--fy-muted); font-size: var(--fy-ios-caption); font-weight: 650; line-height: 1.333; text-transform: uppercase; }
-.fy-benefit-row h3 { margin: .12rem 0 0; color: var(--fy-ink); font-size: var(--fy-ios-headline); line-height: 1.294; letter-spacing: -.015em; }
-.fy-benefit-row > header > strong { max-width: 44%; flex: 0 0 auto; color: var(--fy-blue); font-size: var(--fy-ios-footnote); line-height: 1.385; text-align: right; }
-.fy-benefit-row > p { margin: .65rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-benefit-row > header span { color: var(--fy-muted); font-size: var(--fy-benefits-caption); font-weight: 650; line-height: 1.333; text-transform: uppercase; }
+.fy-benefit-row h3 { margin: .12rem 0 0; color: var(--fy-ink); font-size: var(--fy-benefits-headline); line-height: 1.294; letter-spacing: -.015em; }
+.fy-benefit-row > header > strong { max-width: 44%; flex: 0 0 auto; color: var(--fy-blue); font-size: var(--fy-benefits-footnote); line-height: 1.385; text-align: right; }
+.fy-benefit-row > p { margin: .65rem 0 0; color: var(--fy-muted); font-size: var(--fy-benefits-subheadline); line-height: 1.333; }
 .fy-benefit-explainer { margin-top: .75rem; padding: .75rem; background: #f4f7fb; border-left: 3px solid var(--fy-blue); }
-.fy-benefit-explainer strong { display: block; color: var(--fy-ink); font-size: var(--fy-ios-footnote); line-height: 1.385; }
-.fy-benefit-explainer p { margin: .25rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-benefit-explainer strong { display: block; color: var(--fy-ink); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
+.fy-benefit-explainer p { margin: .25rem 0 0; color: var(--fy-muted); font-size: var(--fy-benefits-subheadline); line-height: 1.333; }
 .fy-contribution-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-top: .75rem; }
 .fy-contribution-pair > div { display: grid; gap: .2rem; padding: .75rem; background: #f4f7fb; border-radius: .7rem; }
-.fy-contribution-pair span { color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
-.fy-contribution-pair strong { color: var(--fy-blue); font-size: var(--fy-ios-headline); line-height: 1.294; }
+.fy-contribution-pair span { color: var(--fy-muted); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
+.fy-contribution-pair strong { color: var(--fy-blue); font-size: var(--fy-benefits-headline); line-height: 1.294; }
 .fy-benefit-row > .fy-benefit-current { color: var(--fy-ink); font-weight: 600; }
-.fy-benefit-row > .fy-benefit-confidence { padding-top: .65rem; border-top: 1px solid rgba(22,52,95,.1); font-size: var(--fy-ios-footnote); line-height: 1.385; }
-.fy-benefit-row > .fy-benefit-boundary { color: #754475; font-size: var(--fy-ios-footnote); font-weight: 650; line-height: 1.385; }
-.fy-benefit-row > .fy-benefit-next-step { color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
+.fy-benefit-row > .fy-benefit-confidence { padding-top: .65rem; border-top: 1px solid rgba(22,52,95,.1); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
+.fy-benefit-row > .fy-benefit-boundary { color: #754475; font-size: var(--fy-benefits-footnote); font-weight: 650; line-height: 1.385; }
+.fy-benefit-row > .fy-benefit-next-step { color: var(--fy-muted); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
 .fy-opportunity-source { margin-top: .55rem; border-top: 1px solid rgba(22,52,95,.1); }
-.fy-opportunity-source summary { min-height: var(--fy-touch); padding: .7rem 0 0; color: var(--fy-blue); cursor: pointer; font-size: var(--fy-ios-footnote); font-weight: 650; line-height: 1.385; }
-.fy-opportunity-source p { margin: .35rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-footnote); line-height: 1.385; }
-.fy-official-source-link { display: inline-flex; align-items: center; gap: .35rem; min-height: var(--fy-touch); margin-top: .25rem; color: var(--fy-blue); font-size: var(--fy-ios-subheadline); font-weight: 650; }
-.fy-official-source-link span { font-size: var(--fy-ios-callout); }
+.fy-opportunity-source summary { min-height: var(--fy-touch); padding: .7rem 0 0; color: var(--fy-blue); cursor: pointer; font-size: var(--fy-benefits-footnote); font-weight: 650; line-height: 1.385; }
+.fy-opportunity-source p { margin: .35rem 0 0; color: var(--fy-muted); font-size: var(--fy-benefits-footnote); line-height: 1.385; }
+.fy-official-source-link { display: inline-flex; align-items: center; gap: .35rem; min-height: var(--fy-touch); margin-top: .25rem; color: var(--fy-blue); font-size: var(--fy-benefits-subheadline); font-weight: 650; }
+.fy-official-source-link span { font-size: var(--fy-benefits-callout); }
 .fy-category-empty strong,
-.fy-loyalty-state strong { display: block; color: var(--fy-ink); font-size: var(--fy-ios-headline); line-height: 1.294; }
+.fy-loyalty-state strong { display: block; color: var(--fy-ink); font-size: var(--fy-benefits-headline); line-height: 1.294; }
 .fy-category-empty p,
-.fy-loyalty-state p { margin: .35rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
-.fy-loyalty-state > span { display: block; margin-bottom: .2rem; color: var(--fy-blue); font-size: var(--fy-ios-footnote); font-weight: 650; line-height: 1.385; }
-.fy-context-settings { display: flex; min-height: var(--fy-touch); align-items: center; margin: 1.6rem 0 1rem; padding: .8rem 1rem; color: var(--fy-blue); background: #fff; border: 1px solid rgba(0,74,173,.14); border-radius: .9rem; font-size: var(--fy-ios-body); font-weight: 600; text-decoration: none; }
+.fy-loyalty-state p { margin: .35rem 0 0; color: var(--fy-muted); font-size: var(--fy-benefits-subheadline); line-height: 1.333; }
+.fy-loyalty-state > span { display: block; margin-bottom: .2rem; color: var(--fy-blue); font-size: var(--fy-benefits-footnote); font-weight: 650; line-height: 1.385; }
+.fy-context-settings { display: flex; min-height: var(--fy-touch); align-items: center; margin: 1.6rem 0 1rem; padding: .8rem 1rem; color: var(--fy-blue); background: #fff; border: 1px solid rgba(0,74,173,.14); border-radius: .9rem; font-size: var(--fy-benefits-body); font-weight: 600; text-decoration: none; }
 
 .fy-surface-state { display: grid; min-height: 65dvh; place-content: center; justify-items: center; padding: 2rem; text-align: center; }
 .fy-surface-state.is-loading { display: block; width: 100%; padding: 1.75rem 0 2rem; text-align: left; }
@@ -2477,6 +2488,38 @@ summary {
   .fy-opportunity-category.is-work > .fy-work-benefit-stack { grid-column: 1 / -1; }
   .fy-opportunity-category.is-tax { grid-column: 1; }
   .fy-opportunity-category.is-loyalty { grid-column: 2; }
+}
+
+/* Apple tvOS viewing-distance typography for TV-sized browser viewports.
+   The smallest Benefits text is 23px and normal reading text is 29px. */
+@media (min-width: 100rem) and (min-height: 50rem) {
+  .fy-benefits-shell {
+    --fy-benefits-large-title: 4.75rem;
+    --fy-benefits-title-2: 3.5625rem;
+    --fy-benefits-headline: 2.375rem;
+    --fy-benefits-body: 1.8125rem;
+    --fy-benefits-callout: 1.8125rem;
+    --fy-benefits-subheadline: 1.8125rem;
+    --fy-benefits-footnote: 1.5625rem;
+    --fy-benefits-caption: 1.4375rem;
+    --fy-touch: 4.5rem;
+    width: min(calc(100% - 6rem), 112rem);
+  }
+
+  .fy-benefits-shell .fy-product-content { max-width: 96rem; }
+  .fy-benefits-intro { margin-top: 2.5rem; }
+  .fy-benefits-intro h1 { line-height: 1.263; }
+  .fy-benefits-intro p { max-width: 58rem; }
+  .fy-opportunity-category { gap: 1rem; margin-top: 3rem; }
+  .fy-work-benefit-stack { gap: 1.5rem; }
+  .fy-workplace-summary,
+  .fy-benefit-row,
+  .fy-loyalty-state,
+  .fy-category-empty { padding: 1.75rem; }
+  .fy-benefit-explainer,
+  .fy-contribution-pair > div { padding: 1.25rem; }
+  .fy-benefit-row > header { gap: 1.25rem; }
+  .fy-context-settings { padding: 1.25rem 1.5rem; }
 }
 
 @media (min-width: 1024px) {
