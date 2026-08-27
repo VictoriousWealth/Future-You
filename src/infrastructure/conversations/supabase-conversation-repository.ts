@@ -11,7 +11,7 @@ import type {
   StoredConversationMessage,
   StoredConversationTurnCompletion
 } from "../../application/ports/conversation-repository";
-import { conversationIntentKindSchema } from "../../application/conversation/schemas";
+import { recordedConversationIntentKindSchema } from "../../application/conversation/demo-schemas";
 import type { Json } from "../supabase/database.types";
 import type { RequestSupabaseClient } from "../supabase/server-client";
 import { PersistenceBoundaryError } from "../persistence/persistence-errors";
@@ -56,7 +56,7 @@ function completionFromJson(value: Json | null): StoredConversationTurnCompletio
   if (value === null || Array.isArray(value) || typeof value !== "object") {
     throw new PersistenceBoundaryError("PERSISTED_DATA_INVALID", "The persisted turn completion was invalid.");
   }
-  const intent = value.intent === null ? null : conversationIntentKindSchema.safeParse(value.intent);
+  const intent = value.intent === null ? null : recordedConversationIntentKindSchema.safeParse(value.intent);
   if (
     (intent !== null && !intent.success) ||
     typeof value.providerAttemptCount !== "number" ||
