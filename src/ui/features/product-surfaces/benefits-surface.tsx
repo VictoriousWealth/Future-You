@@ -46,59 +46,68 @@ export function BenefitsSurface() {
             <header className="fy-opportunity-category-heading">
               <div><p>From your company</p><h2 id="work-opportunities-title">Work benefits</h2></div>
             </header>
-            <div className="fy-benefit-group">
-              <article className="fy-workplace-summary" data-testid="workplace-state">
-                <div><span>Workplace</span><strong>{data.workplace.name ?? "Not added"}</strong></div>
-                <div className="fy-status-stack">
-                  <span>{data.workplace.statusLabel}</span>
-                  {data.workplace.status === "verified" ? <span>{data.workplace.membershipStatusLabel}</span> : null}
-                </div>
-                {data.workplace.status !== "not_supplied" ? <p>{data.workplace.explanation}</p> : null}
-              </article>
-
-              {data.activeFacts.map((fact) => (
-                <article className="fy-benefit-row is-active" key={fact.id} data-testid="active-pension-fact">
-                  <header><div><span>In your plan</span><h3>{fact.title}</h3></div><strong>{fact.statusLabel}</strong></header>
-                  <div className="fy-contribution-pair">
-                    <div><span>You contribute</span><strong>{fact.employeeContribution}</strong></div>
-                    <div><span>{fact.employerName} contributes</span><strong>{fact.employerContribution}</strong></div>
-                  </div>
-                  <p>{fact.treatment}</p>
-                  <p className="fy-benefit-boundary">{fact.spendability}</p>
-                  <details className="fy-opportunity-source">
-                    <summary>Why this appears</summary>
-                    <p>Confirmed in financial context {fact.provenance.contextVersion}. This is not a new opportunity or spendable balance.</p>
-                  </details>
-                </article>
-              ))}
-
-              {data.opportunities.map((opportunity) => (
-                <article
-                  className="fy-benefit-row"
-                  id={opportunity.benefitKey === "SEASON_TICKET_LOAN" ? "opportunity-season-ticket-loan" : "opportunity-additional-pension-match"}
-                  key={opportunity.id}
-                  data-testid={`benefit-opportunity-${opportunity.benefitKey.toLowerCase()}`}
-                >
-                  <header><div><span>Worth checking</span><h3>{opportunity.title}</h3></div><strong>{opportunity.statusLabel}</strong></header>
-                  <p>{opportunity.description}</p>
-                  {opportunity.currentContribution ? <p className="fy-benefit-current">{opportunity.currentContribution}</p> : null}
-                  <p className="fy-benefit-confidence">{opportunity.eligibilityLabel} {opportunity.uptakeLabel} {opportunity.planInclusionLabel}</p>
-                  <p className="fy-benefit-boundary">{opportunity.numericalEffectLabel}</p>
-                  {opportunity.benefitKey === "SEASON_TICKET_LOAN" ? (
-                    <p className="fy-benefit-next-step">More information is needed before any future simulation.</p>
+            <div className="fy-work-benefit-stack">
+              <div className="fy-benefit-group">
+                <article className="fy-workplace-summary" data-testid="workplace-state">
+                  <div><span>Workplace</span><strong>{data.workplace.name ?? "Not added"}</strong></div>
+                  {data.workplace.status === "unverified" ? (
+                    <div className="fy-status-stack"><span>{data.workplace.statusLabel}</span></div>
                   ) : null}
-                  <details className="fy-opportunity-source">
-                    <summary>Information source</summary>
-                    <p>{opportunity.provenance.sourceReference}</p>
-                    <p>Reference date: {opportunity.provenance.referenceDate}</p>
-                  </details>
+                  {data.workplace.status !== "not_supplied" ? <p>{data.workplace.explanation}</p> : null}
                 </article>
-              ))}
+              </div>
 
-              {data.opportunities.length === 0 && data.emptyState ? (
-                <article className="fy-category-empty" data-testid="benefits-empty-state">
-                  <strong>{data.emptyState.title}</strong><p>{data.emptyState.description}</p>
-                </article>
+              {data.activeFacts.length > 0 ? (
+                <div className="fy-benefit-group">
+                  {data.activeFacts.map((fact) => (
+                    <article className="fy-benefit-row is-active" key={fact.id} data-testid="active-pension-fact">
+                      <header><div><span>In your plan</span><h3>{fact.title}</h3></div><strong>{fact.statusLabel}</strong></header>
+                      <div className="fy-contribution-pair">
+                        <div><span>You contribute</span><strong>{fact.employeeContribution}</strong></div>
+                        <div><span>{fact.employerName} contributes</span><strong>{fact.employerContribution}</strong></div>
+                      </div>
+                      <p>{fact.treatment}</p>
+                      <p className="fy-benefit-boundary">{fact.spendability}</p>
+                      <details className="fy-opportunity-source">
+                        <summary>Why this appears</summary>
+                        <p>Confirmed in financial context {fact.provenance.contextVersion}. This is not a new opportunity or spendable balance.</p>
+                      </details>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+
+              {data.opportunities.length > 0 || data.emptyState ? (
+                <div className="fy-benefit-group">
+                  {data.opportunities.map((opportunity) => (
+                    <article
+                      className="fy-benefit-row"
+                      id={opportunity.benefitKey === "SEASON_TICKET_LOAN" ? "opportunity-season-ticket-loan" : "opportunity-additional-pension-match"}
+                      key={opportunity.id}
+                      data-testid={`benefit-opportunity-${opportunity.benefitKey.toLowerCase()}`}
+                    >
+                      <header><div><span>Worth checking</span><h3>{opportunity.title}</h3></div><strong>{opportunity.statusLabel}</strong></header>
+                      <p>{opportunity.description}</p>
+                      {opportunity.currentContribution ? <p className="fy-benefit-current">{opportunity.currentContribution}</p> : null}
+                      <p className="fy-benefit-confidence">{opportunity.eligibilityLabel} {opportunity.uptakeLabel} {opportunity.planInclusionLabel}</p>
+                      <p className="fy-benefit-boundary">{opportunity.numericalEffectLabel}</p>
+                      {opportunity.benefitKey === "SEASON_TICKET_LOAN" ? (
+                        <p className="fy-benefit-next-step">More information is needed before any future simulation.</p>
+                      ) : null}
+                      <details className="fy-opportunity-source">
+                        <summary>Information source</summary>
+                        <p>{opportunity.provenance.sourceReference}</p>
+                        <p>Reference date: {opportunity.provenance.referenceDate}</p>
+                      </details>
+                    </article>
+                  ))}
+
+                  {data.opportunities.length === 0 && data.emptyState ? (
+                    <article className="fy-category-empty" data-testid="benefits-empty-state">
+                      <strong>{data.emptyState.title}</strong><p>{data.emptyState.description}</p>
+                    </article>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           </section>
