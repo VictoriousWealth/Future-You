@@ -9,6 +9,10 @@ import type { ApplicationError } from "../errors/application-error";
 import type { FinancialContextSource } from "../ports/financial-context-source";
 import type { WorkplaceAssociationSource } from "../ports/workplace-association-source";
 import type {
+  TaxOpportunityProfile,
+  TaxOpportunityProfileSource
+} from "../ports/tax-opportunity-profile-source";
+import type {
   EmployerBenefitOpportunity,
   EmployerBenefitSource
 } from "../ports/employer-benefit-source";
@@ -43,6 +47,7 @@ export interface ProductSurfaceDependencies {
   readonly contextSource: FinancialContextSource;
   readonly workplaceSource: WorkplaceAssociationSource;
   readonly employerBenefitSource: EmployerBenefitSource;
+  readonly taxOpportunityProfileSource?: TaxOpportunityProfileSource;
   readonly simulator: SurfaceSimulator;
 }
 
@@ -230,55 +235,210 @@ function opportunityDTO(
   };
 }
 
+function ageOnDate(dateOfBirth: string, referenceDate: string): number | null {
+  const birth = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth);
+  const reference = /^(\d{4})-(\d{2})-(\d{2})$/.exec(referenceDate);
+  if (!birth || !reference) return null;
+  const birthYear = Number(birth[1]);
+  const birthMonth = Number(birth[2]);
+  const birthDay = Number(birth[3]);
+  const referenceYear = Number(reference[1]);
+  const referenceMonth = Number(reference[2]);
+  const referenceDay = Number(reference[3]);
+  const birthdayPassed = referenceMonth > birthMonth
+    || (referenceMonth === birthMonth && referenceDay >= birthDay);
+  return referenceYear - birthYear - (birthdayPassed ? 0 : 1);
+}
+
+function taxProvenance(
+  profile: TaxOpportunityProfile,
+  sourceReference: string,
+  sourceUrl: string,
+  profileEvidenceReferences: readonly string[]
+): BenefitsSurfaceDTO["taxAndAllowances"][number]["provenance"] {
+  return {
+    sourceType: "official_public_guidance",
+    publisher: "GOV.UK",
+    sourceReference,
+    sourceUrl,
+    accessedDate: "2026-08-27",
+    profileVersion: profile.profileVersion,
+    profileEvidenceReferences
+  };
+}
+
 function taxAndAllowanceOpportunities(
+  profile: TaxOpportunityProfile | null,
+  pensions: readonly InformationalPensionContext[],
   context: FinancialContextSnapshot,
-  pensions: readonly InformationalPensionContext[]
+  verifiedEmployerName: string | null
 ): BenefitsSurfaceDTO["taxAndAllowances"] {
+  if (!profile || profile.effectiveTaxYear !== "2026-27") return [];
   const opportunities: BenefitsSurfaceDTO["taxAndAllowances"][number][] = [];
-  if (pensions.length > 0) {
+  const noPersonalisedEffect = "No personalised numerical effect has been calculated." as const;
+
+  if (
+    profile.residence.incomeTaxNation.value === "ENGLAND"
+    && profile.incomeTax.taxCode.value === "1257L"
+    && profile.incomeTax.employmentCount.value === 1
+  ) {
+    opportunities.push({
+      id: "PERSONAL_ALLOWANCE",
+      title: "Standard Personal Allowance",
+      category: "income_tax",
+      status: "active_treatment",
+      statusLabel: "In your tax code",
+      description: "Your 1257L tax code reflects the standard £12,570 Personal Allowance for the 2026/27 tax year.",
+      matchedBecause: "Matched to your confirmed tax code, one employment and England Income Tax position.",
+      eligibilityLabel: "This describes your current payroll setting, not a new cash benefit.",
+      includedInCurrentPlan: true,
+      planTreatmentLabel: "Already reflected in your confirmed take-home pay.",
+      personalisedEffectCalculated: false,
+      numericalEffectLabel: noPersonalisedEffect,
+      provenance: taxProvenance(
+        profile,
+        "Income Tax rates and Personal Allowances; P9X tax codes from 6 April 2026",
+        "https://www.gov.uk/income-tax-rates",
+        [
+          profile.incomeTax.taxCode.sourceReference,
+          profile.incomeTax.employmentCount.sourceReference,
+          profile.residence.incomeTaxNation.sourceReference
+        ]
+      )
+    });
+  }
+
+  if (pensions.length > 0 && profile.pension.taxReliefMethod.value === "NET_PAY") {
     opportunities.push({
       id: "PENSION_TAX_RELIEF",
       title: "Pension tax relief",
-      status: "details_required",
-      statusLabel: "Check details",
-      description: "Pension contributions can receive tax relief. Whether it happens automatically or must be claimed depends on the pension scheme and Income Tax position.",
-      matchedBecause: "Shown because your plan confirms an active workplace pension.",
-      eligibilityLabel: "Your scheme’s tax-relief method is not confirmed in Future You.",
-      includedInCurrentPlan: false,
-      numericalEffectLabel: "No numerical effect has been calculated.",
-      provenance: {
-        sourceType: "official_public_guidance",
-        publisher: "GOV.UK",
-        sourceReference: "Tax on your private pension contributions: Tax relief",
-        sourceUrl: "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-        accessedDate: "2026-08-27"
-      }
+      category: "pension",
+      status: "active_treatment",
+      statusLabel: "Applied automatically",
+      description: `${verifiedEmployerName ?? "Your workplace"} uses a net pay arrangement for this pension, so your contribution is taken before Income Tax and relief is applied automatically.`,
+      matchedBecause: "Matched to your confirmed pension scheme method and active workplace-pension fact.",
+      eligibilityLabel: "There is no additional basic-rate relief for Future You to claim on this contribution.",
+      includedInCurrentPlan: true,
+      planTreatmentLabel: "Already reflected in your confirmed take-home pay.",
+      personalisedEffectCalculated: false,
+      numericalEffectLabel: noPersonalisedEffect,
+      provenance: taxProvenance(
+        profile,
+        "Workplace pensions: Managing your pension",
+        "https://www.gov.uk/workplace-pensions/managing-your-pension",
+        [profile.pension.taxReliefMethod.sourceReference]
+      )
     });
   }
-  const hasFirstHomeGoal = context.goals.some((goal) => {
-    const label = goal.label.toLowerCase();
-    return label.includes("house deposit") || label.includes("home deposit") || label.includes("first home");
-  });
-  if (hasFirstHomeGoal) {
+
+  const age = ageOnDate(profile.identityAndHousehold.dateOfBirth.value, profile.referenceDate);
+  const firstHome = profile.firstHome;
+  if (
+    age !== null
+    && age >= 18
+    && age < 40
+    && profile.residence.ukTaxResident.value
+    && firstHome.hasEverOwnedResidentialProperty.value === false
+    && firstHome.lifetimeIsaStatus.value === "NONE_RECORDED"
+    && firstHome.intendedPurchasePriceMinor.value !== null
+    && firstHome.intendedPurchasePriceMinor.value <= 45_000_000n
+    && firstHome.mortgageIntended.value === true
+    && firstHome.mainResidenceIntended.value === true
+    && firstHome.purchaseCountry.value === "UK"
+  ) {
     opportunities.push({
       id: "LIFETIME_ISA_FIRST_HOME",
       title: "Lifetime ISA for a first home",
-      status: "details_required",
-      statusLabel: "Eligibility not checked",
-      description: "A Lifetime ISA can support a first-home purchase or later-life saving, subject to eligibility and withdrawal rules.",
-      matchedBecause: "Shown because your plan includes a house-deposit goal.",
-      eligibilityLabel: "Your age and first-time-buyer status are not confirmed in Future You.",
+      category: "home",
+      status: "potential_fit",
+      statusLabel: "Potential fit",
+      description: "A Lifetime ISA accepts up to £4,000 a tax year and adds a 25% government bonus. First-home withdrawals require additional conditions, including a property price of £450,000 or less and at least 12 months since the first payment.",
+      matchedBecause: `Matched because you are ${age}, UK-resident, have never owned a home and are planning a mortgaged UK main residence within the price limit.`,
+      eligibilityLabel: "You appear able to explore opening one, but Future You has not confirmed an account, provider terms or a qualifying future withdrawal.",
       includedInCurrentPlan: false,
-      numericalEffectLabel: "No numerical effect has been calculated.",
-      provenance: {
-        sourceType: "official_public_guidance",
-        publisher: "GOV.UK",
-        sourceReference: "Lifetime ISA: Overview",
-        sourceUrl: "https://www.gov.uk/lifetime-isa",
-        accessedDate: "2026-08-27"
-      }
+      planTreatmentLabel: "Not included in your current financial plan.",
+      personalisedEffectCalculated: false,
+      numericalEffectLabel: noPersonalisedEffect,
+      provenance: taxProvenance(
+        profile,
+        "Lifetime ISA: Overview and first-home withdrawal rules",
+        "https://www.gov.uk/lifetime-isa",
+        [
+          profile.identityAndHousehold.dateOfBirth.sourceReference,
+          profile.residence.ukTaxResident.sourceReference,
+          firstHome.hasEverOwnedResidentialProperty.sourceReference,
+          firstHome.intendedPurchasePriceMinor.sourceReference,
+          firstHome.mortgageIntended.sourceReference,
+          firstHome.mainResidenceIntended.sourceReference
+        ]
+      )
     });
   }
+
+  if (
+    profile.identityAndHousehold.countedCouncilTaxAdults.value === 1
+    && profile.identityAndHousehold.singlePersonDiscountStatus.value === "NOT_CONFIRMED"
+  ) {
+    const councilTax = context.routineSpending.items.find((item) => item.id === "council-tax");
+    const confirmedBill = councilTax
+      ? `Your confirmed ${displayMoney(councilTax.amount.minor)} monthly Council Tax bill has not been changed.`
+      : "No Council Tax amount has been changed in your financial plan.";
+    opportunities.push({
+      id: "COUNCIL_TAX_SINGLE_PERSON_DISCOUNT",
+      title: "Council Tax single-person discount",
+      category: "council_tax",
+      status: "potential_fit",
+      statusLabel: "Worth checking",
+      description: "A full Council Tax bill assumes at least two counted adults. A person who lives alone, or only with disregarded adults, can usually apply for 25% off.",
+      matchedBecause: `Matched because your household profile records one counted adult for ${profile.residence.localAuthority.value}.`,
+      eligibilityLabel: `Future You does not know whether the discount is already on your Council Tax account; check your bill or ask ${profile.residence.localAuthority.value}.`,
+      includedInCurrentPlan: false,
+      planTreatmentLabel: confirmedBill,
+      personalisedEffectCalculated: false,
+      numericalEffectLabel: noPersonalisedEffect,
+      provenance: taxProvenance(
+        profile,
+        "Paying the right level of Council Tax: discounts",
+        "https://www.gov.uk/government/publications/paying-the-right-level-of-council-tax-a-plain-english-guide-to-council-tax/paying-the-right-level-of-council-tax-a-plain-english-guide-to-council-tax",
+        [
+          profile.identityAndHousehold.countedCouncilTaxAdults.sourceReference,
+          profile.identityAndHousehold.singlePersonDiscountStatus.sourceReference,
+          profile.residence.localAuthority.sourceReference
+        ]
+      )
+    });
+  }
+
+  if (
+    profile.incomeTax.incomeTaxBand.value === "BASIC_RATE"
+    && profile.savings.taxableInterestAnnualMinor.value === null
+  ) {
+    opportunities.push({
+      id: "PERSONAL_SAVINGS_ALLOWANCE",
+      title: "Personal Savings Allowance",
+      category: "savings",
+      status: "details_required",
+      statusLabel: "Interest needed",
+      description: "For 2026/27, a basic-rate taxpayer can usually receive up to £1,000 of savings interest before paying tax on it. Interest inside an ISA does not use this allowance.",
+      matchedBecause: "Matched to your confirmed basic-rate Income Tax position.",
+      eligibilityLabel: "Add annual interest from savings outside ISAs before Future You can tell whether this allowance is relevant in practice.",
+      includedInCurrentPlan: false,
+      planTreatmentLabel: "No savings-interest treatment has been added to your plan.",
+      personalisedEffectCalculated: false,
+      numericalEffectLabel: noPersonalisedEffect,
+      provenance: taxProvenance(
+        profile,
+        "Tax on savings interest: How much tax you pay",
+        "https://www.gov.uk/apply-tax-free-interest-on-savings",
+        [
+          profile.incomeTax.incomeTaxBand.sourceReference,
+          profile.savings.taxableInterestAnnualMinor.sourceReference,
+          profile.savings.currentTaxYearIsaContributionsMinor.sourceReference
+        ]
+      )
+    });
+  }
+
   return opportunities;
 }
 
@@ -452,9 +612,10 @@ export class ProductSurfaceApplication {
     if (!version) return surfaceError("FINANCIAL_CONTEXT_NOT_FOUND", "A current financial context is required.");
     const context = await this.dependencies.contextSource.getContextVersion(version);
     if (!context) return surfaceError("CONTEXT_VERSION_NOT_FOUND", "The current financial context could not be read.");
-    const [workplace, employerOpportunities] = await Promise.all([
+    const [workplace, employerOpportunities, taxOpportunityProfile] = await Promise.all([
       this.dependencies.workplaceSource.getWorkplace(),
-      this.dependencies.employerBenefitSource.getOpportunities()
+      this.dependencies.employerBenefitSource.getOpportunities(),
+      this.dependencies.taxOpportunityProfileSource?.getProfile() ?? Promise.resolve(null)
     ]);
     const pensions = context.informationalContext.filter(
       (fact): fact is InformationalPensionContext => fact.kind === "PENSION_INFORMATION"
@@ -501,7 +662,12 @@ export class ProductSurfaceApplication {
     const opportunities = trustedOpportunities(workplace, employerOpportunities)
       .map((opportunity) => opportunityDTO(opportunity, pensions[0]))
       .filter((opportunity): opportunity is NonNullable<typeof opportunity> => opportunity !== null);
-    const taxAndAllowances = taxAndAllowanceOpportunities(context, pensions);
+    const taxAndAllowances = taxAndAllowanceOpportunities(
+      taxOpportunityProfile,
+      pensions,
+      context,
+      workplace?.verificationStatus === "verified" ? workplace.name : null
+    );
     const emptyState: BenefitsSurfaceDTO["emptyState"] = opportunities.length > 0
       ? null
       : workplace
