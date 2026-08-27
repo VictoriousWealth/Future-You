@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, type Dispatch, type SetStateAction } from "react";
 import type {
   GoalChartColorDTO,
   GoalLineChartSeriesDTO,
@@ -8,14 +11,43 @@ function seriesClass(color: GoalChartColorDTO): string {
   return `is-${color}`;
 }
 
-function ChartLegend({ series }: Readonly<{ series: readonly GoalLineChartSeriesDTO[] }>) {
+interface ChartLegendItem {
+  readonly goalId: string;
+  readonly label: string;
+  readonly color: GoalChartColorDTO;
+}
+
+function toggleHiddenGoal(
+  update: Dispatch<SetStateAction<readonly string[]>>,
+  goalId: string
+) {
+  update((current) => current.includes(goalId)
+    ? current.filter((id) => id !== goalId)
+    : [...current, goalId]);
+}
+
+function ChartLegend({ items, hiddenGoalIds, onToggle }: Readonly<{
+  items: readonly ChartLegendItem[];
+  hiddenGoalIds: readonly string[];
+  onToggle: (goalId: string) => void;
+}>) {
   return (
     <ul className="fy-chart-legend" aria-label="Chart key">
-      {series.map((item) => (
-        <li className={seriesClass(item.color)} key={item.goalId}>
-          <i aria-hidden="true"/><span>{item.label}</span>
+      {items.map((item) => {
+        const visible = !hiddenGoalIds.includes(item.goalId);
+        return (
+        <li className={`${seriesClass(item.color)}${visible ? "" : " is-hidden"}`} key={item.goalId}>
+          <button
+            type="button"
+            aria-label={`${visible ? "Hide" : "Show"} ${item.label}`}
+            aria-pressed={visible}
+            onClick={() => onToggle(item.goalId)}
+          >
+            <i aria-hidden="true"/><span>{item.label}</span>
+          </button>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -26,7 +58,8 @@ function LineChart({
   firstPeriodLabel,
   lastPeriodLabel,
   topLabel,
-  bottomLabel
+  bottomLabel,
+  hiddenGoalIds
 }: Readonly<{
   label: string;
   series: readonly GoalLineChartSeriesDTO[];
@@ -34,7 +67,9 @@ function LineChart({
   lastPeriodLabel: string;
   topLabel: string;
   bottomLabel: string;
+  hiddenGoalIds: readonly string[];
 }>) {
+  const visibleSeries = series.filter((item) => !hiddenGoalIds.includes(item.goalId));
   return (
     <div className="fy-line-chart">
       <div className="fy-line-chart-y" aria-hidden="true"><span>{topLabel}</span><span>{bottomLabel}</span></div>
@@ -44,16 +79,40 @@ function LineChart({
           <line x1="70" y1="180" x2="930" y2="180"/>
           <line x1="70" y1="330" x2="930" y2="330"/>
         </g>
-        {series.map((item) => (
+        {visibleSeries.map((item) => (
           <g className={`fy-chart-series ${seriesClass(item.color)}`} key={item.goalId}>
             <polyline points={item.polylinePoints}/>
             {item.points.map((point) => (
-              <circle cx={point.x} cy={point.y} r="9" key={`${item.goalId}-${point.period}`}>
-                <title>{`${item.label}, ${point.periodLabel}: ${point.valueLabel}`}</title>
-              </circle>
+              <circle className="fy-chart-point-marker" cx={point.x} cy={point.y} r="9" key={`${item.goalId}-${point.period}`}/>
             ))}
           </g>
         ))}
+        <g className="fy-chart-tooltip-layer">
+          {visibleSeries.flatMap((item) => item.points.map((point) => {
+              const tooltipX = Math.max(220, Math.min(780, point.x));
+              const tooltipY = point.y < 105 ? point.y + 100 : point.y - 22;
+              const accessibleLabel = `${item.label}, ${point.periodLabel}: ${point.valueLabel}`;
+              return (
+                <g
+                  className={`fy-chart-point ${seriesClass(item.color)}`}
+                  tabIndex={0}
+                  role="img"
+                  aria-label={accessibleLabel}
+                  key={`${item.goalId}-${point.period}`}
+                >
+                  <circle className="fy-chart-point-hit" cx={point.x} cy={point.y} r="28"/>
+                  <circle className="fy-chart-point-active" cx={point.x} cy={point.y} r="14"/>
+                  <g className="fy-chart-point-tooltip" transform={`translate(${tooltipX} ${tooltipY})`} aria-hidden="true">
+                    <rect x="-200" y="-88" width="400" height="84" rx="18"/>
+                    <text textAnchor="middle">
+                      <tspan className="fy-chart-tooltip-title" x="0" y="-55">{item.label}</tspan>
+                      <tspan x="0" y="-19">{point.periodLabel} · {point.valueLabel}</tspan>
+                    </text>
+                  </g>
+                </g>
+              );
+            }))}
+        </g>
       </svg>
       <div className="fy-line-chart-x" aria-hidden="true"><span>{firstPeriodLabel}</span><span>{lastPeriodLabel}</span></div>
     </div>
@@ -63,6 +122,9 @@ function LineChart({
 export function GoalProgressCharts({ progress }: Readonly<{ progress: GoalsProgressDTO }>) {
   const history = progress.contributionHistory;
   const splitLegend = progress.monthlyContributionSplit.periods[0]?.segments ?? [];
+  const [hiddenForecastGoals, setHiddenForecastGoals] = useState<readonly string[]>([]);
+  const [hiddenSplitGoals, setHiddenSplitGoals] = useState<readonly string[]>([]);
+  const [hiddenHistoryGoals, setHiddenHistoryGoals] = useState<readonly string[]>([]);
   return (
     <div className="fy-goal-progress-charts">
       <article className="fy-progress-chart-card">
@@ -74,8 +136,13 @@ export function GoalProgressCharts({ progress }: Readonly<{ progress: GoalsProgr
           lastPeriodLabel={progress.forecast.lastPeriodLabel}
           topLabel="100%"
           bottomLabel="0%"
+          hiddenGoalIds={hiddenForecastGoals}
         />
-        <ChartLegend series={progress.forecast.series}/>
+        <ChartLegend
+          items={progress.forecast.series}
+          hiddenGoalIds={hiddenForecastGoals}
+          onToggle={(goalId) => toggleHiddenGoal(setHiddenForecastGoals, goalId)}
+        />
       </article>
 
       <article className="fy-progress-chart-card">
@@ -85,24 +152,34 @@ export function GoalProgressCharts({ progress }: Readonly<{ progress: GoalsProgr
             <div className="fy-contribution-split-row" key={period.period}>
               <span>{period.periodLabel}</span>
               <div className="fy-contribution-split-bar">
-                {period.segments.map((segment) => (
-                  <i
-                    className={seriesClass(segment.color)}
+                {period.segments.map((segment) => {
+                  const visible = !hiddenSplitGoals.includes(segment.goalId);
+                  return (
+                  <span
+                    className={`fy-contribution-split-segment ${seriesClass(segment.color)}${visible ? "" : " is-hidden"}`}
                     style={{ width: segment.width }}
                     key={segment.goalId}
-                    title={`${segment.label}: ${segment.amount.display}`}
-                  />
-                ))}
+                    tabIndex={visible ? 0 : -1}
+                    aria-hidden={visible ? undefined : true}
+                    aria-label={`${period.periodLabel}, ${segment.label}: ${segment.amount.display}`}
+                  >
+                    <span className="fy-split-tooltip" role="tooltip">
+                      <strong>{segment.label}</strong>
+                      <small>{period.periodLabel} · {segment.amount.display}</small>
+                    </span>
+                  </span>
+                  );
+                })}
               </div>
               <strong>{period.total.display}</strong>
             </div>
           ))}
         </div>
-        <ul className="fy-chart-legend" aria-label="Contribution key">
-          {splitLegend.map((item) => (
-            <li className={seriesClass(item.color)} key={item.goalId}><i aria-hidden="true"/><span>{item.label}</span></li>
-          ))}
-        </ul>
+        <ChartLegend
+          items={splitLegend}
+          hiddenGoalIds={hiddenSplitGoals}
+          onToggle={(goalId) => toggleHiddenGoal(setHiddenSplitGoals, goalId)}
+        />
       </article>
 
       <article className="fy-progress-chart-card">
@@ -116,8 +193,13 @@ export function GoalProgressCharts({ progress }: Readonly<{ progress: GoalsProgr
               lastPeriodLabel={history.lastPeriodLabel}
               topLabel={history.axisMaximum.display}
               bottomLabel="£0"
+              hiddenGoalIds={hiddenHistoryGoals}
             />
-            <ChartLegend series={history.series}/>
+            <ChartLegend
+              items={history.series}
+              hiddenGoalIds={hiddenHistoryGoals}
+              onToggle={(goalId) => toggleHiddenGoal(setHiddenHistoryGoals, goalId)}
+            />
             <small className="fy-chart-source">{history.sourceLabel}</small>
           </>
         ) : <p className="fy-chart-empty">{history.description}</p>}
