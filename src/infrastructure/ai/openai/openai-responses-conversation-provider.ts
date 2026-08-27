@@ -19,7 +19,7 @@ import {
 } from "../../../application/conversation/contracts";
 import {
   amountClarificationResolutionSchema,
-  conversationInterpretationEnvelopeV3Schema,
+  conversationInterpretationEnvelopeV4Schema,
   explanationPlanSchema,
   monthClarificationResolutionSchema,
   scenarioClarificationResolutionSchema
@@ -38,7 +38,7 @@ import {
 import {
   AMOUNT_CLARIFICATION_PARAMETERS,
   EXPLANATION_PARAMETERS_V1,
-  INTERPRETATION_PARAMETERS_V3,
+  INTERPRETATION_PARAMETERS_V4,
   MONTH_CLARIFICATION_PARAMETERS,
   SCENARIO_CLARIFICATION_PARAMETERS,
   assertStrictProviderSchema
@@ -63,7 +63,7 @@ import {
   type SanitisedInterpretationDiagnosticDraft
 } from "./interpretation-diagnostics";
 
-export const INTERPRET_TOOL = "submit_conversation_interpretation_v3";
+export const INTERPRET_TOOL = "submit_conversation_interpretation_v4";
 export const CLARIFICATION_TOOL = "submit_clarification_resolution_v2";
 export const EXPLANATION_TOOL = "submit_explanation_plan";
 
@@ -110,8 +110,29 @@ function minimalState(input: unknown): unknown {
     selectedScenarioType: request.selectedScenarioType ?? null,
     availableScenarioLabels: request.availableScenarios?.map((scenario) => scenario.label) ?? [],
     trustedDate: request.trustedDate,
-    timezone: request.timezone
+    timezone: request.timezone,
+    supportedFollowUpFamily: request.supportedFollowUpEvidence?.family ?? null
   };
+}
+
+function providerVisibleInterpretationRequest(request: InterpretationProviderRequest): unknown {
+  return {
+    userMessage: request.userMessage,
+    pendingClarification: request.pendingClarification,
+    availableScenarios: request.availableScenarios,
+    selectedScenarioType: request.selectedScenarioType,
+    trustedDate: request.trustedDate,
+    timezone: request.timezone,
+    ...(request.supportedFollowUpEvidence
+      ? { supportedFollowUpFamily: request.supportedFollowUpEvidence.family }
+      : {})
+  };
+}
+
+function supportedFollowUpFamily(input: unknown): string | null {
+  if (!input || typeof input !== "object" || !("supportedFollowUpEvidence" in input)) return null;
+  const evidence = (input as { supportedFollowUpEvidence?: { family?: unknown } }).supportedFollowUpEvidence;
+  return typeof evidence?.family === "string" ? evidence.family : null;
 }
 
 function repairInput(input: unknown, validationErrors: readonly unknown[]): unknown {
@@ -147,7 +168,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     this.reasoningEffort = options.reasoningEffort ?? null;
     this.maxRetries = options.maxRetries ?? 1;
     this.diagnosticSink = options.diagnosticSink ?? null;
-    assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V3);
+    assertStrictProviderSchema(INTERPRETATION_PARAMETERS_V4);
     assertStrictProviderSchema(MONTH_CLARIFICATION_PARAMETERS);
   }
 
@@ -158,6 +179,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     parameters: JsonSchema;
     parse: (value: unknown) => T;
     allowValidationRepair: boolean;
+    initialProviderInput?: unknown;
     diagnostic?: Readonly<{
       promptVersion: string;
       schemaVersion: string;
@@ -169,7 +191,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
     let inputTokens = 0;
     let outputTokens = 0;
     let totalTokens = 0;
-    let nextInput = input.request;
+    let nextInput = input.initialProviderInput ?? input.request;
     let repairUsed = false;
     let firstFailureDiagnostic: SanitisedInterpretationDiagnosticDraft | null = null;
     const startedAt = performance.now();
@@ -216,7 +238,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
               diagnosticMetadata,
               calls.length > 1 ? "MULTIPLE" : "MISSING"
             );
-            issueCodes = repairValidationErrors(attemptDiagnostic);
+            issueCodes = repairValidationErrors(attemptDiagnostic, supportedFollowUpFamily(input.request));
           } else {
             issueCodes = [{
               path: "",
@@ -241,7 +263,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
         } catch {
           if (diagnosticMetadata) {
             attemptDiagnostic = jsonArgumentsDiagnostic(diagnosticMetadata);
-            issueCodes = repairValidationErrors(attemptDiagnostic);
+            issueCodes = repairValidationErrors(attemptDiagnostic, supportedFollowUpFamily(input.request));
           } else {
             issueCodes = [{ path: "", code: "INVALID_JSON_ARGUMENTS" }];
           }
@@ -255,13 +277,12 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
               parsed as ConversationInterpretation | ClarificationResolution,
               input.request as InterpretationProviderRequest | ClarificationResolutionProviderRequest
             );
-            if (attemptDiagnostic.failedStage !== null
-              && attemptDiagnostic.diagnosticCodes.some((code) => code.startsWith("TIMING_"))) {
-              issueCodes = repairValidationErrors(attemptDiagnostic);
+            if (attemptDiagnostic.failedStage !== null) {
+              issueCodes = repairValidationErrors(attemptDiagnostic, supportedFollowUpFamily(input.request));
               throw new ConversationProviderError(
                 "INVALID_OUTPUT",
                 true,
-                "The provider timing interpretation failed deterministic validation."
+                "The provider interpretation failed deterministic semantic validation."
               );
             }
             if (repairUsed) attemptDiagnostic = markRepairSucceeded(attemptDiagnostic);
@@ -281,7 +302,7 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
           }
           if (diagnosticMetadata) {
             attemptDiagnostic = runtimeValidationDiagnostic(diagnosticMetadata, providerArguments, error);
-            issueCodes = repairValidationErrors(attemptDiagnostic);
+            issueCodes = repairValidationErrors(attemptDiagnostic, supportedFollowUpFamily(input.request));
           } else {
             issueCodes = legacyValidationIssueCodes(error);
           }
@@ -333,9 +354,10 @@ export class OpenAIResponsesConversationModelProvider implements ConversationMod
       toolName: INTERPRET_TOOL,
       instructions: INTERPRETATION_PROMPT,
       request,
-      parameters: INTERPRETATION_PARAMETERS_V3,
-      parse: (value) => conversationInterpretationEnvelopeV3Schema.parse(value).interpretation,
+      parameters: INTERPRETATION_PARAMETERS_V4,
+      parse: (value) => conversationInterpretationEnvelopeV4Schema.parse(value).interpretation,
       allowValidationRepair: true,
+      initialProviderInput: providerVisibleInterpretationRequest(request),
       diagnostic: {
         promptVersion: INTERPRETATION_PROMPT_VERSION,
         schemaVersion: INTERPRETATION_SCHEMA_VERSION,
