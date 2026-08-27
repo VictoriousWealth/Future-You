@@ -27,7 +27,6 @@ export function ProductHeader({ action, showAI = false }: Readonly<{ action?: Re
         className="fy-wordmark"
         href="/home"
         aria-label="Future You home"
-        style={{ paddingLeft: "1.3em", paddingTop: "0.6em", paddingBottom: "0.1em" }}
       >
         <FutureYouWordmark showAI={showAI}/>
       </Link>
