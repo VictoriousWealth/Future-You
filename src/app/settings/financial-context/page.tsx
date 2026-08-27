@@ -32,6 +32,7 @@ export default async function CorrectFinancialContextPage() {
         mode="revision"
         expectedCurrentContextVersionId={correction.value.currentContextVersionId}
         initialDraft={correction.value.draft}
+        provisionedEmployerName={resolved.provisionedEmployerName ?? null}
       />
     </>
   );
