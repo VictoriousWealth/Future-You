@@ -133,7 +133,7 @@ function StepEvidence({ story, contentKind, scenario }: Readonly<{
 function UnavailableStory({ message }: Readonly<{ message: string }>) {
   return (
     <main className="fy-story-unavailable" id="story-main">
-      <FutureYouWordmark/>
+      <div className="fy-wordmark" aria-label="Future You"><FutureYouWordmark/></div>
       <p className="eyebrow">Guided demonstration</p>
       <h1>Sarah’s story is unavailable</h1>
       <p>{message}</p>
@@ -207,7 +207,7 @@ function ReadySarahStory({ story }: Readonly<{ story: SarahStoryBundleDTO }>) {
     >
       <a className="fy-skip-link" href="#story-main">Skip to story content</a>
       <header className="fy-story-header">
-        <Link href="/home" aria-label="Future You home"><FutureYouWordmark/></Link>
+        <Link className="fy-wordmark" href="/home" aria-label="Future You home"><FutureYouWordmark/></Link>
         <span>{story.demonstrationLabel}</span>
         <Link href="/home">Exit</Link>
       </header>
