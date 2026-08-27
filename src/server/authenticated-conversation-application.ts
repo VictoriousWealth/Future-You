@@ -1,5 +1,6 @@
 import "server-only";
 import { ConversationApplication } from "../application/conversation/application";
+import { DemoConversationTrustedDataReader } from "../application/conversation/demo-trusted-data";
 import type { AuthenticatedPrincipal } from "../application/auth/authenticated-principal";
 import { SLICE_1_RULES } from "../domain/simulator/engine";
 import {
@@ -9,8 +10,14 @@ import {
 import { SupabasePrincipalProvider } from "../infrastructure/auth/supabase-principal-provider";
 import { requireActiveFutureYouAccount } from "../infrastructure/auth/supabase-account-activation";
 import { SupabaseFinancialContextSource } from "../infrastructure/context/supabase-financial-context-source";
+import { SupabaseEmployerBenefitSource } from "../infrastructure/context/supabase-employer-benefit-source";
+import { SupabaseWorkplaceAssociationSource } from "../infrastructure/context/supabase-workplace-association-source";
 import { SupabaseConversationRepository } from "../infrastructure/conversations/supabase-conversation-repository";
-import { resolveConversationProvider, userScopedProviderAllowance } from "../infrastructure/ai/provider-configuration";
+import {
+  resolveAskConversationMode,
+  resolveConversationProvider,
+  userScopedProviderAllowance
+} from "../infrastructure/ai/provider-configuration";
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
 import { createSimulatorApplication } from "./simulator-application";
@@ -45,6 +52,9 @@ export const resolveAuthenticatedConversationApplication: AuthenticatedConversat
     runStore: new SupabaseSimulationRunStore(client, principal)
   });
   const resolvedProvider = resolveConversationProvider();
+  const askMode = resolveAskConversationMode();
+  const workplaceSource = new SupabaseWorkplaceAssociationSource(client, principal);
+  const employerBenefitSource = new SupabaseEmployerBenefitSource(client, principal);
   return {
     principal,
     displayName: profile.display_name,
@@ -56,7 +66,20 @@ export const resolveAuthenticatedConversationApplication: AuthenticatedConversat
       provider: resolvedProvider.provider,
       providerIdentifier: resolvedProvider.providerIdentifier,
       modelIdentifier: resolvedProvider.modelIdentifier,
-      consumeProviderAllowance: () => userScopedProviderAllowance(principal.userId)
+      consumeProviderAllowance: () => userScopedProviderAllowance(principal.userId),
+      ...(askMode === "trusted_demo"
+        ? {
+            demo: {
+              enabled: true,
+              provider: resolvedProvider.provider,
+              trustedData: new DemoConversationTrustedDataReader({
+                contextSource,
+                workplaceSource,
+                employerBenefitSource
+              })
+            }
+          }
+        : {})
     })
   };
 };
