@@ -47,6 +47,10 @@ import {
 } from "./application-error";
 import { ConversationProviderError } from "./provider-error";
 import { exactMinorUnitsFromInterpretation, sourceContainsQuote } from "./exact-source-grounding";
+import {
+  deriveSupportedFollowUpEvidence,
+  exactScenarioReferenceIssue
+} from "./follow-up-evidence";
 import { resolvePaymentPeriod, trustedLondonDate } from "./time-resolution";
 import {
   availableFacts,
@@ -273,7 +277,10 @@ export class ConversationApplication {
         })),
         selectedScenarioType: selected ? "one_off_purchase" : null,
         trustedDate,
-        timezone: CONVERSATION_TIMEZONE
+        timezone: CONVERSATION_TIMEZONE,
+        ...(conversation.pendingClarification === null
+          ? { supportedFollowUpEvidence: deriveSupportedFollowUpEvidence(request.message) }
+          : {})
       } as const;
       let providerValue: ConversationInterpretation;
       if (conversation.pendingClarification) {
@@ -305,6 +312,13 @@ export class ConversationApplication {
         throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider output did not match the interpretation schema.");
       }
       const intent = validation.data;
+      if (exactScenarioReferenceIssue(intent, providerRequest)) {
+        throw new ConversationProviderError(
+          "INVALID_OUTPUT",
+          true,
+          "The provider did not use the exact scenario-reference clarification required by bounded evidence."
+        );
+      }
       const outcome = await this.handleIntent({
         conversation,
         scenarios,
@@ -568,8 +582,12 @@ export class ConversationApplication {
     }
     if (input.intent.kind === "CLARIFY_SCENARIO_REFERENCE") {
       const attempted = input.intent.attemptedOperation;
+      const amountMinorUnits = attempted.kind === "CHANGE_PURCHASE_AMOUNT"
+        ? exactMinorUnitsFromInterpretation(attempted.amount, input.message)
+        : undefined;
       return this.scenarioClarification(input, preserve, attempted.kind, {
         ...(attempted.kind === "CHANGE_PURCHASE_AMOUNT" ? { amount: attempted.amount } : {}),
+        ...(amountMinorUnits ? { amountMinorUnits } : {}),
         ...(attempted.kind === "CHANGE_PURCHASE_MONTH" ? { timing: attempted.timing } : {}),
         ...(attempted.kind === "EXPLAIN_SELECTED_RESULT"
           ? { explanationTarget: attempted.explanationTarget, goalReferenceQuote: attempted.goalReferenceQuote }
@@ -595,8 +613,16 @@ export class ConversationApplication {
       ? input.selected
       : this.resolveScenarioReference(input.intent.scenarioReferenceQuote, input.message, input.scenarios);
     if (!referenced || referenced === "current") {
+      const amountMinorUnits = input.intent.kind === "CHANGE_PURCHASE_AMOUNT"
+        ? exactMinorUnitsFromInterpretation(input.intent.amount, input.message)
+        : undefined;
       return this.scenarioClarification(input, preserve, input.intent.kind, {
-        ...(input.intent.kind === "CHANGE_PURCHASE_AMOUNT" ? { amount: input.intent.amount } : { timing: input.intent.timing })
+        ...(input.intent.kind === "CHANGE_PURCHASE_AMOUNT"
+          ? {
+              amount: input.intent.amount,
+              ...(amountMinorUnits ? { amountMinorUnits } : {})
+            }
+          : { timing: input.intent.timing })
       });
     }
     if (input.intent.kind === "CHANGE_PURCHASE_AMOUNT") {
@@ -604,6 +630,15 @@ export class ConversationApplication {
         ? input.conversation.pendingClarification.amount?.quote ?? null
         : null;
       const amount = exactMinorUnitsFromInterpretation(input.intent.amount, input.message, priorAmount);
+      const priorMinorUnits = input.conversation.pendingClarification?.type === "SCENARIO_REFERENCE"
+        ? input.conversation.pendingClarification.amountMinorUnits ?? null
+        : null;
+      if (priorMinorUnits !== null && amount !== priorMinorUnits) {
+        throw new ConversationApplicationError(
+          "AI_INTERPRETATION_INVALID",
+          "The preserved purchase amount did not match the original grounded amount."
+        );
+      }
       const approvedAlternativeSource = input.scenarios.find((scenario) =>
         scenario.scenario.change.amount.minorUnits === "65000" &&
         scenario.scenario.change.paymentPeriod === referenced.scenario.change.paymentPeriod &&
@@ -637,6 +672,7 @@ export class ConversationApplication {
     attemptedOperation: "CHANGE_PURCHASE_AMOUNT" | "CHANGE_PURCHASE_MONTH" | "EXPLAIN_SELECTED_RESULT" | "SELECT_EXISTING_SCENARIO",
     details: Readonly<{
       amount?: AmountInterpretation;
+      amountMinorUnits?: string;
       timing?: CompleteTimingInterpretation;
       explanationTarget?: ExplanationTarget;
       goalReferenceQuote?: string | null;
