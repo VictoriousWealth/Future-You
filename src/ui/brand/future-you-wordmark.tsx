@@ -10,9 +10,17 @@ function FutureYouAngularSymbol({ withBackdrop }: Readonly<{ withBackdrop: boole
           alt=""
           width={1280}
           height={1211}
+          loading="eager"
         />
       ) : null}
-      <Image className="fy-angular-artwork" src="/images/future-you-logo.svg" alt="" width={109} height={135}/>
+      <Image
+        className="fy-angular-artwork"
+        src="/images/future-you-logo.svg"
+        alt=""
+        width={109}
+        height={135}
+        loading="eager"
+      />
     </span>
   );
 }
