@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import type {
   ConversationDetailDTO,
   ConversationListResponseDTO,
@@ -42,13 +41,15 @@ export function AskConversationShell({
   configuration,
   initialList,
   initialConversation,
-  initialPrompt = ""
+  initialPrompt = "",
+  autoSubmitInitialPrompt = false
 }: Readonly<{
   displayName: string;
   configuration: BrowserSupabaseConfiguration;
   initialList: ConversationListResponseDTO;
   initialConversation: ConversationDetailDTO | null;
   initialPrompt?: string;
+  autoSubmitInitialPrompt?: boolean;
 }>) {
   const [list, setList] = useState(initialList);
   const [conversation, setConversation] = useState(initialConversation);
@@ -57,6 +58,7 @@ export function AskConversationShell({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scenarioOpen, setScenarioOpen] = useState(false);
   const [historyStatus, setHistoryStatus] = useState<"idle" | "loading" | "failed">("idle");
+  const automaticPrompt = useRef(autoSubmitInitialPrompt ? initialPrompt : null);
 
   async function refreshList() {
     const response = await fetch("/api/v1/conversations", { cache: "no-store" });
@@ -106,6 +108,16 @@ export function AskConversationShell({
       });
     }
   }
+
+  useEffect(() => {
+    const prompt = automaticPrompt.current;
+    if (!prompt) return;
+    automaticPrompt.current = null;
+    window.history.replaceState(window.history.state, "", "/ask");
+    void submit(prompt);
+    // This is deliberately a one-shot navigation action guarded by automaticPrompt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function openConversation(id: string) {
     setRequest({ status: "idle" });
@@ -167,15 +179,9 @@ export function AskConversationShell({
             </div>
             <div className="fy-quick-chat-row is-n-plus-one">
               {QUICK_CHAT_OPTIONS.slice(2).map((prompt) => (
-                "href" in prompt ? (
-                  <Link className="fy-prompt-card fy-quick-chat-card" href={prompt.href} key={prompt.label}>
-                    <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
-                  </Link>
-                ) : (
-                  <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => void submit(prompt.prompt)}>
-                    <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
-                  </button>
-                )
+                <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => void submit(prompt.prompt)}>
+                  <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                </button>
               ))}
             </div>
           </div>
