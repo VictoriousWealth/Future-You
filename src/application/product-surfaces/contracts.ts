@@ -2,7 +2,7 @@ import type { MoneyDTO, RatioDTO } from "../dto/contracts";
 
 export const PRODUCT_SURFACE_API_VERSION = "future-you.product-surfaces/v1" as const;
 export const HOME_SURFACE_SCHEMA = "home-surface/1.2.0" as const;
-export const GOALS_SURFACE_SCHEMA = "goals-surface/1.0.0" as const;
+export const GOALS_SURFACE_SCHEMA = "goals-surface/1.1.0" as const;
 export const GOALS_PREVIEW_SURFACE_SCHEMA = "goals-preview-surface/1.0.0" as const;
 export const BENEFITS_SURFACE_SCHEMA = "benefits-surface/1.3.0" as const;
 
@@ -34,6 +34,64 @@ export interface SurfaceGoalDTO {
     readonly display: string;
     readonly statusLabel: string;
   };
+}
+
+export type GoalChartColorDTO = "blue" | "purple" | "pink" | "cyan" | "green";
+
+export interface GoalLineChartSeriesDTO {
+  readonly goalId: string;
+  readonly label: string;
+  readonly color: GoalChartColorDTO;
+  readonly polylinePoints: string;
+  readonly points: readonly Readonly<{
+    readonly period: string;
+    readonly periodLabel: string;
+    readonly x: number;
+    readonly y: number;
+    readonly valueLabel: string;
+  }>[];
+}
+
+export interface GoalsProgressDTO {
+  readonly forecast: {
+    readonly title: "Goal forecast";
+    readonly description: string;
+    readonly firstPeriodLabel: string;
+    readonly lastPeriodLabel: string;
+    readonly series: readonly GoalLineChartSeriesDTO[];
+  };
+  readonly monthlyContributionSplit: {
+    readonly title: "Monthly contribution split";
+    readonly description: string;
+    readonly periods: readonly Readonly<{
+      readonly period: string;
+      readonly periodLabel: string;
+      readonly total: MoneyDTO;
+      readonly segments: readonly Readonly<{
+        readonly goalId: string;
+        readonly label: string;
+        readonly color: GoalChartColorDTO;
+        readonly amount: MoneyDTO;
+        readonly width: string;
+      }>[];
+    }>[];
+  };
+  readonly contributionHistory:
+    | Readonly<{
+        readonly status: "available";
+        readonly title: "Past contributions";
+        readonly description: string;
+        readonly sourceLabel: string;
+        readonly firstPeriodLabel: string;
+        readonly lastPeriodLabel: string;
+        readonly axisMaximum: MoneyDTO;
+        readonly series: readonly GoalLineChartSeriesDTO[];
+      }>
+    | Readonly<{
+        readonly status: "unavailable";
+        readonly title: "Past contributions";
+        readonly description: string;
+      }>;
 }
 
 export interface HomeSurfaceDTO {
@@ -79,6 +137,7 @@ export interface GoalsSurfaceDTO {
   readonly title: "Your goals";
   readonly summary: string;
   readonly goals: readonly SurfaceGoalDTO[];
+  readonly progress: GoalsProgressDTO;
 }
 
 export interface PreviewGoalDTO extends Omit<SurfaceGoalDTO, "completion"> {
