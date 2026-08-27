@@ -155,6 +155,11 @@ export const INTERPRETATION_PARAMETERS_V3 = strictObject({
   interpretation: { anyOf: interpretationBranches(COMPLETE_TIMING_PARAMETERS_V3) }
 });
 
+/** Active v4 provider shape. Exact-clarification precedence is enforced by server semantics. */
+export const INTERPRETATION_PARAMETERS_V4 = strictObject({
+  interpretation: { anyOf: interpretationBranches(COMPLETE_TIMING_PARAMETERS_V3) }
+});
+
 const unsupportedResolution = strictObject({
   kind: literal("UNSUPPORTED"),
   category: enumeration(UNSUPPORTED_CATEGORY_IDS)
