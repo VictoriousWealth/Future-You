@@ -171,7 +171,7 @@ export function BenefitsSurface() {
             </div>
           </section>
 
-          <Link className="fy-context-settings" href="/profile/settings">Review the information used</Link>
+          <Link className="fy-context-settings" href="/profile/financial-context">Review the information used</Link>
         </>
       ) : null}
     </ProductShell>
