@@ -165,7 +165,7 @@ test("renders loading, safe error, empty-benefits and historical-preview states"
       contentType: "application/json",
       body: JSON.stringify({
         apiVersion: "future-you.product-surfaces/v1",
-        schemaVersion: "benefits-surface/1.2.0",
+        schemaVersion: "benefits-surface/1.3.0",
         kind: "benefits_surface",
         context: actualHome.context,
         workplace: { status: "not_supplied", name: null, statusLabel: "No workplace added" },
