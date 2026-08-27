@@ -16,6 +16,7 @@ import {
   INTERPRETATION_PROMPT_VERSION,
   INTERPRETATION_SCHEMA_VERSION
 } from "../src/application/conversation/contracts";
+import { deriveSupportedFollowUpEvidence } from "../src/application/conversation/follow-up-evidence";
 import { sourceContainsQuote } from "../src/application/conversation/exact-source-grounding";
 import { ConversationProviderError } from "../src/application/conversation/provider-error";
 import {
@@ -313,7 +314,10 @@ async function evaluateInterpretation(
       : [],
     selectedScenarioType: evaluation.selectedScenario ? "one_off_purchase" : null,
     trustedDate: TRUSTED_DATE,
-    timezone: TIMEZONE
+    timezone: TIMEZONE,
+    ...(evaluation.providerMethod === "INTERPRET"
+      ? { supportedFollowUpEvidence: deriveSupportedFollowUpEvidence(evaluation.message) }
+      : {})
   };
   const startedAt = performance.now();
   try {
@@ -698,7 +702,8 @@ async function main(): Promise<void> {
         availableScenarios: "<user-facing labels and symbolic type only>",
         selectedScenarioType: "<symbolic type or null>",
         trustedDate: TRUSTED_DATE,
-        timezone: TIMEZONE
+        timezone: TIMEZONE,
+        supportedFollowUpEvidence: "<server-owned bounded family and structured value; only the family is provider-visible>"
       },
       explanation: {
         explanationTarget: "<symbolic target>",
