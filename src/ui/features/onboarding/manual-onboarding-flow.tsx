@@ -56,6 +56,17 @@ const STEP_TITLES = [
   "Review your current path"
 ] as const;
 
+const REVISION_STEP_TITLES = [
+  "Before you start",
+  "Current account",
+  "Income and payday",
+  "Regular spending and bills",
+  "Safety buffer",
+  "Goals",
+  "Workplace",
+  "Review changes"
+] as const;
+
 const initialForm = (
   snapshotDate: string,
   draft: FinancialOnboardingDraftDTO | null
@@ -251,6 +262,7 @@ export function ManualOnboardingFlow({
   const [preview, setPreview] = useState<FinancialContextPreviewDTO | null>(null);
   const [issues, setIssues] = useState<readonly { path: string; message: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const stepTitles = mode === "revision" ? REVISION_STEP_TITLES : STEP_TITLES;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
 
@@ -382,19 +394,29 @@ export function ManualOnboardingFlow({
 
   return (
     <main className={`onboarding-page ${mode === "revision" ? "is-revision" : ""}`} aria-busy={busy}>
-      <header className="onboarding-header">
-        <div className="fy-wordmark" aria-label="Future You"><FutureYouWordmark/></div>
-        <div>
-          <p className="eyebrow">{mode === "initial" ? "Build current path" : "Correct current facts"}</p>
-          <span>Step {step + 1} of {STEP_TITLES.length}</span>
-        </div>
-        {registrationActivation ? <span className="registration-secure-state">Activation in progress</span> : <SignOutButton configuration={configuration} />}
-      </header>
+      {mode === "revision" ? (
+        <header className="onboarding-header revision-settings-header">
+          <div>
+            <p>Financial settings</p>
+            <strong>Update financial context</strong>
+            <span>Step {step + 1} of {stepTitles.length}</span>
+          </div>
+        </header>
+      ) : (
+        <header className="onboarding-header">
+          <div className="fy-wordmark" aria-label="Future You"><FutureYouWordmark/></div>
+          <div>
+            <p className="eyebrow">Build current path</p>
+            <span>Step {step + 1} of {stepTitles.length}</span>
+          </div>
+          {registrationActivation ? <span className="registration-secure-state">Activation in progress</span> : <SignOutButton configuration={configuration} />}
+        </header>
+      )}
       {mode === "revision" ? (
         <aside className="revision-notice" aria-labelledby="revision-notice-title">
-          <span>Immutable correction</span>
-          <h2 id="revision-notice-title">You’re creating a new version of your financial plan.</h2>
-          <p>Your current version and every historical what-if remain unchanged. Preview comes before activation.</p>
+          <span>Before you save</span>
+          <h2 id="revision-notice-title">Previous plans and what-if results stay unchanged.</h2>
+          <p>You’ll review the updated information before it replaces your current financial context.</p>
         </aside>
       ) : null}
       <div
@@ -402,18 +424,27 @@ export function ManualOnboardingFlow({
         role="progressbar"
         aria-label="Financial context progress"
         aria-valuemin={1}
-        aria-valuemax={STEP_TITLES.length}
+        aria-valuemax={stepTitles.length}
         aria-valuenow={step + 1}
-        aria-valuetext={`Step ${step + 1} of ${STEP_TITLES.length}: ${STEP_TITLES[step]}`}
+        aria-valuetext={`Step ${step + 1} of ${stepTitles.length}: ${stepTitles[step]}`}
       >
-        <span style={{ width: `${((step + 1) / STEP_TITLES.length) * 100}%` }} />
+        <span style={{ width: `${((step + 1) / stepTitles.length) * 100}%` }} />
       </div>
       <section className="onboarding-card">
-        <h1 ref={headingRef} tabIndex={-1}>{STEP_TITLES[step]}</h1>
+        <h1 ref={headingRef} tabIndex={-1}>{stepTitles[step]}</h1>
         {step === 0 && (
           <div className="intro-copy">
-            <p>Tell Future You what is true today. We’ll use it to show where your current path leads before you test any new decision.</p>
-            <p>Nothing becomes your financial context until you review and confirm the server-generated preview.</p>
+            {mode === "revision" ? (
+              <>
+                <p>Check the information Future You currently uses for your financial plan, then update anything that has changed.</p>
+                <p>Nothing is saved until you reach the final review and confirm your changes.</p>
+              </>
+            ) : (
+              <>
+                <p>Tell Future You what is true today. We’ll use it to show where your current path leads before you test any new decision.</p>
+                <p>Nothing becomes your financial context until you review and confirm the server-generated preview.</p>
+              </>
+            )}
           </div>
         )}
         {step === 1 && (
@@ -494,18 +525,18 @@ export function ManualOnboardingFlow({
         )}
         {step === 7 && (
           <div className="onboarding-review-stage">
-            {!preview && <p>Future You will now model your current path on the server. {mode === "initial" ? "No financial context has been saved yet." : "Your current version will remain active until you confirm the preview."}</p>}
-            {preview && <FinancialContextPreviewView preview={preview} />}
-            {!preview && <button type="button" className="primary-button" disabled={busy} onClick={requestPreview}>{busy ? "Building preview…" : "Preview my current path"}</button>}
+            {!preview && <p>{mode === "initial" ? "Future You will now model your current path on the server. No financial context has been saved yet." : "Review a summary before saving. Your current information stays in place until you confirm the update."}</p>}
+            {preview && <FinancialContextPreviewView preview={preview} mode={mode} />}
+            {!preview && <button type="button" className="primary-button" disabled={busy} onClick={requestPreview}>{busy ? "Preparing review…" : mode === "revision" ? "Review changes" : "Preview my current path"}</button>}
             {preview && !confirmationReady ? <p className="registration-confirmation-gate">Confirm your personal email above before activating this reviewed financial context.</p> : null}
-            {preview && <button type="button" className="primary-button" disabled={busy || !confirmationReady} onClick={confirm}>{busy ? "Confirming…" : "Confirm this financial context"}</button>}
+            {preview && <button type="button" className="primary-button" disabled={busy || !confirmationReady} onClick={confirm}>{busy ? "Saving…" : mode === "revision" ? "Save updated financial context" : "Confirm this financial context"}</button>}
           </div>
         )}
-        {busy ? <p className="onboarding-busy" role="status">Your confirmed values are being handled securely…</p> : null}
+        {busy ? <p className="onboarding-busy" role="status">{mode === "revision" ? "Updating your financial context…" : "Your confirmed values are being handled securely…"}</p> : null}
         {issues.length > 0 && <div className="form-errors" role="alert" ref={errorRef} tabIndex={-1}><strong>Check these fields</strong><ul>{issues.map((item, index) => <li key={`${item.path}-${index}`}><code>{item.path}</code>: {item.message}</li>)}</ul></div>}
         <footer className="onboarding-actions">
           {step > 0 && <button type="button" className="secondary-button" onClick={() => setStep((current) => current - 1)}>Back</button>}
-          {step < STEP_TITLES.length - 1 && <button type="button" className="primary-button" disabled={step === 5 && form.transferDeclaration === ""} onClick={() => setStep((current) => current + 1)}>{step === 0 ? "Build my current path" : "Continue"}</button>}
+          {step < stepTitles.length - 1 && <button type="button" className="primary-button" disabled={step === 5 && form.transferDeclaration === ""} onClick={() => setStep((current) => current + 1)}>{step === 0 ? mode === "revision" ? "Start updating" : "Build my current path" : "Continue"}</button>}
         </footer>
       </section>
     </main>
