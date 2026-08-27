@@ -214,10 +214,15 @@ export class ConversationApplication {
       this.dependencies.repository.list(),
       this.dependencies.contextSource.getCurrentContextVersionId()
     ]);
+    const recentMessages = conversations[0]
+      ? await this.dependencies.repository.listMessages(conversations[0].id)
+      : [];
+    const recentConversationQuestion = recentMessages.find((message) => message.kind === "USER_TEXT")?.text ?? null;
     return {
       apiVersion: "future-you.api/v1",
       schemaVersion: CONVERSATION_LIST_RESPONSE_SCHEMA,
       kind: "conversation_list",
+      recentConversationQuestion,
       conversations: conversations.map((conversation) => this.summary(conversation, currentVersion))
     };
   }
