@@ -90,7 +90,7 @@ function LineChart({
         <g className="fy-chart-tooltip-layer">
           {visibleSeries.flatMap((item) => item.points.map((point) => {
               const tooltipX = Math.max(220, Math.min(780, point.x));
-              const tooltipY = point.y < 105 ? point.y + 100 : point.y - 22;
+              const tooltipY = point.y < 105 ? point.y + 125 : point.y - 22;
               const accessibleLabel = `${item.label}, ${point.periodLabel}: ${point.valueLabel}`;
               return (
                 <g
@@ -103,10 +103,10 @@ function LineChart({
                   <circle className="fy-chart-point-hit" cx={point.x} cy={point.y} r="28"/>
                   <circle className="fy-chart-point-active" cx={point.x} cy={point.y} r="14"/>
                   <g className="fy-chart-point-tooltip" transform={`translate(${tooltipX} ${tooltipY})`} aria-hidden="true">
-                    <rect x="-200" y="-88" width="400" height="84" rx="18"/>
+                    <rect x="-200" y="-112" width="400" height="108" rx="18"/>
                     <text textAnchor="middle">
-                      <tspan className="fy-chart-tooltip-title" x="0" y="-55">{item.label}</tspan>
-                      <tspan x="0" y="-19">{point.periodLabel} · {point.valueLabel}</tspan>
+                      <tspan className="fy-chart-tooltip-title" x="0" y="-72">{item.label}</tspan>
+                      <tspan x="0" y="-29">{point.periodLabel} · {point.valueLabel}</tspan>
                     </text>
                   </g>
                 </g>
