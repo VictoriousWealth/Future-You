@@ -1532,6 +1532,7 @@ summary {
 .fy-opportunity-category-heading p { color: var(--fy-muted); font-size: var(--fy-ios-caption); font-weight: 650; line-height: 1.333; text-transform: uppercase; }
 .fy-opportunity-category-heading h2 { margin-top: .1rem; color: var(--fy-blue); font-size: var(--fy-ios-title-2); line-height: 1.273; letter-spacing: -.025em; }
 .fy-category-explainer { margin: -.15rem 0 .15rem; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+.fy-work-benefit-stack { display: grid; gap: 1rem; }
 .fy-benefit-group { overflow: hidden; background: #fff; border: 1px solid rgba(0,74,173,.14); border-radius: .9rem; }
 .fy-benefit-group > * { border: 0; border-radius: 0; }
 .fy-benefit-group > * + * { border-top: 1px solid rgba(22,52,95,.12); }
@@ -2438,7 +2439,7 @@ summary {
   .fy-benefits-intro h1 { max-width: none; }
   .fy-benefits-intro h1 span { display: inline; }
   .fy-opportunity-category.is-work > .fy-opportunity-category-heading,
-  .fy-opportunity-category.is-work > .fy-benefit-group { grid-column: 1 / -1; }
+  .fy-opportunity-category.is-work > .fy-work-benefit-stack { grid-column: 1 / -1; }
   .fy-opportunity-category.is-tax { grid-column: 1; }
   .fy-opportunity-category.is-loyalty { grid-column: 2; }
 }
