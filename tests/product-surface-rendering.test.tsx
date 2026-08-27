@@ -66,6 +66,18 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain("SERVER ACCESSIBLE RATIO");
   });
 
+  it("renders trusted saved and target amounts on the compact Goals-page card", () => {
+    const markup = renderToStaticMarkup(createElement(GoalCard, {
+      goal: sentinelGoal,
+      compact: true,
+      showBalance: true
+    }));
+    expect(markup).toContain("£SERVER-CURRENT");
+    expect(markup).toContain("of £SERVER-TARGET");
+    expect(markup).toContain("43% SERVER");
+    expect(markup).toContain("December 2099 SERVER");
+  });
+
   it("renders the generated profile portrait as the entry to Profile", () => {
     const markup = renderToStaticMarkup(createElement(ProductHeader, {}));
     expect(markup).toContain("%2Fimages%2Fsarah-profile.png");
