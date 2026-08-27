@@ -1179,6 +1179,7 @@ summary {
   position: relative;
   display: block;
   min-height: 14.56rem;
+  margin-top: 1rem;
   padding: 0.8rem 1rem 1.25rem;
   overflow: hidden;
   isolation: isolate;
@@ -1186,18 +1187,6 @@ summary {
   background: #004aad;
   border-radius: 1.2rem;
   text-decoration: none;
-}
-.fy-home-hero::before {
-  position: absolute;
-  z-index: -1;
-  top: 5.7rem;
-  right: -2.2rem;
-  width: 13rem;
-  height: 4.6rem;
-  content: "";
-  background: linear-gradient(125deg, transparent 6%, rgba(255,255,255,.08) 25%, rgba(255,255,255,.72) 48%, rgba(107,158,255,.36) 63%, transparent 82%);
-  filter: blur(0.75rem);
-  transform: rotate(-34deg);
 }
 .fy-home-hero::after {
   position: absolute;
@@ -1224,37 +1213,62 @@ summary {
   z-index: 1;
   top: 8.2rem;
   left: 1rem;
-  max-width: 9ch;
+  display: -webkit-box;
+  max-width: calc(100% - 4.75rem);
+  overflow: hidden;
   font-size: 2rem;
   line-height: 1.03;
   letter-spacing: -.07em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 .fy-home-hero-action { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.65rem; display: grid; width: 2.22rem; height: 2.22rem; place-items: center; color: var(--fy-blue); background: #8c9ffa; border-radius: 50%; }
 .fy-home-hero-action .fy-action-triangle { width: 1rem; height: 1rem; }
-@media (max-width: 47.999rem) {
-  .fy-home-hero { margin-right: .5625rem; margin-left: .5625rem; }
+.fy-quick-chat-layout {
+  --fy-home-decision-size: clamp(7.25rem, 34.8vw, 9rem);
+  --fy-home-decision-gap: clamp(.65rem, 3.85vw, 1rem);
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  overscroll-behavior: auto;
+  scroll-snap-type: none;
 }
-
-.fy-home-decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-top: .8rem; }
-.fy-home-decision {
+.fy-quick-chat-layout > p { margin: 1.25rem 0 .9rem; padding-left: .5625rem; color: var(--fy-blue); font-size: 1.2rem; }
+.fy-quick-chat-row {
+  display: grid;
+  width: 100%;
+  grid-auto-columns: var(--fy-home-decision-size);
+  grid-auto-flow: column;
+  gap: var(--fy-home-decision-gap);
+  justify-content: center;
+}
+.fy-quick-chat-row.is-n-plus-one { margin-top: .75rem; }
+.fy-quick-chat-card {
   position: relative;
   display: grid;
-  min-height: 9.7rem;
+  width: var(--fy-home-decision-size);
+  min-width: 0;
+  height: var(--fy-home-decision-size);
+  min-height: var(--fy-home-decision-size);
   grid-template-rows: auto 1fr;
+  gap: 0;
+  align-content: normal;
   padding: 1rem;
+  overflow: hidden;
   color: var(--fy-blue);
-  border: 1px solid var(--fy-border);
-  border-radius: 1.3rem;
+  background: linear-gradient(155deg, #f3faff 8%, #f4f8ff 48%, #fff0fa 100%);
+  border: 1px solid #8c9ffa;
+  border-radius: 1.56rem;
+  box-shadow: none;
+  cursor: pointer;
+  text-align: left;
   text-decoration: none;
+  scroll-snap-align: none;
 }
-.fy-home-decision:last-child { grid-column: 1 / -1; min-height: 6.5rem; }
-.fy-home-decision.blue { background: linear-gradient(145deg, #e0efff, #f9fcff); }
-.fy-home-decision.pink { background: linear-gradient(145deg, #ffe9f6, #fff); }
-.fy-home-decision.purple { background: linear-gradient(145deg, #eee7ff, #fff); }
-.fy-home-decision.cyan { background: linear-gradient(145deg, #e3f8ff, #fff); }
-.fy-home-decision svg { width: 1.7rem; height: 1.7rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.fy-home-decision strong { align-self: end; max-width: 12ch; font-size: 1rem; line-height: 1.08; }
-.fy-home-decision > .fy-action-triangle { position: absolute; right: .9rem; bottom: .85rem; width: var(--fy-icon-body); height: var(--fy-icon-body); fill: currentColor; stroke: none; }
+.fy-quick-chat-card svg { width: 1.55rem; height: 1.55rem; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.fy-quick-chat-card strong { align-self: end; max-width: 10ch; padding: 0; font-size: 1.2rem; font-weight: 400; line-height: .98; letter-spacing: -.04em; }
 
 .fy-overview-section { margin-top: 2.5rem; padding-top: .25rem; }
 .fy-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; margin-bottom: .9rem; }
@@ -2124,7 +2138,6 @@ summary {
 
 @media (max-width: 23.75rem) {
   .fy-product-shell { padding-right: 0.9rem; padding-left: 0.9rem; }
-  .fy-prompt-rail { margin-right: -0.9rem; margin-left: -0.9rem; padding-right: 0.9rem; padding-left: 0.9rem; }
   .fy-bottom-nav { right: 0.7rem; left: 0.7rem; }
   .fy-composer { right: 0.8rem; left: 0.8rem; }
   .fy-home-hero strong { font-size: 2rem; }
@@ -2188,7 +2201,6 @@ summary {
     margin: 2rem auto 0;
   }
   .fy-ask-shell .fy-product-content { width: min(100%, 48rem); }
-  .fy-prompt-rail { margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; }
   .fy-bottom-sheet {
     width: min(calc(100% - 3rem), 38rem);
     max-height: min(78dvh, 46rem);
