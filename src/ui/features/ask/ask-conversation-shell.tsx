@@ -198,7 +198,7 @@ export function AskConversationShell({
             <article className={`fy-message ${item.kind === "USER_TEXT" ? "user" : "assistant"}`} key={item.id} data-kind={item.kind}>
               {item.kind !== "USER_TEXT" && <span className="fy-assistant-mark" aria-hidden="true">FY</span>}
               <div className="fy-message-content">
-                {item.kind !== "ASSISTANT_RESULT" && <p>{item.text}</p>}
+                {(item.kind !== "ASSISTANT_RESULT" || item.templateId?.startsWith("DEMO_")) && <p>{item.text}</p>}
                 {item.result && <ConversationResultView result={item.result}/>} 
                 {item.explanationFallbackUsed && <small className="fy-fallback-note">Trusted fallback explanation used</small>}
               </div>
