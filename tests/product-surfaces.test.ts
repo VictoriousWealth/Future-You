@@ -225,6 +225,24 @@ describe("Slice 6 product-surface application", () => {
           numericalSimulationSupported: false
         }
       ],
+      taxAndAllowances: [
+        {
+          id: "PENSION_TAX_RELIEF",
+          status: "details_required",
+          includedInCurrentPlan: false,
+          provenance: { publisher: "GOV.UK" }
+        },
+        {
+          id: "LIFETIME_ISA_FIRST_HOME",
+          status: "details_required",
+          includedInCurrentPlan: false,
+          provenance: { publisher: "GOV.UK" }
+        }
+      ],
+      loyaltySchemes: {
+        status: "not_connected",
+        title: "No loyalty schemes connected"
+      },
       emptyState: null
     });
     const serialized = JSON.stringify(result.value);
