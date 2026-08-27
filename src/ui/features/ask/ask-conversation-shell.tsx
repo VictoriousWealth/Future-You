@@ -167,8 +167,7 @@ export function AskConversationShell({
 
       {isInitial ? (
         <section className="fy-ask-intro">
-          <h1 className="fy-welcome">Welcome back,<br/>{displayName}!</h1>
-          <p className="fy-question">What are you thinking about?</p>
+          <h1 className="fy-welcome">Good morning,<br/>{displayName}!</h1>
           <div className="fy-prompt-rail" aria-label="Suggested questions">
             {PROMPTS.map((prompt) => (
               <button type="button" className={`fy-prompt-card ${prompt.tone}`} key={prompt.text} onClick={() => void submit(prompt.text)}>
