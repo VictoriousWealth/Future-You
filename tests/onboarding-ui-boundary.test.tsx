@@ -69,6 +69,10 @@ describe("onboarding browser authority boundary", () => {
     );
     expect(markup).toContain("Check the updated information");
     expect(markup).toContain("Calculation details");
+    expect(markup).toContain("Long-term date estimate");
+    expect(markup).not.toContain("Existing pressure spotted");
     expect(markup).not.toContain("Here’s where these numbers take you");
+    expect(markup).not.toContain(result.value.versions.rulesVersion);
+    expect(markup).not.toContain(result.value.versions.calendarVersion);
   });
 });
