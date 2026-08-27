@@ -206,7 +206,7 @@ async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/ben
   if (path === "/home") await expect(page.getByText("What are you thinking about?")).toBeVisible({ timeout: 20_000 });
   if (path === "/goals") await expect(page.getByRole("heading", { name: "Your goals", exact: true })).toBeVisible();
   if (path === "/ask") await expect(page.getByTestId("ask-visual-shell")).toBeVisible();
-  if (path === "/benefits") await expect(page.getByRole("heading", { name: "Your benefits", exact: true })).toBeVisible();
+  if (path === "/benefits") await expect(page.getByRole("heading", { name: "Benefits & opportunities", exact: true })).toBeVisible();
 }
 
 test("completes the new-user auth and canonical onboarding release journey", async ({ page }) => {
@@ -780,7 +780,7 @@ test("uses intentional phone, tablet and desktop layouts without changing route 
     const navigation = await page.getByRole("navigation", { name: "Product navigation" }).boundingBox();
     expect(navigation).not.toBeNull();
     if (viewport.width >= 768) {
-      const contentHeading = await page.getByRole("heading", { name: "Your benefits" }).boundingBox();
+      const contentHeading = await page.getByRole("heading", { name: "Benefits & opportunities" }).boundingBox();
       expect(contentHeading).not.toBeNull();
       expect(navigation!.x).toBeLessThan(contentHeading!.x);
       expect(navigation!.y).toBeLessThan(contentHeading!.y + contentHeading!.height);
