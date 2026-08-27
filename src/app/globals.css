@@ -1177,26 +1177,63 @@ summary {
 
 .fy-home-hero {
   position: relative;
-  display: grid;
-  min-height: 14.5rem;
-  grid-template-rows: auto 1fr auto;
-  padding: 1.35rem;
+  display: block;
+  min-height: 14.56rem;
+  padding: 0.8rem 1rem 1.25rem;
   overflow: hidden;
+  isolation: isolate;
   color: #fff;
-  background:
-    radial-gradient(circle at 80% 52%, rgba(255,255,255,.55), transparent 9%),
-    radial-gradient(circle at 92% 25%, rgba(56,182,255,.52), transparent 32%),
-    linear-gradient(145deg, #0043a7, #0758c9 55%, #003c9d);
-  border-radius: 1.35rem;
-  box-shadow: 0 18px 38px rgba(0,74,173,.2);
+  background: #004aad;
+  border-radius: 1.2rem;
   text-decoration: none;
 }
-.fy-home-hero::after { position: absolute; right: -2.5rem; bottom: -4rem; width: 12rem; height: 12rem; content: ""; background: radial-gradient(circle, rgba(222,83,173,.6), transparent 66%); }
-.fy-home-hero small { margin-left: 2.3rem; font-size: 1.35rem; font-weight: 900; letter-spacing: -.05em; }
-.fy-home-hero strong { align-self: end; max-width: 9ch; font-size: 2.35rem; line-height: .93; letter-spacing: -.075em; }
-.fy-home-hero-action { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.25rem; display: grid; width: 3rem; height: 3rem; place-items: center; color: var(--fy-blue); background: #9bc3ff; border-radius: 50%; }
-.fy-home-hero-action .fy-action-triangle { width: var(--fy-icon-body); height: var(--fy-icon-body); }
-.fy-home-spark { position: absolute; top: .95rem; left: 1.2rem; color: #ffdc28; font-size: 2rem; }
+.fy-home-hero::before {
+  position: absolute;
+  z-index: -1;
+  top: 5.7rem;
+  right: -2.2rem;
+  width: 13rem;
+  height: 4.6rem;
+  content: "";
+  background: linear-gradient(125deg, transparent 6%, rgba(255,255,255,.08) 25%, rgba(255,255,255,.72) 48%, rgba(107,158,255,.36) 63%, transparent 82%);
+  filter: blur(0.75rem);
+  transform: rotate(-34deg);
+}
+.fy-home-hero::after {
+  position: absolute;
+  z-index: -2;
+  right: -3.6rem;
+  bottom: -4.7rem;
+  width: 12rem;
+  height: 12rem;
+  content: "";
+  background: radial-gradient(circle, rgba(222,83,173,.38), transparent 66%);
+}
+.fy-home-hero-title {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: max-content;
+  font-size: 2.7rem;
+  font-weight: 400;
+  letter-spacing: -.075em;
+  line-height: 1.06;
+}
+.fy-home-hero strong {
+  position: absolute;
+  z-index: 1;
+  top: 8.2rem;
+  left: 1rem;
+  max-width: 9ch;
+  font-size: 2rem;
+  line-height: 1.03;
+  letter-spacing: -.07em;
+}
+.fy-home-hero-action { position: absolute; z-index: 1; right: 1.25rem; bottom: 1.65rem; display: grid; width: 2.22rem; height: 2.22rem; place-items: center; color: var(--fy-blue); background: #8c9ffa; border-radius: 50%; }
+.fy-home-hero-action .fy-action-triangle { width: 1rem; height: 1rem; }
+@media (max-width: 47.999rem) {
+  .fy-home-hero { margin-right: .5625rem; margin-left: .5625rem; }
+}
 
 .fy-home-decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-top: .8rem; }
 .fy-home-decision {
