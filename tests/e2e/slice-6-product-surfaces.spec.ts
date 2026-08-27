@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import type { HomeSurfaceDTO } from "../../src/application/product-surfaces/contracts";
+import type { GoalsSurfaceDTO, HomeSurfaceDTO } from "../../src/application/product-surfaces/contracts";
 import { SARAH_V1_ONBOARDING_DRAFT } from "../../src/fixtures/sarah-v1-onboarding";
 import { signIn, signOut } from "./helpers/auth";
 
@@ -85,6 +85,14 @@ test("delivers the shared Home, Goals, Ask and Benefits product journey", async 
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("£3,300");
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("£4,500");
   await expect(page.getByTestId("goal-goal-emergency-fund")).toContainText("December 2026");
+  const addGoal = page.getByRole("link", { name: "Add another goal" });
+  await expect(addGoal).toHaveAttribute("href", "/goals/new");
+  await addGoal.click();
+  await expect(page).toHaveURL(/\/goals\/new$/);
+  await expect(page.getByRole("heading", { name: "Add goal", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Preview new goal" })).toBeVisible();
+  await page.goto("/goals");
+  await expect(page.getByRole("heading", { name: "Your goals" })).toBeVisible();
   await page.screenshot({ path: evidence("goals-current-414x896.png") });
 
   const runId = await createRun(page, `req_slice6_preview_${Date.now()}`);
@@ -297,6 +305,7 @@ test("keeps an actual stored run paired with its original plan after a revision"
 test("renders server sentinel goal fields verbatim without browser recalculation", async ({ page }) => {
   await signIn(page, "sarah", "/home");
   const home = await page.evaluate(async () => await (await fetch("/api/v1/home")).json()) as HomeSurfaceDTO;
+  const goals = await page.evaluate(async () => await (await fetch("/api/v1/goals")).json()) as GoalsSurfaceDTO;
   const serverGoal = home.goals[0];
   if (!serverGoal) throw new Error("Home returned no goal for the sentinel test.");
   await page.route("**/api/v1/goals", async (route) => {
@@ -305,7 +314,7 @@ test("renders server sentinel goal fields verbatim without browser recalculation
       contentType: "application/json",
       body: JSON.stringify({
         apiVersion: "future-you.product-surfaces/v1",
-        schemaVersion: "goals-surface/1.0.0",
+        schemaVersion: "goals-surface/1.1.0",
         kind: "goals_surface",
         mode: "current_path",
         context: home.context,
@@ -318,7 +327,8 @@ test("renders server sentinel goal fields verbatim without browser recalculation
           targetBalance: { currency: "GBP", minorUnits: "1", display: "£SERVER-TARGET" },
           progress: { ...serverGoal.progress, display: "43% SERVER", fill: "12.345%", ringDasharray: "1234.5 8765.5", accessibleLabel: "SERVER RATIO" },
           completion: { status: "on_track", month: "2099-12", display: "December 2099 SERVER", statusLabel: "SERVER STATUS" }
-        }]
+        }],
+        progress: goals.progress
       })
     });
   });
