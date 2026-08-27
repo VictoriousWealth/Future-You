@@ -1540,6 +1540,21 @@ summary {
   letter-spacing: -.075em;
   line-height: 1.06;
 }
+.fy-home-hero-title-line {
+  display: flex;
+  align-items: center;
+  gap: .42rem;
+}
+.fy-home-hero-star {
+  display: block;
+  width: 3.35rem;
+  height: 3.35rem;
+  flex: 0 0 auto;
+  margin: -.12rem 0 -.1rem -.1rem;
+  overflow: visible;
+  color: #ffd400;
+  fill: currentColor;
+}
 .fy-home-hero-question {
   position: relative;
   z-index: 1;
