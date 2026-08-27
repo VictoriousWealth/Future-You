@@ -1,5 +1,6 @@
 import "server-only";
 import type { ConversationModelProvider } from "../../application/conversation/contracts";
+import type { DemoConversationModelProvider } from "../../application/conversation/demo-contracts";
 import { ConversationProviderError } from "../../application/conversation/provider-error";
 import {
   FakeConversationModelProvider,
@@ -14,9 +15,21 @@ const FAKE_MODES = new Set<FakeProviderMode>([
 ]);
 
 export interface ResolvedConversationProvider {
-  readonly provider: ConversationModelProvider;
+  readonly provider: ConversationModelProvider & DemoConversationModelProvider;
   readonly providerIdentifier: string;
   readonly modelIdentifier: string;
+}
+
+export type AskConversationMode = "strict" | "trusted_demo";
+
+/** Server-only feature switch. The browser cannot opt itself into demo orchestration. */
+export function resolveAskConversationMode(
+  environment: Readonly<Record<string, string | undefined>> = process.env
+): AskConversationMode {
+  const configured = environment["FUTURE_YOU_ASK_MODE"]?.trim().toLowerCase();
+  if (!configured || configured === "strict") return "strict";
+  if (configured === "trusted_demo") return "trusted_demo";
+  throw new Error("FUTURE_YOU_ASK_MODE must be strict or trusted_demo.");
 }
 
 export function resolveConversationProvider(): ResolvedConversationProvider {
