@@ -12,6 +12,7 @@ import { slice2TestDependencies } from "./helpers/slice-2";
 import { AuthenticationBoundaryError } from "../src/infrastructure/auth/authentication-error";
 import { AccountActivationRequiredError } from "../src/infrastructure/auth/account-activation-error";
 import { SARAH_EMPLOYER_BENEFIT_SOURCE } from "./fixtures/employer-benefits";
+import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../src/fixtures/sarah-v1-tax-opportunity-profile";
 
 function resolver(): AuthenticatedProductSurfaceResolver {
   const contextSource = new SarahV1ContextSource();
@@ -26,6 +27,7 @@ function resolver(): AuthenticatedProductSurfaceResolver {
     contextSource,
     workplaceSource,
     employerBenefitSource: SARAH_EMPLOYER_BENEFIT_SOURCE,
+    taxOpportunityProfileSource: SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE,
     simulator
   });
   return async () => ({
@@ -58,8 +60,11 @@ describe("Slice 6 product-surface API contracts", () => {
       "SEASON_TICKET_LOAN"
     ]);
     expect(benefits.taxAndAllowances.map((opportunity: { id: string }) => opportunity.id)).toEqual([
+      "PERSONAL_ALLOWANCE",
       "PENSION_TAX_RELIEF",
-      "LIFETIME_ISA_FIRST_HOME"
+      "LIFETIME_ISA_FIRST_HOME",
+      "COUNCIL_TAX_SINGLE_PERSON_DISCOUNT",
+      "PERSONAL_SAVINGS_ALLOWANCE"
     ]);
     expect(benefits.loyaltySchemes.status).toBe("not_connected");
   });
