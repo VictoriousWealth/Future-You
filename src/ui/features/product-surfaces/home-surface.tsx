@@ -3,18 +3,21 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { HomeSurfaceDTO } from "../../../application/product-surfaces/contracts";
+import type { ConversationListResponseDTO } from "../../../application/conversation/contracts";
 import type { ApiErrorResponseDTO } from "../../../application/dto/contracts";
 import { ActionTriangleIcon, ProductIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
 import { SurfaceError, SurfaceLoading } from "../../product-shell/surface-state";
+import { QUICK_CHAT_OPTIONS, QuickChatIcon, type QuickChatOption } from "../../quick-chat/quick-chat-options";
 import { GoalCard } from "./goal-card";
 
-const DECISIONS = [
-  { label: "Can I afford a £650 trip?", prompt: "Can I afford a £650 trip next month?", icon: "ask" as const, tone: "blue" },
-  { label: "Can I afford something?", prompt: "Can I afford something next month?", icon: "buffer" as const, tone: "pink" },
-  { label: "What would cheaper change?", prompt: "What would a cheaper option change?", icon: "goals" as const, tone: "purple" },
-  { label: "Explain my current path", prompt: "Explain my current path", icon: "home" as const, tone: "cyan" }
-] as const;
+const DEFAULT_DECISION = { label: "Can I afford a £650 trip?", prompt: "Can I afford a £650 trip next month?" } as const;
+
+function decisionHref(decision: QuickChatOption): string {
+  return "href" in decision
+    ? decision.href
+    : `/ask?prompt=${encodeURIComponent(decision.prompt)}`;
+}
 
 function apiMessage(value: unknown): string {
   return (value as Partial<ApiErrorResponseDTO> | null)?.error?.message ?? "Your Home overview is temporarily unavailable.";
@@ -22,6 +25,7 @@ function apiMessage(value: unknown): string {
 
 export function HomeSurface() {
   const [data, setData] = useState<HomeSurfaceDTO | null>(null);
+  const [recentConversationQuestion, setRecentConversationQuestion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const load = useCallback(() => setAttempt((value) => value + 1), []);
@@ -29,6 +33,13 @@ export function HomeSurface() {
   useEffect(() => {
     let active = true;
     setError(null);
+    fetch("/api/v1/conversations", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const body = await response.json() as ConversationListResponseDTO;
+        if (active) setRecentConversationQuestion(body.recentConversationQuestion);
+      })
+      .catch(() => undefined);
     fetch("/api/v1/home", { cache: "no-store" })
       .then(async (response) => {
         const body = await response.json();
@@ -39,6 +50,11 @@ export function HomeSurface() {
     return () => { active = false; };
   }, [attempt]);
 
+  const heroQuestion = recentConversationQuestion ?? DEFAULT_DECISION.label;
+  const heroHref = recentConversationQuestion
+    ? "/ask"
+    : `/ask?prompt=${encodeURIComponent(DEFAULT_DECISION.prompt)}`;
+
   return (
     <ProductShell active="home" className="fy-home-shell" testId="home-surface">
       {!data && !error ? <SurfaceLoading label="future"/> : null}
@@ -47,27 +63,29 @@ export function HomeSurface() {
         <>
           <section className="fy-home-intro">
             <h1 className="fy-personal-greeting">Good morning,<br/><strong>{data.displayName}!</strong></h1>
-            <Link className="fy-home-hero" href={`/ask?prompt=${encodeURIComponent(DECISIONS[0].prompt)}`}>
+            <Link className="fy-home-hero" href={heroHref}>
               <span className="fy-home-hero-title"><span>Ask</span><span>Future You</span></span>
-              <strong>{DECISIONS[0].label}</strong>
+              <strong>{heroQuestion}</strong>
               <span className="fy-home-hero-action"><ActionTriangleIcon/></span>
             </Link>
-            <div className="fy-home-decisions" aria-label="Supported questions">
-              {DECISIONS.slice(1).map((decision) => (
-                <Link className={`fy-home-decision ${decision.tone}`} href={`/ask?prompt=${encodeURIComponent(decision.prompt)}`} key={decision.prompt}>
-                  <ProductIcon name={decision.icon}/><strong>{decision.label}</strong><ActionTriangleIcon/>
-                </Link>
-              ))}
+            <div className="fy-home-decisions fy-quick-chat-layout" aria-label="Questions to try">
+              <p>Or Start a Quick Chat With:</p>
+              <div className="fy-quick-chat-row is-n">
+                {QUICK_CHAT_OPTIONS.slice(0, 2).map((decision) => (
+                  <Link className="fy-home-decision fy-quick-chat-card" href={decisionHref(decision)} key={decision.label}>
+                    <QuickChatIcon name={decision.icon}/><strong>{decision.label}</strong>
+                  </Link>
+                ))}
+              </div>
+              <div className="fy-quick-chat-row is-n-plus-one">
+                {QUICK_CHAT_OPTIONS.slice(2).map((decision) => (
+                  <Link className="fy-home-decision fy-quick-chat-card" href={decisionHref(decision)} key={decision.label}>
+                    <QuickChatIcon name={decision.icon}/><strong>{decision.label}</strong>
+                  </Link>
+                ))}
+              </div>
             </div>
           </section>
-
-          {data.guidedStory.available ? (
-            <Link className="fy-story-entry" href={data.guidedStory.href}>
-              <span className="fy-story-entry-art" aria-hidden="true">S</span>
-              <span><small>Guided demonstration</small><strong>{data.guidedStory.label}</strong><em>{data.guidedStory.description}</em></span>
-              <ActionTriangleIcon/>
-            </Link>
-          ) : null}
 
           <section className="fy-overview-section" aria-labelledby="right-now-title">
             <div className="fy-section-heading">
