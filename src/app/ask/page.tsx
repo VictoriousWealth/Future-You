@@ -14,11 +14,12 @@ const SUPPORTED_HOME_PROMPTS = new Set([
   "Can I afford something next month?",
   "How am I doing?",
   "What should I prioritise?",
-  "Future You Wrapped"
+  "Future You Wrapped",
+  "Let’s amend my goals"
 ]);
 
 export default async function AskPage({ searchParams }: Readonly<{
-  searchParams: Promise<{ prompt?: string }>;
+  searchParams: Promise<{ prompt?: string; autosend?: string }>;
 }>) {
   let context;
   try {
@@ -29,13 +30,17 @@ export default async function AskPage({ searchParams }: Readonly<{
     throw error;
   }
   if (!context.currentContextVersionId) redirect("/onboarding");
-  const list = await context.application.list();
-  const first = list.conversations[0];
-  const initialConversation = first ? await context.application.get(first.id) : null;
-  const requestedPrompt = (await searchParams).prompt;
+  const requested = await searchParams;
+  const requestedPrompt = requested.prompt;
   const initialPrompt = requestedPrompt && SUPPORTED_HOME_PROMPTS.has(requestedPrompt)
     ? requestedPrompt
     : "";
+  const autoSubmitInitialPrompt = initialPrompt.length > 0 && requested.autosend === "1";
+  const list = await context.application.list();
+  const first = list.conversations[0];
+  const initialConversation = !autoSubmitInitialPrompt && first
+    ? await context.application.get(first.id)
+    : null;
   return (
     <AskConversationShell
       displayName={context.displayName}
@@ -43,6 +48,7 @@ export default async function AskPage({ searchParams }: Readonly<{
       initialList={list}
       initialConversation={initialConversation}
       initialPrompt={initialPrompt}
+      autoSubmitInitialPrompt={autoSubmitInitialPrompt}
     />
   );
 }
