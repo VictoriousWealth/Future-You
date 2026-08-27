@@ -9,9 +9,11 @@ import {
   INTERPRETATION_PROMPT_VERSION,
   INTERPRETATION_PROMPT_VERSION_V1,
   INTERPRETATION_PROMPT_VERSION_V2,
+  INTERPRETATION_PROMPT_VERSION_V3,
   INTERPRETATION_SCHEMA_VERSION,
   INTERPRETATION_SCHEMA_VERSION_V1,
-  INTERPRETATION_SCHEMA_VERSION_V2
+  INTERPRETATION_SCHEMA_VERSION_V2,
+  INTERPRETATION_SCHEMA_VERSION_V3
 } from "../src/application/conversation/contracts";
 import {
   CLARIFICATION_ID_BY_BRANCH,
@@ -126,8 +128,10 @@ describe("Track C1A interpretation contract v2", () => {
     expect(INTERPRETATION_PROMPT_VERSION_V2).toBe("fy-conversation-interpretation/2.0.0");
     expect(INTERPRETATION_SCHEMA_VERSION_V2).toBe("fy-conversation-intent/2.0.0");
     expect(INTERPRETATION_PROMPT_V2).toContain(INTERPRETATION_PROMPT_VERSION_V2);
-    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/3.0.0");
-    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/3.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION_V3).toBe("fy-conversation-interpretation/3.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION_V3).toBe("fy-conversation-intent/3.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/4.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/4.0.0");
   });
 
   it("keeps clarification independently versioned and explanation unchanged", () => {
