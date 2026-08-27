@@ -21,6 +21,23 @@ function apiMessage(value: unknown): string {
   return (value as Partial<ApiErrorResponseDTO> | null)?.error?.message ?? "Your Home overview is temporarily unavailable.";
 }
 
+function balancedQuestionLines(question: string): readonly [string, string] {
+  const words = question.trim().split(/\s+/);
+  if (words.length < 2) return [question, "\u00a0"];
+  let splitAt = 1;
+  let smallestDifference = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < words.length; index += 1) {
+    const first = words.slice(0, index).join(" ");
+    const second = words.slice(index).join(" ");
+    const difference = Math.abs(first.length - second.length);
+    if (difference < smallestDifference) {
+      splitAt = index;
+      smallestDifference = difference;
+    }
+  }
+  return [words.slice(0, splitAt).join(" "), words.slice(splitAt).join(" ")];
+}
+
 export function HomeSurface() {
   const [data, setData] = useState<HomeSurfaceDTO | null>(null);
   const [recentConversationQuestion, setRecentConversationQuestion] = useState<string | null>(null);
@@ -52,6 +69,7 @@ export function HomeSurface() {
   const heroHref = recentConversationQuestion
     ? "/ask"
     : `/ask?prompt=${encodeURIComponent(DEFAULT_DECISION.prompt)}`;
+  const heroQuestionLines = balancedQuestionLines(heroQuestion);
 
   return (
     <ProductShell active="home" className="fy-home-shell" testId="home-surface">
@@ -61,10 +79,13 @@ export function HomeSurface() {
         <>
           <section className="fy-home-intro">
             <h1 className="fy-personal-greeting">Good morning,<br/><strong>{data.displayName}!</strong></h1>
-            <Link className="fy-home-hero" href={heroHref} aria-label={`Open conversation: ${heroQuestion}`} title={heroQuestion}>
+            <div className="fy-home-hero" title={heroQuestion}>
               <span className="fy-home-hero-title"><span>Ask</span><span>Future You</span></span>
-              <strong className="fy-home-hero-question">{heroQuestion}</strong>
-            </Link>
+              <span className="fy-home-hero-latest">
+                <strong className="fy-home-hero-question"><span>{heroQuestionLines[0]}</span><span>{heroQuestionLines[1]}</span></strong>
+                <Link className="fy-home-hero-action" href={heroHref} aria-label={`Open conversation: ${heroQuestion}`}><ActionTriangleIcon/></Link>
+              </span>
+            </div>
             <div className="fy-home-decisions fy-quick-chat-layout" aria-label="Questions to try">
               <p>Or Start a Quick Chat With:</p>
               <div className="fy-quick-chat-row is-n">
