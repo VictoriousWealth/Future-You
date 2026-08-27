@@ -82,13 +82,19 @@ function LineChart({
         {visibleSeries.map((item) => (
           <g className={`fy-chart-series ${seriesClass(item.color)}`} key={item.goalId}>
             <polyline points={item.polylinePoints}/>
-            {item.points.map((point) => (
-              <circle className="fy-chart-point-marker" cx={point.x} cy={point.y} r="9" key={`${item.goalId}-${point.period}`}/>
+            {item.points.map((point, pointIndex) => (
+              <circle
+                className="fy-chart-point-marker"
+                cx={point.x}
+                cy={point.y}
+                r="9"
+                key={`${item.goalId}-${point.period}-${pointIndex}`}
+              />
             ))}
           </g>
         ))}
         <g className="fy-chart-tooltip-layer">
-          {visibleSeries.flatMap((item) => item.points.map((point) => {
+          {visibleSeries.flatMap((item) => item.points.map((point, pointIndex) => {
               const tooltipX = Math.max(220, Math.min(780, point.x));
               const tooltipY = point.y < 105 ? point.y + 125 : point.y - 22;
               const accessibleLabel = `${item.label}, ${point.periodLabel}: ${point.valueLabel}`;
@@ -98,7 +104,7 @@ function LineChart({
                   tabIndex={0}
                   role="img"
                   aria-label={accessibleLabel}
-                  key={`${item.goalId}-${point.period}`}
+                  key={`${item.goalId}-${point.period}-${pointIndex}`}
                 >
                   <circle className="fy-chart-point-hit" cx={point.x} cy={point.y} r="28"/>
                   <circle className="fy-chart-point-active" cx={point.x} cy={point.y} r="14"/>
