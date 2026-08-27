@@ -31,7 +31,7 @@ export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION = "fy-clarification-resolut
 export const EXPLANATION_PROMPT_VERSION = "fy-conversation-explanation/1.0.0" as const;
 export const EXPLANATION_SCHEMA_VERSION = "fy-explanation-plan/1.0.0" as const;
 export const CONVERSATION_RESPONSE_SCHEMA = "conversation/1.0.0" as const;
-export const CONVERSATION_LIST_RESPONSE_SCHEMA = "conversation-list/1.0.0" as const;
+export const CONVERSATION_LIST_RESPONSE_SCHEMA = "conversation-list/1.1.0" as const;
 export const CONVERSATION_TURN_RESPONSE_SCHEMA = "conversation-turn/1.0.0" as const;
 export const CONVERSATION_TIMEZONE = "Europe/London" as const;
 
@@ -287,6 +287,7 @@ export interface ConversationListResponseDTO {
   readonly apiVersion: "future-you.api/v1";
   readonly schemaVersion: typeof CONVERSATION_LIST_RESPONSE_SCHEMA;
   readonly kind: "conversation_list";
+  readonly recentConversationQuestion: string | null;
   readonly conversations: readonly ConversationSummaryDTO[];
 }
 
