@@ -13,6 +13,7 @@ import type {
   UnsupportedCategoryId
 } from "./interpretation-policy";
 import type { CompleteTimingInterpretation } from "./timing-policy";
+import type { RecordedConversationIntentKind } from "./demo-contracts";
 
 export const CONVERSATION_ORCHESTRATION_VERSION = "fy-conversation-orchestration/1.0.0" as const;
 export const INTERPRETATION_PROMPT_VERSION_V1 = "fy-conversation-interpretation/1.0.0" as const;
@@ -309,7 +310,7 @@ export interface ConversationTurnResponseDTO {
   readonly kind: "conversation_turn";
   readonly requestId: string;
   readonly turnId: string;
-  readonly intent: ConversationIntentKind | null;
+  readonly intent: RecordedConversationIntentKind | null;
   readonly providerAttempts: number;
   readonly explanationFallbackUsed: boolean;
   readonly conversation: ConversationDetailDTO;
