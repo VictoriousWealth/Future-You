@@ -69,7 +69,7 @@ function providerResponse(timing: SyntheticTimingShape) {
   return {
     output: [{
       type: "function_call",
-      name: "submit_conversation_interpretation_v3",
+      name: "submit_conversation_interpretation_v4",
       arguments: JSON.stringify({
         interpretation: {
           kind: "CREATE_ONE_OFF_PURCHASE",
@@ -253,8 +253,8 @@ describe("Track C1D local timing-contract diagnostic", () => {
     expect(INTERPRETATION_PROMPT_V2).not.toContain("offsetMonths=1");
     expect(INTERPRETATION_PROMPT_V2).not.toContain("monthNumber must be null");
     expect(CLARIFICATION_RESOLUTION_PROMPT_V1).not.toContain("offsetMonths=1");
-    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/3.0.0");
-    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/3.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/4.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/4.0.0");
   });
 
   it("audits every current corpus timing path without changing its expectation", async () => {
