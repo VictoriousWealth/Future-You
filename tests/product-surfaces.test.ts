@@ -7,6 +7,7 @@ import type { FinancialContextSnapshot } from "../src/domain/simulator/types";
 import { createSimulatorApplication } from "../src/server/simulator-application";
 import { SARAH_V1_BROWSER_PROOF_COMMAND } from "../src/server/sarah-v1-demo-command";
 import { SARAH_V1_CONTEXT } from "../src/fixtures/sarah-v1";
+import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../src/fixtures/sarah-v1-tax-opportunity-profile";
 import { SarahV1ContextSource } from "../src/infrastructure/context/sarah-v1-context-source";
 import { InMemorySimulationRunStore } from "../src/infrastructure/runs/in-memory-simulation-run-store";
 import { SLICE_1_RULES } from "../src/domain/simulator/engine";
@@ -54,6 +55,7 @@ function setup(
       contextSource,
       workplaceSource,
       employerBenefitSource,
+      taxOpportunityProfileSource: SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE,
       simulator
     })
   };
@@ -227,13 +229,31 @@ describe("Slice 6 product-surface application", () => {
       ],
       taxAndAllowances: [
         {
+          id: "PERSONAL_ALLOWANCE",
+          status: "active_treatment",
+          includedInCurrentPlan: true,
+          provenance: { publisher: "GOV.UK" }
+        },
+        {
           id: "PENSION_TAX_RELIEF",
-          status: "details_required",
-          includedInCurrentPlan: false,
+          status: "active_treatment",
+          includedInCurrentPlan: true,
           provenance: { publisher: "GOV.UK" }
         },
         {
           id: "LIFETIME_ISA_FIRST_HOME",
+          status: "potential_fit",
+          includedInCurrentPlan: false,
+          provenance: { publisher: "GOV.UK" }
+        },
+        {
+          id: "COUNCIL_TAX_SINGLE_PERSON_DISCOUNT",
+          status: "potential_fit",
+          includedInCurrentPlan: false,
+          provenance: { publisher: "GOV.UK" }
+        },
+        {
+          id: "PERSONAL_SAVINGS_ALLOWANCE",
           status: "details_required",
           includedInCurrentPlan: false,
           provenance: { publisher: "GOV.UK" }
