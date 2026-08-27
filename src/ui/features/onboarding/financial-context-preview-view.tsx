@@ -9,6 +9,9 @@ export function FinancialContextPreviewView({
   preview: FinancialContextPreviewDTO;
   mode?: "initial" | "revision";
 }) {
+  const calendarNotes = preview.baseline.warnings.filter((warning) => warning.code === "CALENDAR_FALLBACK_WARNING");
+  const financialWarnings = preview.baseline.warnings.filter((warning) => warning.code !== "CALENDAR_FALLBACK_WARNING");
+
   return (
     <section className="onboarding-preview" aria-labelledby="preview-title" data-testid="onboarding-preview">
       <p className="eyebrow">{mode === "revision" ? "Review" : "Your current path"}</p>
@@ -39,10 +42,18 @@ export function FinancialContextPreviewView({
           <strong>{preview.contextSummary.monthlyContributionCapacity.display}</strong>
         </article>
       </div>
-      {preview.baseline.warnings.length > 0 && (
+      {financialWarnings.length > 0 && (
         <div className="preview-warning" role="status">
-          <strong>{mode === "revision" ? "Items to review" : "Existing pressure spotted"}</strong>
-          {preview.baseline.warnings.map((warning) => (
+          <strong>{mode === "revision" ? "Financial items to review" : "Existing pressure spotted"}</strong>
+          {financialWarnings.map((warning) => (
+            <p key={warning.code}>{warning.message}</p>
+          ))}
+        </div>
+      )}
+      {calendarNotes.length > 0 && (
+        <div className="preview-warning is-note" role="status">
+          <strong>Long-term date estimate</strong>
+          {calendarNotes.map((warning) => (
             <p key={warning.code}>{warning.message}</p>
           ))}
         </div>
@@ -67,16 +78,18 @@ export function FinancialContextPreviewView({
       </div>
       <details>
         <summary>{mode === "revision" ? "Calculation details" : "Assumptions and confidence"}</summary>
-        <p>Confidence: {preview.confidence}</p>
+        <p>{mode === "revision" ? "Information quality" : "Confidence"}: {preview.confidence}</p>
         <ul>
           {preview.assumptions.map((assumption) => (
             <li key={assumption.id}>{assumption.description}</li>
           ))}
         </ul>
       </details>
-      <p className="preview-versions">
-        Rules {preview.versions.rulesVersion} · Calendar {preview.versions.calendarVersion}
-      </p>
+      {mode === "initial" ? (
+        <p className="preview-versions">
+          Rules {preview.versions.rulesVersion} · Calendar {preview.versions.calendarVersion}
+        </p>
+      ) : null}
     </section>
   );
 }
