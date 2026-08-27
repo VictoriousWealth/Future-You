@@ -19,8 +19,10 @@ export const INTERPRETATION_PROMPT_VERSION_V1 = "fy-conversation-interpretation/
 export const INTERPRETATION_SCHEMA_VERSION_V1 = "fy-conversation-intent/1.0.0" as const;
 export const INTERPRETATION_PROMPT_VERSION_V2 = "fy-conversation-interpretation/2.0.0" as const;
 export const INTERPRETATION_SCHEMA_VERSION_V2 = "fy-conversation-intent/2.0.0" as const;
-export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/3.0.0" as const;
-export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/3.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION_V3 = "fy-conversation-interpretation/3.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION_V3 = "fy-conversation-intent/3.0.0" as const;
+export const INTERPRETATION_PROMPT_VERSION = "fy-conversation-interpretation/4.0.0" as const;
+export const INTERPRETATION_SCHEMA_VERSION = "fy-conversation-intent/4.0.0" as const;
 export const CLARIFICATION_RESOLUTION_PROMPT_VERSION_V1 = "fy-clarification-resolution-prompt/1.0.0" as const;
 export const CLARIFICATION_RESOLUTION_SCHEMA_VERSION_V1 = "fy-clarification-resolution-schema/1.0.0" as const;
 export const CLARIFICATION_RESOLUTION_PROMPT_VERSION = "fy-clarification-resolution-prompt/2.0.0" as const;
@@ -222,6 +224,7 @@ export type PendingClarification =
       availableRunIds: readonly string[];
       attemptedOperation?: ScenarioFollowUpId | undefined;
       amount?: AmountInterpretation | undefined;
+      amountMinorUnits?: string | undefined;
       timing?: CompleteTimingInterpretation | undefined;
       explanationTarget?: ExplanationTargetId | undefined;
       goalReferenceQuote?: string | null | undefined;
@@ -328,6 +331,28 @@ export interface AvailableScenarioReference {
   readonly selected: boolean;
 }
 
+export type SupportedFollowUpEvidence =
+  | Readonly<{
+      family: "AMOUNT_CHANGE";
+      amount: AmountInterpretation;
+      amountMinorUnits: string;
+    }>
+  | Readonly<{
+      family: "MONTH_CHANGE";
+      timing: CompleteTimingInterpretation;
+    }>
+  | Readonly<{
+      family: "RESULT_EXPLANATION";
+      explanationTarget: ExplanationTargetId;
+      goalReferenceQuote: string | null;
+    }>
+  | Readonly<{
+      family: "SCENARIO_SELECTION";
+      selectionTarget: "CURRENT_PATH";
+    }>
+  | Readonly<{ family: "NONE" }>
+  | Readonly<{ family: "MULTIPLE_OR_UNCERTAIN" }>;
+
 export interface InterpretationProviderRequest {
   readonly userMessage: string;
   readonly pendingClarification: PendingClarification | null;
@@ -335,6 +360,8 @@ export interface InterpretationProviderRequest {
   readonly selectedScenarioType: "one_off_purchase" | null;
   readonly trustedDate: string;
   readonly timezone: typeof CONVERSATION_TIMEZONE;
+  /** Server-owned bounded evidence; optional only for replay of pre-v4 historical fixtures. */
+  readonly supportedFollowUpEvidence?: SupportedFollowUpEvidence;
 }
 
 export interface ClarificationResolutionProviderRequest {
