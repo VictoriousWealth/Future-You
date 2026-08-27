@@ -125,7 +125,7 @@ describe("Slice 6 product-surface application", () => {
     expect(result.value.progress.monthlyContributionSplit.periods).toHaveLength(6);
     expect(result.value.progress.contributionHistory).toMatchObject({
       status: "available",
-      sourceLabel: "Sarah’s recorded goal contributions (demo data)",
+      sourceLabel: "Contributions recorded in Future You",
       axisMaximum: { minorUnits: "45000", display: "£450" }
     });
   });
