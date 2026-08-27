@@ -1,12 +1,61 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { SurfaceGoalDTO } from "../../../application/product-surfaces/contracts";
 
-export function GoalProgressRing({ progress }: Readonly<{
-  progress: SurfaceGoalDTO["progress"];
+function AnimatedProgressLabel({
+  display,
+  enabled,
+  revealed
+}: Readonly<{
+  display: string;
+  enabled: boolean;
+  revealed: boolean;
 }>) {
+  const [visibleLabel, setVisibleLabel] = useState(enabled ? "0%" : display);
+
+  useEffect(() => {
+    if (!enabled) {
+      setVisibleLabel(display);
+      return;
+    }
+    if (!revealed) {
+      setVisibleLabel("0%");
+      return;
+    }
+    const match = /^(\d+)%$/.exec(display);
+    if (!match || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setVisibleLabel(display);
+      return;
+    }
+    const target = Number.parseInt(match[1] ?? "0", 10);
+    let frame = 0;
+    let startedAt: number | null = null;
+    const duration = 900;
+    const tick = (timestamp: number) => {
+      startedAt ??= timestamp;
+      const elapsed = Math.min(1, (timestamp - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      setVisibleLabel(elapsed === 1 ? display : `${Math.round(target * eased)}%`);
+      if (elapsed < 1) frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [display, enabled, revealed]);
+
+  return <span>{visibleLabel}</span>;
+}
+
+export function GoalProgressRing({ progress, animateProgress = false, progressRevealed = true }: Readonly<{
+  progress: SurfaceGoalDTO["progress"];
+  animateProgress?: boolean;
+  progressRevealed?: boolean;
+}>) {
+  const pending = animateProgress && !progressRevealed;
   return (
     <span
-      className="fy-goal-ratio"
+      className={`fy-goal-ratio${pending ? " is-progress-pending" : ""}`}
       role="img"
       aria-label={progress.accessibleLabel}
     >
@@ -21,25 +70,30 @@ export function GoalProgressRing({ progress }: Readonly<{
           strokeDasharray={progress.ringDasharray}
         />
       </svg>
-      <span>{progress.display}</span>
+      <AnimatedProgressLabel display={progress.display} enabled={animateProgress} revealed={progressRevealed}/>
     </span>
   );
 }
 
-export function GoalProgressBar({ progress }: Readonly<{
+export function GoalProgressBar({ progress, animateProgress = false, progressRevealed = true }: Readonly<{
   progress: SurfaceGoalDTO["progress"];
+  animateProgress?: boolean;
+  progressRevealed?: boolean;
 }>) {
   const completionClass = progress.fill === "100%" ? "is-complete" : "is-partial";
+  const pending = animateProgress && !progressRevealed;
   return (
-    <div className="fy-progress-track" role="img" aria-label={progress.accessibleLabel}>
+    <div className={`fy-progress-track${pending ? " is-progress-pending" : ""}`} role="img" aria-label={progress.accessibleLabel}>
       <span className={completionClass} style={{ width: progress.fill }}/>
     </div>
   );
 }
 
-export function GoalCard({ goal, compact = false }: Readonly<{
+export function GoalCard({ goal, compact = false, animateProgress = false, progressRevealed = true }: Readonly<{
   goal: SurfaceGoalDTO;
   compact?: boolean;
+  animateProgress?: boolean;
+  progressRevealed?: boolean;
 }>) {
   const href = `/goals/${encodeURIComponent(goal.id)}`;
 
@@ -56,8 +110,8 @@ export function GoalCard({ goal, compact = false }: Readonly<{
           <h3>{goal.label}</h3>
           <p>{goal.completion.display}</p>
         </header>
-        <GoalProgressRing progress={goal.progress}/>
-        <GoalProgressBar progress={goal.progress}/>
+        <GoalProgressRing progress={goal.progress} animateProgress={animateProgress} progressRevealed={progressRevealed}/>
+        <GoalProgressBar progress={goal.progress} animateProgress={animateProgress} progressRevealed={progressRevealed}/>
       </Link>
     );
   }
