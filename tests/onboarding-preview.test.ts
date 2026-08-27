@@ -49,6 +49,11 @@ describe("manual financial-context preview", () => {
     });
     expect(() => JSON.stringify(first.value)).not.toThrow();
     expect(JSON.stringify(first.value)).not.toContain("bigint");
+    expect(first.value.baseline.existingPressure).toBe(false);
+    expect(first.value.baseline.warnings).toContainEqual({
+      code: "CALENDAR_FALLBACK_WARNING",
+      message: "Some projections extend beyond our current bank-holiday calendar. Future You used weekdays for those later paydays. Your monthly goal estimates are unchanged."
+    });
   });
 
   it("uses the next month's funding event when the snapshot follows this month's payday", () => {
