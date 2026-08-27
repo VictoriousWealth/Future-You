@@ -173,14 +173,14 @@ export function AskConversationShell({
             <div className="fy-quick-chat-row is-n">
               {QUICK_CHAT_OPTIONS.slice(0, 2).map((prompt) => (
                 <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => { if ("prompt" in prompt) void submit(prompt.prompt); }}>
-                  <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                  <QuickChatIcon/><strong>{prompt.label}</strong>
                 </button>
               ))}
             </div>
             <div className="fy-quick-chat-row is-n-plus-one">
               {QUICK_CHAT_OPTIONS.slice(2).map((prompt) => (
                 <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => void submit(prompt.prompt)}>
-                  <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                  <QuickChatIcon/><strong>{prompt.label}</strong>
                 </button>
               ))}
             </div>
