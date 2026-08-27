@@ -53,7 +53,7 @@ describe("Slice 6 product-surface API contracts", () => {
     const goals = await expectPrivateJson(await goalsGET(appResolver), "goals_surface");
     const benefits = await expectPrivateJson(await benefitsGET(appResolver), "benefits_surface");
     expect(home.apiVersion).toBe("future-you.product-surfaces/v1");
-    expect(goals.schemaVersion).toBe("goals-surface/1.0.0");
+    expect(goals.schemaVersion).toBe("goals-surface/1.1.0");
     expect(benefits.opportunities).toHaveLength(2);
     expect(benefits.opportunities.map((opportunity: { benefitKey: string }) => opportunity.benefitKey)).toEqual([
       "ADDITIONAL_PENSION_MATCH",
