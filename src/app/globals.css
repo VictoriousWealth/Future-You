@@ -2560,6 +2560,80 @@ summary {
   .fy-story-header > .fy-wordmark { grid-column: 1 / -1; }
 }
 
+/* Financial-context revision is an account-settings form, not a promotional surface. */
+.onboarding-page.is-revision {
+  width: min(100%, 48rem);
+  padding: 0 1rem 5rem;
+  color: var(--fy-ink);
+  background: #f4f6fa;
+  font-size: var(--fy-ios-body);
+}
+
+.revision-settings-header {
+  display: block;
+  padding: 1.25rem 0 .9rem;
+}
+
+.revision-settings-header > div { display: grid; gap: .18rem; }
+.revision-settings-header p { margin: 0; color: var(--fy-muted); font-size: var(--fy-ios-footnote); font-weight: 650; line-height: 1.385; text-transform: uppercase; }
+.revision-settings-header strong { color: var(--fy-ink); font-size: var(--fy-ios-large-title); line-height: 1.205; letter-spacing: -.035em; }
+.revision-settings-header span { color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+
+.onboarding-page.is-revision .revision-notice {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  color: var(--fy-ink);
+  background: #fff;
+  border: 1px solid rgba(0,74,173,.14);
+  border-left: 3px solid var(--fy-blue);
+  border-radius: .8rem;
+}
+
+.onboarding-page.is-revision .revision-notice span { color: var(--fy-blue); font-size: var(--fy-ios-footnote); font-weight: 650; letter-spacing: 0; text-transform: none; }
+.onboarding-page.is-revision .revision-notice h2 { margin: .25rem 0 0; color: var(--fy-ink); font-size: var(--fy-ios-headline); line-height: 1.294; }
+.onboarding-page.is-revision .revision-notice p { margin: .35rem 0 0; color: var(--fy-muted); font-size: var(--fy-ios-subheadline); line-height: 1.333; }
+
+.onboarding-page.is-revision .step-progress { height: .3rem; margin-bottom: 1rem; background: #d8e0ea; border-radius: 999px; }
+.onboarding-page.is-revision .step-progress span { background: var(--fy-blue); }
+.onboarding-page.is-revision .onboarding-card,
+.onboarding-page.is-revision .onboarding-preview {
+  padding: clamp(1rem, 4vw, 1.5rem);
+  background: #fff;
+  border: 1px solid rgba(22,52,95,.1);
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.onboarding-page.is-revision .onboarding-card > h1,
+.onboarding-page.is-revision .onboarding-preview h2 { margin-bottom: 1rem; color: var(--fy-ink); font-size: var(--fy-ios-title-2); line-height: 1.273; letter-spacing: -.025em; }
+.onboarding-page.is-revision :is(.intro-copy, .form-stack) { color: var(--fy-muted); font-size: var(--fy-ios-body); line-height: 1.45; }
+.onboarding-page.is-revision :is(.form-stack label, .goal-form label) { color: var(--fy-ink); font-size: var(--fy-ios-subheadline); font-weight: 650; }
+.onboarding-page.is-revision :is(.form-stack input, .form-stack select, .goal-form input) {
+  min-height: 3rem;
+  padding: .7rem .8rem;
+  color: var(--fy-ink);
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: .7rem;
+  font-size: var(--fy-ios-body);
+}
+
+.onboarding-page.is-revision :is(.goal-form, .choice-group) { padding: 1rem; border-color: #d8e0ea; border-radius: .8rem; }
+.onboarding-page.is-revision :is(.goal-form legend, .choice-group legend) { color: var(--fy-ink); font-size: var(--fy-ios-subheadline); font-weight: 650; }
+.onboarding-page.is-revision .onboarding-actions { padding-top: .25rem; border-top: 1px solid #e1e7ef; }
+.onboarding-page.is-revision :is(.primary-button, .secondary-button) { min-height: var(--fy-touch); border-radius: .7rem; font-size: var(--fy-ios-body); font-weight: 650; }
+.onboarding-page.is-revision .primary-button { color: #fff; background: var(--fy-blue); }
+.onboarding-page.is-revision .secondary-button { color: var(--fy-blue); background: #edf3fa; }
+.onboarding-page.is-revision .onboarding-busy { font-size: var(--fy-ios-footnote); }
+.onboarding-page.is-revision .form-errors code { font-size: var(--fy-ios-footnote); }
+.onboarding-page.is-revision .preview-grid span,
+.onboarding-page.is-revision .goal-preview-list :is(p, span),
+.onboarding-page.is-revision .preview-versions { font-size: var(--fy-ios-footnote); }
+
+@media (min-width: 48rem) {
+  .onboarding-page.is-revision { margin: 1rem auto; padding: 0 1.5rem 5rem; border-radius: 1rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
