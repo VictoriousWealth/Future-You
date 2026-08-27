@@ -338,6 +338,7 @@ test("captures the returning Sarah journey and every canonical visual state", as
   await expect(homeWordmark.locator(".fy-angular-backdrop")).toHaveAttribute("src", /future-you-auth-backdrop\.svg/);
   await expectHeaderWordmarkInsideViewport(page);
   const homeHero = page.locator(".fy-home-hero");
+  await expect(homeHero.locator('[data-icon="mockup-sparkle-cluster"]')).toBeVisible();
   await expect(homeHero.locator(".fy-home-hero-action .fy-action-triangle.is-right")).toBeVisible();
   await expect(homeHero).not.toContainText("→");
   await expect(page.locator(".fy-home-decision > .fy-action-triangle.is-right")).toHaveCount(3);
