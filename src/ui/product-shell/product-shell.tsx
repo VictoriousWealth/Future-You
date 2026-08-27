@@ -17,7 +17,7 @@ const DESTINATIONS: readonly Readonly<{
   { id: "home", label: "Home", href: "/home", icon: "home" },
   { id: "goals", label: "Goals", href: "/goals", icon: "goals" },
   { id: "ask", label: "Ask", href: "/ask", icon: "ask" },
-  { id: "benefits", label: "Benefits", href: "/benefits", icon: "benefits" }
+  { id: "benefits", label: "Opportunities", href: "/benefits", icon: "benefits" }
 ];
 
 export function ProductHeader({ action, showAI = false }: Readonly<{ action?: ReactNode; showAI?: boolean }>) {
