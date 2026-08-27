@@ -10,6 +10,7 @@ import {
   ENGLAND_WALES_WORKING_DAY_CALENDAR
 } from "../../src/fixtures/calendar/england-wales-bank-holidays";
 import { SARAH_V1_CONTEXT } from "../../src/fixtures/sarah-v1";
+import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../../src/fixtures/sarah-v1-tax-opportunity-profile";
 import { SupabaseEmployerBenefitSource } from "../../src/infrastructure/context/supabase-employer-benefit-source";
 import { SupabaseFinancialContextSource } from "../../src/infrastructure/context/supabase-financial-context-source";
 import { SupabaseWorkplaceAssociationSource } from "../../src/infrastructure/context/supabase-workplace-association-source";
@@ -62,6 +63,7 @@ function surfaceApplication(
     contextSource,
     workplaceSource: new SupabaseWorkplaceAssociationSource(configured, principal),
     employerBenefitSource: new SupabaseEmployerBenefitSource(configured, principal),
+    taxOpportunityProfileSource: SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE,
     simulator
   });
 }
