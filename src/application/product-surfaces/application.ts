@@ -8,6 +8,11 @@ import type { BaselineRequestDTO, BaselineResponseDTO, GoalCompletionDTO, MoneyD
 import type { ApplicationError } from "../errors/application-error";
 import type { FinancialContextSource } from "../ports/financial-context-source";
 import type { WorkplaceAssociationSource } from "../ports/workplace-association-source";
+import {
+  EMPTY_GOAL_CONTRIBUTION_HISTORY_SOURCE,
+  type GoalContributionHistory,
+  type GoalContributionHistorySource
+} from "../ports/goal-contribution-history-source";
 import type {
   TaxOpportunityProfile,
   TaxOpportunityProfileSource
@@ -24,7 +29,10 @@ import {
   PRODUCT_SURFACE_API_VERSION,
   type BenefitsSurfaceDTO,
   type GoalsPreviewSurfaceDTO,
+  type GoalsProgressDTO,
   type GoalsSurfaceDTO,
+  type GoalChartColorDTO,
+  type GoalLineChartSeriesDTO,
   type HomeSurfaceDTO,
   type PreviewGoalDTO,
   type SurfaceContextDTO,
@@ -48,6 +56,7 @@ export interface ProductSurfaceDependencies {
   readonly workplaceSource: WorkplaceAssociationSource;
   readonly employerBenefitSource: EmployerBenefitSource;
   readonly taxOpportunityProfileSource?: TaxOpportunityProfileSource;
+  readonly goalContributionHistorySource?: GoalContributionHistorySource;
   readonly simulator: SurfaceSimulator;
 }
 
@@ -55,6 +64,8 @@ const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ] as const;
+
+const GOAL_CHART_COLORS: readonly GoalChartColorDTO[] = ["blue", "purple", "pink", "cyan", "green"];
 
 function surfaceError(code: ApplicationError["code"], message: string): Result<never, ApplicationError> {
   return err({ code, message, missingFields: [] });
@@ -105,6 +116,167 @@ function ratio(numerator: bigint, denominator: bigint, label: string): SurfacePr
 function displayMonth(month: string): string {
   const monthNumber = Number(month.slice(5, 7));
   return `${MONTHS[monthNumber - 1] ?? month} ${month.slice(0, 4)}`;
+}
+
+function displayShortMonth(month: string): string {
+  const monthNumber = Number(month.slice(5, 7));
+  return `${(MONTHS[monthNumber - 1] ?? month).slice(0, 3)} ${month.slice(2, 4)}`;
+}
+
+function chartX(index: number, total: number): number {
+  return total <= 1 ? 70 : 70 + Math.round((index * 860) / (total - 1));
+}
+
+function chartY(value: bigint, maximum: bigint): number {
+  if (maximum <= 0n) return 330;
+  const bounded = value < 0n ? 0n : value > maximum ? maximum : value;
+  const scaled = Number((bounded * 300n + maximum / 2n) / maximum);
+  return 330 - scaled;
+}
+
+function seriesWithPolyline(
+  goalId: string,
+  label: string,
+  color: GoalChartColorDTO,
+  values: readonly Readonly<{ period: string; periodLabel: string; amount: bigint; valueLabel: string }>[],
+  maximum: bigint
+): GoalLineChartSeriesDTO {
+  const points = values.map((value, index) => ({
+    period: value.period,
+    periodLabel: value.periodLabel,
+    x: chartX(index, values.length),
+    y: chartY(value.amount, maximum),
+    valueLabel: value.valueLabel
+  }));
+  return {
+    goalId,
+    label,
+    color,
+    polylinePoints: points.map((point) => `${point.x},${point.y}`).join(" "),
+    points
+  };
+}
+
+function goalsProgress(
+  context: FinancialContextSnapshot,
+  goals: readonly SurfaceGoalDTO[],
+  baseline: BaselineResponseDTO["baseline"],
+  history: GoalContributionHistory | null
+): GoalsProgressDTO {
+  const goalById = new Map(goals.map((goal) => [goal.id, goal]));
+  const contextGoalById = new Map(context.goals.map((goal) => [goal.id, goal]));
+  const forecastPeriods = [context.projectionStartPeriod, ...baseline.periods.map((period) => period.period)];
+  const forecastSeries = goals.flatMap((goal, goalIndex) => {
+    const contextGoal = contextGoalById.get(goal.id);
+    const opening = contextGoal ? moneyValue(contextGoal.openingBalance) : null;
+    const target = contextGoal ? moneyValue(contextGoal.targetBalance) : null;
+    if (!opening || !target) return [];
+    const values = [{
+      period: context.projectionStartPeriod,
+      periodLabel: "Now",
+      amount: opening.minor,
+      valueLabel: `${Math.round(roundedBasisPoints(opening.minor, target.minor) / 100)}% · ${surfaceMoney(opening.minor).display}`
+    }, ...baseline.periods.map((period) => {
+      const state = period.goalContributions.find((item) => item.goalId === goal.id);
+      const balance = state ? BigInt(state.closingBalance.minorUnits) : opening.minor;
+      return {
+        period: period.period,
+        periodLabel: displayShortMonth(period.period),
+        amount: balance,
+        valueLabel: `${Math.round(roundedBasisPoints(balance, target.minor) / 100)}% · ${surfaceMoney(balance).display}`
+      };
+    })];
+    return [seriesWithPolyline(
+      goal.id,
+      goal.label,
+      GOAL_CHART_COLORS[goalIndex % GOAL_CHART_COLORS.length]!,
+      values,
+      target.minor
+    )];
+  });
+
+  const splitPeriods = baseline.periods.map((period) => {
+    const total = period.goalContributions.reduce(
+      (sum, contribution) => sum + BigInt(contribution.contribution.minorUnits),
+      0n
+    );
+    return {
+      period: period.period,
+      periodLabel: displayShortMonth(period.period),
+      total: surfaceMoney(total),
+      segments: period.goalContributions.map((contribution, index) => {
+        const amount = BigInt(contribution.contribution.minorUnits);
+        const goal = goalById.get(contribution.goalId);
+        const basisPoints = total === 0n ? 0 : Math.max(0, Math.min(10_000, roundedBasisPoints(amount, total)));
+        return {
+          goalId: contribution.goalId,
+          label: goal?.label ?? contribution.goalId,
+          color: GOAL_CHART_COLORS[index % GOAL_CHART_COLORS.length]!,
+          amount: surfaceMoney(amount),
+          width: `${basisPoints / 100}%`
+        };
+      })
+    };
+  });
+
+  const contributionHistory: GoalsProgressDTO["contributionHistory"] = history && history.periods.length > 0
+    ? (() => {
+        const maximum = history.periods.reduce(
+          (outerMaximum, period) => period.contributions.reduce(
+            (periodMaximum, contribution) => contribution.amount.minor > periodMaximum
+              ? contribution.amount.minor
+              : periodMaximum,
+            outerMaximum
+          ),
+          0n
+        );
+        const series = goals.map((goal, goalIndex) => seriesWithPolyline(
+          goal.id,
+          goal.label,
+          GOAL_CHART_COLORS[goalIndex % GOAL_CHART_COLORS.length]!,
+          history.periods.map((period) => {
+            const amount = period.contributions.find((item) => item.goalId === goal.id)?.amount.minor ?? 0n;
+            return {
+              period: period.period,
+              periodLabel: displayShortMonth(period.period),
+              amount,
+              valueLabel: surfaceMoney(amount).display
+            };
+          }),
+          maximum
+        ));
+        return {
+          status: "available" as const,
+          title: "Past contributions" as const,
+          description: "Recorded monthly contributions to each goal.",
+          sourceLabel: history.sourceLabel,
+          firstPeriodLabel: displayShortMonth(history.periods[0]!.period),
+          lastPeriodLabel: displayShortMonth(history.throughPeriod),
+          axisMaximum: surfaceMoney(maximum),
+          series
+        };
+      })()
+    : {
+        status: "unavailable",
+        title: "Past contributions",
+        description: "Past contributions have not been recorded yet, so Future You will not infer them from your balances."
+      };
+
+  return {
+    forecast: {
+      title: "Goal forecast",
+      description: "How each goal is expected to move towards 100% on your current plan.",
+      firstPeriodLabel: "Now",
+      lastPeriodLabel: displayShortMonth(forecastPeriods.at(-1)!),
+      series: forecastSeries
+    },
+    monthlyContributionSplit: {
+      title: "Monthly contribution split",
+      description: "How your planned goal contribution is allocated each month.",
+      periods: splitPeriods
+    },
+    contributionHistory
+  };
 }
 
 function completionPresentation(completion: GoalCompletionDTO) {
@@ -560,6 +732,9 @@ export class ProductSurfaceApplication {
     if (!current.ok) return current;
     const goals = mapGoals(current.value.context, current.value.baseline.baseline.goalCompletions);
     if (!goals.ok) return goals;
+    const history = await (
+      this.dependencies.goalContributionHistorySource ?? EMPTY_GOAL_CONTRIBUTION_HISTORY_SOURCE
+    ).getHistory(current.value.context.version);
     return ok({
       apiVersion: PRODUCT_SURFACE_API_VERSION,
       schemaVersion: GOALS_SURFACE_SCHEMA,
@@ -568,7 +743,8 @@ export class ProductSurfaceApplication {
       context: contextDTO(current.value.context, true),
       title: "Your goals",
       summary: "These dates come from your current confirmed financial plan.",
-      goals: goals.value
+      goals: goals.value,
+      progress: goalsProgress(current.value.context, goals.value, current.value.baseline.baseline, history)
     });
   }
 
