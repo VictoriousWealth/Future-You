@@ -26,7 +26,9 @@ export const SARAH_V1_PROFILE = deepFreeze({
   grossSalaryMinor: 3_850_000n,
   consumerDebt: "NONE",
   takeHomeIncludesCurrentPensionContribution: true,
-  takeHomeIncludesStudentLoanDeduction: true
+  takeHomeIncludesStudentLoanDeduction: true,
+  studentLoanPlan: "PLAN_2",
+  taxOpportunityProfileVersion: "sarah-tax-opportunity-profile@2026-09-01"
 });
 
 export const SARAH_V1_IDS = deepFreeze({
