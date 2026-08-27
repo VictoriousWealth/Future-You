@@ -48,6 +48,7 @@ export function GoalsSurface() {
           <section className="fy-goals-current-view">
             <div className="fy-goals-current-panel">
               <h1>Your goals</h1>
+              <p className="fy-goals-current-intro">See how much you have saved and what remains.</p>
               <section className="fy-goals-list is-current" aria-label="Financial goals">
                 {data.goals.length === 0 ? (
                   <div className="fy-inline-empty" data-testid="goals-empty-state">
@@ -55,7 +56,7 @@ export function GoalsSurface() {
                     <span>Create a new immutable financial-context version to add goals.</span>
                     <Link href="/settings/financial-context">Review financial context →</Link>
                   </div>
-                ) : data.goals.map((goal) => <GoalCard goal={goal} key={goal.id}/>)}
+                ) : data.goals.map((goal) => <GoalCard goal={goal} compact showBalance key={goal.id}/>)}
                 <Link className="fy-add-goal-card" href="/settings/financial-context">
                   <span aria-hidden="true">+</span><strong>Add another goal</strong>
                 </Link>
