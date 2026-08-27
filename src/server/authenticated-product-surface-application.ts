@@ -13,6 +13,8 @@ import { SupabaseWorkplaceAssociationSource } from "../infrastructure/context/su
 import { SupabaseEmployerBenefitSource } from "../infrastructure/context/supabase-employer-benefit-source";
 import { SupabaseSimulationRunStore } from "../infrastructure/runs/supabase-simulation-run-store";
 import { createRequestSupabaseClient } from "../infrastructure/supabase/server-client";
+import { EMPTY_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../application/ports/tax-opportunity-profile-source";
+import { SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE } from "../fixtures/sarah-v1-tax-opportunity-profile";
 import { createSimulatorApplication } from "./simulator-application";
 import { SARAH_DEMO_USER_ID, SARAH_STORY_MANIFEST } from "./sarah-story-contract";
 
@@ -43,17 +45,22 @@ export const resolveAuthenticatedProductSurfaceApplication: AuthenticatedProduct
     calendarMetadata: ENGLAND_WALES_CALENDAR_METADATA,
     runStore
   });
+  const isCanonicalSarah = principal.userId === SARAH_DEMO_USER_ID
+    && profile.is_demo;
+  const isSarahStoryAvailable = isCanonicalSarah
+    && profile.current_financial_context_version_id === SARAH_STORY_MANIFEST.requiredContextVersion;
   return {
     principal,
     currentContextVersionId: await contextSource.getCurrentContextVersionId(),
     application: new ProductSurfaceApplication({
       displayName: profile.display_name,
-      sarahStoryAvailable: principal.userId === SARAH_DEMO_USER_ID
-        && profile.is_demo
-        && profile.current_financial_context_version_id === SARAH_STORY_MANIFEST.requiredContextVersion,
+      sarahStoryAvailable: isSarahStoryAvailable,
       contextSource,
       workplaceSource: new SupabaseWorkplaceAssociationSource(client, principal),
       employerBenefitSource: new SupabaseEmployerBenefitSource(client, principal),
+      taxOpportunityProfileSource: isCanonicalSarah
+        ? SARAH_V1_TAX_OPPORTUNITY_PROFILE_SOURCE
+        : EMPTY_TAX_OPPORTUNITY_PROFILE_SOURCE,
       simulator
     })
   };
