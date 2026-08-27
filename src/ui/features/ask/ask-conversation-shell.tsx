@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import type {
   ConversationDetailDTO,
@@ -13,18 +14,12 @@ import type { BrowserSupabaseConfiguration } from "../../auth/browser-supabase-c
 import { ModalSheet } from "../../product-shell/modal-sheet";
 import { ActionTriangleIcon } from "../../product-shell/product-icon";
 import { ProductShell } from "../../product-shell/product-shell";
+import { QUICK_CHAT_OPTIONS, QuickChatIcon } from "../../quick-chat/quick-chat-options";
 
 type RequestState =
   | Readonly<{ status: "idle" }>
   | Readonly<{ status: "sending"; message: string }>
   | Readonly<{ status: "failed"; message: string; retryable: boolean; originalMessage: string | null }>;
-
-const PROMPTS = [
-  { icon: "card", text: "Can I afford a £650 trip next month?", tone: "blue" },
-  { icon: "calendar", text: "Can I afford something next month?", tone: "pink" },
-  { icon: "spark", text: "What would a cheaper option change?", tone: "purple" },
-  { icon: "path", text: "Explain my current path", tone: "cyan" }
-] as const;
 
 function requestId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
@@ -40,13 +35,6 @@ function errorFrom(body: unknown): { message: string; retryable: boolean } {
     message: possible?.error?.message ?? "Future You could not complete that request.",
     retryable: possible?.error?.retryable ?? false
   };
-}
-
-function AskIcon({ name }: Readonly<{ name: string }>) {
-  if (name === "card") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/></svg>;
-  if (name === "calendar") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/></svg>;
-  if (name === "spark") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3zM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16z"/></svg>;
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 3 7-9"/><path d="M16 6h4v4"/></svg>;
 }
 
 export function AskConversationShell({
@@ -168,14 +156,28 @@ export function AskConversationShell({
       {isInitial ? (
         <section className="fy-ask-intro">
           <h1 className="fy-welcome">Good morning,<br/>{displayName}!</h1>
-          <div className="fy-prompt-rail" aria-label="Suggested questions">
-            {PROMPTS.map((prompt) => (
-              <button type="button" className={`fy-prompt-card ${prompt.tone}`} key={prompt.text} onClick={() => void submit(prompt.text)}>
-                <span><AskIcon name={prompt.icon}/></span>
-                <strong>{prompt.text}</strong>
-                <ActionTriangleIcon/>
-              </button>
-            ))}
+          <div className="fy-prompt-rail fy-quick-chat-layout" aria-label="Suggested questions">
+            <p>Or Start a Quick Chat With:</p>
+            <div className="fy-quick-chat-row is-n">
+              {QUICK_CHAT_OPTIONS.slice(0, 2).map((prompt) => (
+                <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => { if ("prompt" in prompt) void submit(prompt.prompt); }}>
+                  <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                </button>
+              ))}
+            </div>
+            <div className="fy-quick-chat-row is-n-plus-one">
+              {QUICK_CHAT_OPTIONS.slice(2).map((prompt) => (
+                "href" in prompt ? (
+                  <Link className="fy-prompt-card fy-quick-chat-card" href={prompt.href} key={prompt.label}>
+                    <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                  </Link>
+                ) : (
+                  <button type="button" className="fy-prompt-card fy-quick-chat-card" key={prompt.label} onClick={() => void submit(prompt.prompt)}>
+                    <QuickChatIcon name={prompt.icon}/><strong>{prompt.label}</strong>
+                  </button>
+                )
+              ))}
+            </div>
           </div>
         </section>
       ) : (
