@@ -56,6 +56,7 @@
   --fy-ios-subheadline: .9375rem;
   --fy-ios-footnote: .8125rem;
   --fy-ios-caption: .75rem;
+  --fy-font-bricolage-grotesque: "Bricolage Grotesque Variable";
   --fy-icon-body: var(--fy-type-body);
   --ink: var(--fy-ink);
   --muted: var(--fy-muted);
