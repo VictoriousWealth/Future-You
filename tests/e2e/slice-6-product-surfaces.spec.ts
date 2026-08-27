@@ -42,12 +42,12 @@ async function createRun(page: Page, requestId: string): Promise<string> {
   }, oneOffCommand(requestId));
 }
 
-async function expectActive(page: Page, name: "Home" | "Goals" | "Ask" | "Benefits") {
+async function expectActive(page: Page, name: "Home" | "Goals" | "Ask" | "Opportunities") {
   const navigation = page.getByRole("navigation", { name: "Product navigation" });
   await expect(navigation.getByRole("link", { name })).toHaveAttribute("aria-current", "page");
 }
 
-test("delivers the shared Home, Goals, Ask and Benefits product journey", async ({ page }) => {
+test("delivers the shared Home, Goals, Ask and Opportunities product journey", async ({ page }) => {
   let conversationMessageRequests = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && /\/api\/v1\/conversations\/[^/]+\/messages$/.test(new URL(request.url()).pathname)) {
@@ -98,8 +98,8 @@ test("delivers the shared Home, Goals, Ask and Benefits product journey", async 
   await expect(emergencyPreview).toContainText("2 months later");
   await page.screenshot({ path: evidence("goals-650-preview-414x896.png") });
 
-  await page.getByRole("navigation", { name: "Product navigation" }).getByRole("link", { name: "Benefits" }).click();
-  await expectActive(page, "Benefits");
+  await page.getByRole("navigation", { name: "Product navigation" }).getByRole("link", { name: "Opportunities" }).click();
+  await expectActive(page, "Opportunities");
   await expect(page.getByTestId("active-pension-fact")).toContainText("You contribute");
   await expect(page.getByTestId("active-pension-fact")).toContainText("OniBank contributes");
   await expect(page.getByTestId("active-pension-fact")).toContainText("3%");
@@ -165,12 +165,19 @@ test("renders loading, safe error, empty-benefits and historical-preview states"
       contentType: "application/json",
       body: JSON.stringify({
         apiVersion: "future-you.product-surfaces/v1",
-        schemaVersion: "benefits-surface/1.1.0",
+        schemaVersion: "benefits-surface/1.2.0",
         kind: "benefits_surface",
         context: actualHome.context,
         workplace: { status: "not_supplied", name: null, statusLabel: "No workplace added" },
         activeFacts: [],
         opportunities: [],
+        taxAndAllowances: [],
+        loyaltySchemes: {
+          status: "not_connected",
+          statusLabel: "Not connected",
+          title: "No loyalty schemes connected",
+          description: "No trusted loyalty data is connected."
+        },
         emptyState: {
           kind: "no_workplace",
           title: "No workplace information yet",
