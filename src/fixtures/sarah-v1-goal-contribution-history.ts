@@ -15,7 +15,7 @@ export const SARAH_V1_GOAL_CONTRIBUTION_HISTORY_SOURCE: GoalContributionHistoryS
   async getHistory(contextVersion) {
     if (contextVersion !== "sarah-v1@2026-09-01") return null;
     return {
-      sourceLabel: "Sarah’s recorded goal contributions (demo data)",
+      sourceLabel: "Contributions recorded in Future You",
       throughPeriod: "2026-08",
       periods: periods.map(([period, emergency, house, holiday]) => ({
         period,
