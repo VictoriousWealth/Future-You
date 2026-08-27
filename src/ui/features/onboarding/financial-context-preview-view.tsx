@@ -2,11 +2,17 @@
 
 import type { FinancialContextPreviewDTO } from "../../../application/onboarding/contracts";
 
-export function FinancialContextPreviewView({ preview }: { preview: FinancialContextPreviewDTO }) {
+export function FinancialContextPreviewView({
+  preview,
+  mode = "initial"
+}: {
+  preview: FinancialContextPreviewDTO;
+  mode?: "initial" | "revision";
+}) {
   return (
     <section className="onboarding-preview" aria-labelledby="preview-title" data-testid="onboarding-preview">
-      <p className="eyebrow">Your current path</p>
-      <h2 id="preview-title">Here’s where these numbers take you</h2>
+      <p className="eyebrow">{mode === "revision" ? "Review" : "Your current path"}</p>
+      <h2 id="preview-title">{mode === "revision" ? "Check the updated information" : "Here’s where these numbers take you"}</h2>
       <div className="preview-grid">
         <article>
           <span>Actual cash</span>
@@ -35,7 +41,7 @@ export function FinancialContextPreviewView({ preview }: { preview: FinancialCon
       </div>
       {preview.baseline.warnings.length > 0 && (
         <div className="preview-warning" role="status">
-          <strong>Existing pressure spotted</strong>
+          <strong>{mode === "revision" ? "Items to review" : "Existing pressure spotted"}</strong>
           {preview.baseline.warnings.map((warning) => (
             <p key={warning.code}>{warning.message}</p>
           ))}
@@ -60,7 +66,7 @@ export function FinancialContextPreviewView({ preview }: { preview: FinancialCon
         ))}
       </div>
       <details>
-        <summary>Assumptions and confidence</summary>
+        <summary>{mode === "revision" ? "Calculation details" : "Assumptions and confidence"}</summary>
         <p>Confidence: {preview.confidence}</p>
         <ul>
           {preview.assumptions.map((assumption) => (
