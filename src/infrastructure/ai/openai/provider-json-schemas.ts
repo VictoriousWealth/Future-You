@@ -160,6 +160,20 @@ export const INTERPRETATION_PARAMETERS_V4 = strictObject({
   interpretation: { anyOf: interpretationBranches(COMPLETE_TIMING_PARAMETERS_V3) }
 });
 
+export const DEMO_INTERPRETATION_PARAMETERS_V1 = strictObject({
+  interpretation: {
+    anyOf: [
+      ...interpretationBranches(COMPLETE_TIMING_PARAMETERS_V3),
+      strictObject({ kind: literal("RETRIEVE_GOALS") }),
+      strictObject({ kind: literal("RETRIEVE_WORK_BENEFITS") })
+    ]
+  }
+});
+
+export const DEMO_RESPONSE_PARAMETERS_V1 = strictObject({
+  template: { type: "string", minLength: 1, maxLength: 4_000 }
+});
+
 const unsupportedResolution = strictObject({
   kind: literal("UNSUPPORTED"),
   category: enumeration(UNSUPPORTED_CATEGORY_IDS)
