@@ -36,6 +36,7 @@ describe("Slice 5 constrained conversation orchestration", () => {
       pendingClarification: null,
       availableScenarios: [],
       selectedScenarioType: null,
+      supportedFollowUpEvidence: { family: "NONE" },
       trustedDate: "2026-08-24",
       timezone: "Europe/London"
     });
@@ -79,8 +80,8 @@ describe("Slice 5 constrained conversation orchestration", () => {
     });
     expect(provider.observedClarificationRequests).toHaveLength(1);
     expect(repository.turns.get(`${id}:clarify_amount`)?.beginCommand).toMatchObject({
-      interpretationPromptVersion: "fy-conversation-interpretation/3.0.0",
-      interpretationSchemaVersion: "fy-conversation-intent/3.0.0"
+      interpretationPromptVersion: "fy-conversation-interpretation/4.0.0",
+      interpretationSchemaVersion: "fy-conversation-intent/4.0.0"
     });
     expect(repository.turns.get(`${id}:clarify_amount_answer`)?.beginCommand).toMatchObject({
       interpretationPromptVersion: "fy-clarification-resolution-prompt/2.0.0",
