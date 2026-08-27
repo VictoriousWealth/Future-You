@@ -52,6 +52,20 @@ describe("Slice 6 renderer authority", () => {
     expect(markup).toContain("width:100%");
   });
 
+  it("starts animated Home progress at zero while retaining every trusted server target", () => {
+    const markup = renderToStaticMarkup(createElement(GoalCard, {
+      goal: sentinelGoal,
+      compact: true,
+      animateProgress: true,
+      progressRevealed: false
+    }));
+    expect(markup).toContain("0%");
+    expect(markup).toContain("is-progress-pending");
+    expect(markup).toContain("width:12.345%");
+    expect(markup).toContain('stroke-dasharray="1234.5 8765.5"');
+    expect(markup).toContain("SERVER ACCESSIBLE RATIO");
+  });
+
   it("renders the generated profile portrait without replacing the settings link semantics", () => {
     const markup = renderToStaticMarkup(createElement(ProductHeader, {}));
     expect(markup).toContain("%2Fimages%2Fsarah-profile.png");
