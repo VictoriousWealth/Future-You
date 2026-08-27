@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { SurfaceGoalDTO } from "../../../application/product-surfaces/contracts";
 
+export const GOAL_PROGRESS_ANIMATION_MS = 2200;
+
 function AnimatedProgressLabel({
   display,
   enabled,
@@ -32,11 +34,12 @@ function AnimatedProgressLabel({
     const target = Number.parseInt(match[1] ?? "0", 10);
     let frame = 0;
     let startedAt: number | null = null;
-    const duration = 900;
     const tick = (timestamp: number) => {
       startedAt ??= timestamp;
-      const elapsed = Math.min(1, (timestamp - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - elapsed, 3);
+      const elapsed = Math.min(1, (timestamp - startedAt) / GOAL_PROGRESS_ANIMATION_MS);
+      const eased = elapsed < 0.5
+        ? 4 * elapsed * elapsed * elapsed
+        : 1 - Math.pow(-2 * elapsed + 2, 3) / 2;
       setVisibleLabel(elapsed === 1 ? display : `${Math.round(target * eased)}%`);
       if (elapsed < 1) frame = window.requestAnimationFrame(tick);
     };
