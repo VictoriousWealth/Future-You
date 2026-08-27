@@ -198,7 +198,9 @@ async function expectHeaderWordmarkInsideViewport(page: Page) {
   expect(geometry.backdropOpacity).toBe("1");
   expect(geometry.backgroundImage).toContain("linear-gradient");
   expect(geometry.borderStyle).toBe("solid");
-  expect(geometry.copyColors.every((color) => color === "rgb(255, 255, 255)")).toBe(true);
+  expect(geometry.copyColors[0]).toBe("rgb(255, 255, 255)");
+  expect(geometry.copyColors[1]).toBe("rgb(255, 143, 216)");
+  expect(geometry.copyColors.slice(2).every((color) => color === "rgb(255, 255, 255)")).toBe(true);
 }
 
 async function settleRoute(page: Page, path: "/home" | "/goals" | "/ask" | "/benefits") {
@@ -231,7 +233,10 @@ test("completes the new-user auth and canonical onboarding release journey", asy
   expect(welcomeBrandColors.backgroundImage).toContain("linear-gradient");
   expect(welcomeBrandColors.borderColor).toBe("rgb(0, 74, 173)");
   expect(welcomeBrandColors.backdropFilter).toBe("none");
-  expect(welcomeBrandColors.copyColors.every((color) => color === "rgb(255, 255, 255)")).toBe(true);
+  expect(welcomeBrandColors.copyColors).toEqual([
+    "rgb(255, 255, 255)",
+    "rgb(255, 143, 216)"
+  ]);
   await page.screenshot({ path: evidence("01-welcome-414x896.png") });
 
   await page.getByRole("link", { name: "Login", exact: true }).click();
