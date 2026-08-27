@@ -12,8 +12,9 @@ export const metadata: Metadata = { title: "Ask | Future You" };
 const SUPPORTED_HOME_PROMPTS = new Set([
   "Can I afford a £650 trip next month?",
   "Can I afford something next month?",
-  "What would a cheaper option change?",
-  "Explain my current path"
+  "How am I doing?",
+  "What should I prioritise?",
+  "Future You Wrapped"
 ]);
 
 export default async function AskPage({ searchParams }: Readonly<{
