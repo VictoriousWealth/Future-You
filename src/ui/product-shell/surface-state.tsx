@@ -1,9 +1,17 @@
 export function SurfaceLoading({ label }: Readonly<{ label: string }>) {
   return (
-    <section className="fy-surface-state" aria-live="polite" data-testid="surface-loading">
-      <span className="fy-state-orbit" aria-hidden="true"/>
-      <h1>Bringing your {label} into view…</h1>
-      <p>Financial details will appear together when the trusted result is ready.</p>
+    <section className="fy-surface-state is-loading" role="status" aria-live="polite" aria-busy="true" data-testid="surface-loading">
+      <div className="fy-loading-status">
+        <span className="fy-state-orbit" aria-hidden="true"/>
+        <h1>Loading {label}…</h1>
+      </div>
+      <div className="fy-loading-placeholder" aria-hidden="true">
+        <span className="fy-loading-line is-title"/>
+        <span className="fy-loading-line is-subtitle"/>
+        <span className="fy-loading-block"/>
+        <span className="fy-loading-block is-short"/>
+        <span className="fy-loading-block"/>
+      </div>
     </section>
   );
 }
