@@ -145,6 +145,17 @@ function fact(amount: string) {
   };
 }
 
+function issueSection(path: string): string {
+  if (path.includes("currentAccount") || path.includes("actualCash") || path.includes("reserve")) return "Current account";
+  if (path.includes("income") || path.includes("payday")) return "Income and payday";
+  if (path.includes("routineSpending")) return "Regular spending";
+  if (path.includes("requiredObligations") || path.includes("obligations")) return "Bills";
+  if (path.includes("desiredSafetyBuffer") || path.includes("desiredBuffer")) return "Safety buffer";
+  if (path.includes("goal")) return "Goals";
+  if (path.includes("workplace")) return "Workplace";
+  return "Financial information";
+}
+
 function buildDraft(
   form: FormState,
   draftKey: string,
@@ -511,9 +522,9 @@ export function ManualOnboardingFlow({
           <div className="form-stack">
             {provisionedEmployerName ? (
               <div className="verified-workplace-summary">
-                <span>Verified through your employer invitation</span>
+                <span>Provided by your employer</span>
                 <strong>{provisionedEmployerName}</strong>
-                <p>This verified membership stays separate from your financial calculation.</p>
+                <p>This workplace is linked to your account and cannot be edited here. It helps Future You show relevant workplace benefits, but it does not count as income or cash.</p>
               </div>
             ) : (
               <>
@@ -533,7 +544,7 @@ export function ManualOnboardingFlow({
           </div>
         )}
         {busy ? <p className="onboarding-busy" role="status">{mode === "revision" ? "Updating your financial context…" : "Your confirmed values are being handled securely…"}</p> : null}
-        {issues.length > 0 && <div className="form-errors" role="alert" ref={errorRef} tabIndex={-1}><strong>Check these fields</strong><ul>{issues.map((item, index) => <li key={`${item.path}-${index}`}><code>{item.path}</code>: {item.message}</li>)}</ul></div>}
+        {issues.length > 0 && <div className="form-errors" role="alert" ref={errorRef} tabIndex={-1}><strong>Check these fields</strong><ul>{issues.map((item, index) => <li key={`${item.path}-${index}`}><b>{issueSection(item.path)}</b>: {item.message}</li>)}</ul></div>}
         <footer className="onboarding-actions">
           {step > 0 && <button type="button" className="secondary-button" onClick={() => setStep((current) => current - 1)}>Back</button>}
           {step < stepTitles.length - 1 && <button type="button" className="primary-button" disabled={step === 5 && form.transferDeclaration === ""} onClick={() => setStep((current) => current + 1)}>{step === 0 ? mode === "revision" ? "Start updating" : "Build my current path" : "Continue"}</button>}
