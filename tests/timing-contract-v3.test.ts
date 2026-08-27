@@ -13,7 +13,9 @@ import {
   CLARIFICATION_RESOLUTION_PROMPT_VERSION,
   CLARIFICATION_RESOLUTION_SCHEMA_VERSION,
   INTERPRETATION_PROMPT_VERSION,
-  INTERPRETATION_SCHEMA_VERSION
+  INTERPRETATION_PROMPT_VERSION_V3,
+  INTERPRETATION_SCHEMA_VERSION,
+  INTERPRETATION_SCHEMA_VERSION_V3
 } from "../src/application/conversation/contracts";
 import {
   conversationInterpretationEnvelopeV3Schema,
@@ -159,8 +161,10 @@ describe("Track C1E timing contract v3", () => {
 
   it("activates explicit v3 versions while keeping explanation contracts unchanged elsewhere", () => {
     expect(CONVERSATION_TIMING_POLICY_VERSION).toBe("fy-conversation-timing-policy/1.0.0");
-    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/3.0.0");
-    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/3.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION_V3).toBe("fy-conversation-interpretation/3.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION_V3).toBe("fy-conversation-intent/3.0.0");
+    expect(INTERPRETATION_PROMPT_VERSION).toBe("fy-conversation-interpretation/4.0.0");
+    expect(INTERPRETATION_SCHEMA_VERSION).toBe("fy-conversation-intent/4.0.0");
     expect(CLARIFICATION_RESOLUTION_PROMPT_VERSION).toBe("fy-clarification-resolution-prompt/2.0.0");
     expect(CLARIFICATION_RESOLUTION_SCHEMA_VERSION).toBe("fy-clarification-resolution-schema/2.0.0");
     expect(INTERPRETATION_PROMPT).toContain("NEXT_MONTH: quote is required; monthNumber=null; year=null; offsetMonths=1");
