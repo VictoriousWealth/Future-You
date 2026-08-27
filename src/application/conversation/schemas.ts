@@ -81,6 +81,7 @@ export const pendingClarificationSchema = z.discriminatedUnion("type", [
     availableRunIds: z.array(z.string().min(3).max(160)).max(30),
     attemptedOperation: z.enum(SCENARIO_FOLLOW_UP_IDS).optional(),
     amount: amountInterpretationSchema.optional(),
+    amountMinorUnits: z.string().regex(/^(?:0|[1-9]\d*)$/).optional(),
     timing: completeTimingInterpretationSchema.optional(),
     explanationTarget: z.enum(EXPLANATION_TARGET_IDS).optional(),
     goalReferenceQuote: z.string().max(160).nullable().optional()
@@ -181,6 +182,11 @@ export const conversationInterpretationEnvelopeV2Schema = z.object({
 }).strict();
 
 export const conversationInterpretationEnvelopeV3Schema = z.object({
+  interpretation: conversationInterpretationSchema
+}).strict();
+
+/** Active v4 envelope. Its strict JSON shape remains v3-compatible; v4 adds server semantic precedence. */
+export const conversationInterpretationEnvelopeV4Schema = z.object({
   interpretation: conversationInterpretationSchema
 }).strict();
 
