@@ -14,7 +14,6 @@ import type {
   CompleteTimingInterpretation,
   ConversationInterpretation,
   ConversationDetailDTO,
-  ConversationIntentKind,
   ConversationListResponseDTO,
   ConversationMessageDTO,
   ConversationModelProvider,
@@ -28,6 +27,22 @@ import type {
   SendConversationMessageRequestDTO,
   TimingInterpretation
 } from "./contracts";
+import type {
+  DemoAnswerKind,
+  DemoConversationInterpretation,
+  DemoConversationModelProvider,
+  DemoConversationTrustedDataSource,
+  DemoTrustedFact,
+  RecordedConversationIntentKind
+} from "./demo-contracts";
+import {
+  DEMO_CONVERSATION_ORCHESTRATION_VERSION,
+  DEMO_INTERPRETATION_PROMPT_VERSION,
+  DEMO_INTERPRETATION_SCHEMA_VERSION,
+  DEMO_RESPONSE_PROMPT_VERSION,
+  DEMO_RESPONSE_SCHEMA_VERSION
+} from "./demo-contracts";
+import { demoConversationInterpretationSchema } from "./demo-schemas";
 import {
   CONVERSATION_LIST_RESPONSE_SCHEMA,
   CONVERSATION_ORCHESTRATION_VERSION,
@@ -61,6 +76,12 @@ import {
   templatesForTarget,
   validateExplanationPlan
 } from "./server-renderer";
+import {
+  fallbackDemoResponse,
+  purchaseResultFacts,
+  renderDemoResponse,
+  storedExplanationFacts
+} from "./demo-response";
 import type { OneOffPurchaseRequestDTO, OneOffPurchaseResponseDTO } from "../dto/contracts";
 
 const SUPPORTED_SCOPE = Object.freeze([
@@ -68,6 +89,18 @@ const SUPPORTED_SCOPE = Object.freeze([
   "Compare a different purchase amount or month.",
   "Explain a stored result and return to your current path."
 ]);
+
+const DEMO_SUPPORTED_SCOPE = Object.freeze([
+  ...SUPPORTED_SCOPE,
+  "Describe goals from your confirmed financial context.",
+  "Describe verified workplace benefits and opportunities without calculating an effect."
+]);
+
+export interface DemoConversationDependencies {
+  readonly enabled: boolean;
+  readonly provider: DemoConversationModelProvider;
+  readonly trustedData: DemoConversationTrustedDataSource;
+}
 
 export interface ConversationApplicationDependencies {
   readonly repository: ConversationRepository;
@@ -78,6 +111,7 @@ export interface ConversationApplicationDependencies {
   readonly modelIdentifier: string;
   readonly now?: () => Date;
   readonly consumeProviderAllowance?: () => void;
+  readonly demo?: DemoConversationDependencies;
 }
 
 function suffix(value: unknown): string {
@@ -156,12 +190,21 @@ export class ConversationApplication {
     if (!contextVersionId) {
       throw new ConversationApplicationError("FINANCIAL_CONTEXT_REQUIRED", "Complete financial onboarding before starting an Ask conversation.");
     }
-    const id = `conversation-${suffix({ requestId: request.requestId, contextVersionId })}`;
+    const orchestrationVersion = this.dependencies.demo?.enabled
+      ? DEMO_CONVERSATION_ORCHESTRATION_VERSION
+      : CONVERSATION_ORCHESTRATION_VERSION;
+    const id = `conversation-${suffix({
+      requestId: request.requestId,
+      contextVersionId,
+      ...(orchestrationVersion === DEMO_CONVERSATION_ORCHESTRATION_VERSION
+        ? { orchestrationVersion }
+        : {})
+    })}`;
     const conversation = await this.dependencies.repository.create({
       id,
       contextVersionId,
       title: "New conversation",
-      orchestrationVersion: CONVERSATION_ORCHESTRATION_VERSION
+      orchestrationVersion
     });
     return this.detailFrom(conversation);
   }
@@ -211,6 +254,7 @@ export class ConversationApplication {
     if (!contractConversation) {
       throw new ConversationApplicationError("CONVERSATION_NOT_FOUND", "The conversation was not found.");
     }
+    const demoTurn = this.demoEnabledFor(contractConversation);
     const resolvesClarification = contractConversation.pendingClarification !== null;
     const began = await this.dependencies.repository.beginTurn({
       conversationId,
@@ -223,12 +267,16 @@ export class ConversationApplication {
       trustedTimezone: CONVERSATION_TIMEZONE,
       interpretationPromptVersion: resolvesClarification
         ? CLARIFICATION_RESOLUTION_PROMPT_VERSION
-        : INTERPRETATION_PROMPT_VERSION,
+        : demoTurn
+          ? DEMO_INTERPRETATION_PROMPT_VERSION
+          : INTERPRETATION_PROMPT_VERSION,
       interpretationSchemaVersion: resolvesClarification
         ? CLARIFICATION_RESOLUTION_SCHEMA_VERSION
-        : INTERPRETATION_SCHEMA_VERSION,
-      explanationPromptVersion: EXPLANATION_PROMPT_VERSION,
-      explanationSchemaVersion: EXPLANATION_SCHEMA_VERSION,
+        : demoTurn
+          ? DEMO_INTERPRETATION_SCHEMA_VERSION
+          : INTERPRETATION_SCHEMA_VERSION,
+      explanationPromptVersion: demoTurn ? DEMO_RESPONSE_PROMPT_VERSION : EXPLANATION_PROMPT_VERSION,
+      explanationSchemaVersion: demoTurn ? DEMO_RESPONSE_SCHEMA_VERSION : EXPLANATION_SCHEMA_VERSION,
       providerIdentifier: this.dependencies.providerIdentifier,
       modelIdentifier: this.dependencies.modelIdentifier
     });
@@ -282,7 +330,7 @@ export class ConversationApplication {
           ? { supportedFollowUpEvidence: deriveSupportedFollowUpEvidence(request.message) }
           : {})
       } as const;
-      let providerValue: ConversationInterpretation;
+      let providerValue: DemoConversationInterpretation;
       if (conversation.pendingClarification) {
         const resolved = await this.dependencies.provider.resolveClarification({
           ...providerRequest,
@@ -302,33 +350,45 @@ export class ConversationApplication {
           resolutionValidation.data,
           selected
         );
+      } else if (demoTurn) {
+        const interpreted = await this.dependencies.demo!.provider.interpretDemo(providerRequest);
+        providerAttempts += interpreted.metadata.attempts;
+        providerValue = interpreted.value;
       } else {
         const interpreted = await this.dependencies.provider.interpret(providerRequest);
         providerAttempts += interpreted.metadata.attempts;
         providerValue = interpreted.value;
       }
-      const validation = conversationInterpretationSchema.safeParse(providerValue);
+      const validation = demoTurn
+        ? demoConversationInterpretationSchema.safeParse(providerValue)
+        : conversationInterpretationSchema.safeParse(providerValue);
       if (!validation.success) {
         throw new ConversationProviderError("INVALID_OUTPUT", true, "The provider output did not match the interpretation schema.");
       }
       const intent = validation.data;
-      if (exactScenarioReferenceIssue(intent, providerRequest)) {
+      if (
+        intent.kind !== "RETRIEVE_GOALS"
+        && intent.kind !== "RETRIEVE_WORK_BENEFITS"
+        && exactScenarioReferenceIssue(intent, providerRequest)
+      ) {
         throw new ConversationProviderError(
           "INVALID_OUTPUT",
           true,
           "The provider did not use the exact scenario-reference clarification required by bounded evidence."
         );
       }
-      const outcome = await this.handleIntent({
-        conversation,
-        scenarios,
-        selected,
-        intent,
-        message: request.message,
-        userMessageId,
-        trustedDate,
-        turnId
-      });
+      const outcome = intent.kind === "RETRIEVE_GOALS" || intent.kind === "RETRIEVE_WORK_BENEFITS"
+        ? await this.handleDemoRetrieval(conversation, intent.kind)
+        : await this.handleIntent({
+            conversation,
+            scenarios,
+            selected,
+            intent,
+            message: request.message,
+            userMessageId,
+            trustedDate,
+            turnId
+          });
       providerAttempts += outcome.providerAttempts;
       await this.dependencies.repository.completeTurn({
         conversationId,
@@ -383,6 +443,82 @@ export class ConversationApplication {
         // The original sanitised failure remains authoritative if completion persistence also fails.
       }
       throw error;
+    }
+  }
+
+  private demoEnabledFor(conversation: StoredConversation): boolean {
+    return this.dependencies.demo?.enabled === true
+      && conversation.orchestrationVersion === DEMO_CONVERSATION_ORCHESTRATION_VERSION;
+  }
+
+  private async handleDemoRetrieval(
+    conversation: StoredConversation,
+    intent: "RETRIEVE_GOALS" | "RETRIEVE_WORK_BENEFITS"
+  ) {
+    const currentVersion = await this.dependencies.contextSource.getCurrentContextVersionId();
+    if (currentVersion !== conversation.contextVersionId) {
+      throw new ConversationApplicationError(
+        "CONVERSATION_CONTEXT_STALE",
+        "Your financial plan has changed since this conversation started. Start a new conversation to use your current trusted data."
+      );
+    }
+    const demo = this.dependencies.demo;
+    if (!demo?.enabled) {
+      throw new ConversationApplicationError("AI_INTERPRETATION_INVALID", "Demo retrieval is not enabled.");
+    }
+    const facts = intent === "RETRIEVE_GOALS"
+      ? await demo.trustedData.goals(conversation.contextVersionId)
+      : await demo.trustedData.workBenefits(conversation.contextVersionId);
+    const written = await this.writeDemoAnswer(
+      intent === "RETRIEVE_GOALS" ? "GOALS" : "WORK_BENEFITS",
+      facts
+    );
+    return {
+      kind: "ASSISTANT_EXPLANATION" as const,
+      text: written.text,
+      templateId: written.templateId,
+      runId: null,
+      selectedRunId: conversation.selectedRunId,
+      pendingClarification: null,
+      providerAttempts: written.providerAttempts,
+      explanationFallbackUsed: written.explanationFallbackUsed
+    };
+  }
+
+  private async writeDemoAnswer(
+    answerKind: DemoAnswerKind,
+    facts: readonly DemoTrustedFact[]
+  ): Promise<Readonly<{
+    text: string;
+    templateId: "DEMO_NATURAL_RESPONSE" | "DEMO_TRUSTED_FALLBACK";
+    providerAttempts: number;
+    explanationFallbackUsed: boolean;
+  }>> {
+    const demo = this.dependencies.demo;
+    if (!demo?.enabled) {
+      return {
+        text: fallbackDemoResponse(answerKind, facts),
+        templateId: "DEMO_TRUSTED_FALLBACK",
+        providerAttempts: 0,
+        explanationFallbackUsed: true
+      };
+    }
+    try {
+      this.dependencies.consumeProviderAllowance?.();
+      const planned = await demo.provider.writeDemoResponse({ answerKind, facts });
+      return {
+        text: renderDemoResponse(planned.value, facts),
+        templateId: "DEMO_NATURAL_RESPONSE",
+        providerAttempts: planned.metadata.attempts,
+        explanationFallbackUsed: false
+      };
+    } catch (error) {
+      return {
+        text: fallbackDemoResponse(answerKind, facts),
+        templateId: "DEMO_TRUSTED_FALLBACK",
+        providerAttempts: error instanceof ConversationProviderError ? error.attempts : 0,
+        explanationFallbackUsed: true
+      };
     }
   }
 
@@ -545,7 +681,12 @@ export class ConversationApplication {
           goalReferenceQuote: input.intent.goalReferenceQuote
         });
       }
-      return this.explainResult(result, input.intent.explanationTarget, result.calculation.runId);
+      return this.explainResult(
+        result,
+        input.intent.explanationTarget,
+        result.calculation.runId,
+        this.demoEnabledFor(input.conversation)
+      );
     }
 
     const currentVersion = await this.dependencies.contextSource.getCurrentContextVersionId();
@@ -753,6 +894,19 @@ export class ConversationApplication {
       }
       result = simulated.value;
     }
+    if (this.demoEnabledFor(input.conversation)) {
+      const written = await this.writeDemoAnswer("PURCHASE_RESULT", purchaseResultFacts(result));
+      return {
+        kind: "ASSISTANT_RESULT" as const,
+        text: written.text,
+        templateId: written.templateId,
+        runId: result.calculation.runId,
+        selectedRunId: result.calculation.runId,
+        pendingClarification: null,
+        providerAttempts: written.providerAttempts,
+        explanationFallbackUsed: written.explanationFallbackUsed
+      };
+    }
     const facts = availableFacts(result);
     const target: ExplanationTarget = "OVERALL_CLASSIFICATION";
     const templates = [resultTemplateFor(result)] as const;
@@ -802,8 +956,25 @@ export class ConversationApplication {
   private async explainResult(
     result: OneOffPurchaseResponseDTO,
     target: ExplanationTarget,
-    selectedRunId: string | null
+    selectedRunId: string | null,
+    demoTurn = false
   ) {
+    if (demoTurn) {
+      const written = await this.writeDemoAnswer(
+        "RESULT_EXPLANATION",
+        storedExplanationFacts(result, target)
+      );
+      return {
+        kind: "ASSISTANT_EXPLANATION" as const,
+        text: written.text,
+        templateId: written.templateId,
+        runId: result.calculation.runId,
+        selectedRunId,
+        pendingClarification: null,
+        providerAttempts: written.providerAttempts,
+        explanationFallbackUsed: written.explanationFallbackUsed
+      };
+    }
     const facts = availableFacts(result);
     const templates = templatesForTarget(target);
     let text: string;
@@ -919,7 +1090,7 @@ export class ConversationApplication {
       messages: messageDTOs,
       scenarios: scenarioDTOs,
       selectedResult: conversation.selectedRunId ? byRun.get(conversation.selectedRunId) ?? null : null,
-      supportedScope: SUPPORTED_SCOPE
+      supportedScope: this.demoEnabledFor(conversation) ? DEMO_SUPPORTED_SCOPE : SUPPORTED_SCOPE
     };
   }
 
@@ -939,7 +1110,7 @@ export class ConversationApplication {
   private turnResponse(
     requestId: string,
     turnId: string,
-    intent: ConversationIntentKind | null,
+    intent: RecordedConversationIntentKind | null,
     providerAttempts: number,
     explanationFallbackUsed: boolean,
     conversation: ConversationDetailDTO
